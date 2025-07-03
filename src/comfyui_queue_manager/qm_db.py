@@ -36,6 +36,15 @@ def init_schema():
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- Meta table
+        CREATE TABLE IF NOT EXISTS meta (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_id INTEGER NOT  NULL,  -- Foreign key to queue
+            key VARCHAR(255) NOT NULL,
+            value TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE INDEX IF NOT EXISTS idx_queue_status_number
             ON queue(status, number);
 
@@ -56,6 +65,16 @@ def init_schema():
         WHEN NEW.updated_at = OLD.updated_at         -- only if caller didn't change it
         BEGIN
           UPDATE options
+          SET    updated_at = CURRENT_TIMESTAMP
+          WHERE  rowid = NEW.rowid;
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS meta_set_updated_at
+        AFTER UPDATE ON meta
+        FOR EACH ROW
+        WHEN NEW.updated_at = OLD.updated_at         -- only if caller didn't change it
+        BEGIN
+          UPDATE meta
           SET    updated_at = CURRENT_TIMESTAMP
           WHERE  rowid = NEW.rowid;
         END;
