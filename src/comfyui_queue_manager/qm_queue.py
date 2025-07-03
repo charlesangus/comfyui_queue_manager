@@ -3,11 +3,11 @@ from typing import Optional
 
 from execution import PromptQueue
 from server import PromptServer
-import logging
 import json
 import heapq
 
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
+from .qm_log import qm_log
 
 
 class QM_Queue:
@@ -16,7 +16,7 @@ class QM_Queue:
         self.restored = False
 
         self.paused = queue_manager.options.get("queue_paused", False)
-        logging.info("[Queue Manager] Queue status: %s", "not paused" if not self.paused else "paused")
+        qm_log.info("Queue status: %s", "not paused" if not self.paused else "paused")
 
         client_id, timestamp = queue_manager.options.get("takeover_client", False, True)
         if client_id:
@@ -64,7 +64,7 @@ class QM_Queue:
     # We do this to avoid bottleneck in the native queue when it goes massive
     # and to avoid duplicate bandwidth for requesting queue by execution store and queue manager.
     def get_current_queue(self, page=0, page_size=0, route="queue", filters=None):
-        # logging.info('get_current_queue: %d, %d', page, page_size)
+        # qm_log.info('get_current_queue: %d, %d', page, page_size)
         # Get the first page of the current queue
 
         with self.native_queue.mutex:
@@ -168,6 +168,10 @@ class QM_Queue:
 
     def task_done(self, item_id, history_result, status: Optional["PromptQueue.ExecutionStatus"]):
         with self.native_queue.mutex:
+            # log debug arguments
+            # qm_log.info("Task done: item_id=%s, history_result=%s, status=%s", item_id, history_result, status)
+            qm_log.info("Task done: history_result = %s, status = %s", json.dumps(history_result), json.dumps(status))
+
             # Mark the task as finished in the database
 
             # Get the running item from the native queue dictionary
@@ -182,7 +186,7 @@ class QM_Queue:
                 """,
                     (item[1],),
                 )
-                # logging.info("[Queue Manager] Workflow finished: %s at %s", item[1], item[0])
+                # qm_log.info("Workflow finished: %s at %s", item[1], item[0])
 
                 # Call the original task_done method
                 self.original_task_done(item_id, history_result, status)
@@ -205,7 +209,7 @@ class QM_Queue:
                 ),
             )
 
-            # logging.info("[Queue Manager] Workflow queued: %s at %s", item[1], item[0])
+            # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
 
             # Is there's no pending item in the native heap nd we are not paused then add item with highest priority (could be this one)
             if len(self.native_queue.queue) == 0 and not self.paused:
@@ -277,8 +281,8 @@ class QM_Queue:
                 """,
                     (queue_item[0][1],),
                 )
-                logging.info(
-                    "[Queue Manager] Executing workflow: \033[33m%s\033[0m at %s",
+                qm_log.info(
+                    "Executing workflow: \033[33m%s\033[0m at %s",
                     queue_item[0][3]["extra_pnginfo"]["workflow"]["workflow_name"],
                     queue_item[0][0],
                 )
@@ -295,7 +299,7 @@ class QM_Queue:
         with self.pause_lock:
             # Toggle the playback of the queue
             self.paused = not self.paused
-            logging.info("[Queue Manager] Queue " + ("paused." if self.paused else "play."))
+            qm_log.info("Queue " + ("paused." if self.paused else "play."))
             PromptServer.instance.send_sync(
                 "queue-manager-toggle-queue",
                 {
@@ -323,7 +327,7 @@ class QM_Queue:
         Delete items from the database
         """
         with self.native_queue.mutex:
-            logging.info("[Queue Manager] Deleting items from queue: %s", items)
+            qm_log.info("Deleting items from queue: %s", items)
             # Delete the item from the database
 
             deleted = 0
@@ -372,11 +376,11 @@ class QM_Queue:
 
             # If affected any rows notify the frontend that the queue and archive have been archived
             if total > 0:
-                logging.info("[Queue Manager] Queue Archived: %d item(s)", total)
+                qm_log.info("Queue Archived: %d item(s)", total)
                 PromptServer.instance.queue_updated()
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": total})
             else:
-                logging.info("[Queue Manager] No items to archive")
+                qm_log.info("No items to archive")
 
             return total
 
@@ -402,7 +406,7 @@ class QM_Queue:
             get_conn().commit()
 
             if archived > 0:
-                logging.info("[Queue Manager] Queue Item Archived: %d item(s)", archived)
+                qm_log.info("Queue Item Archived: %d item(s)", archived)
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": archived})
 
             return archived
@@ -426,8 +430,8 @@ class QM_Queue:
             for db_id in items:
                 PromptServer.instance.number += 1
 
-                logging.info(
-                    "[Queue Manager] Playing item: %s, priority: %d, front: %s",
+                qm_log.info(
+                    "Playing item: %s, priority: %d, front: %s",
                     db_id,
                     PromptServer.instance.number * (-1 if front else 1),
                     front,
@@ -474,7 +478,7 @@ class QM_Queue:
                 # Notify native queue lock so if it's waiting it can move on and go for next iteration
                 PromptServer.instance.prompt_queue.not_empty.notify()
 
-                logging.info("[Queue Manager] %d item(s) scheduled for generation.", moved)
+                qm_log.info("%d item(s) scheduled for generation.", moved)
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": moved})
                 PromptServer.instance.queue_updated()
 
@@ -527,7 +531,7 @@ class QM_Queue:
                 # Notify native queue lock so if it's waiting it can move on and go for next iteration
                 PromptServer.instance.prompt_queue.not_empty.notify()
 
-                logging.info("[Queue Manager] %d item(s) scheduled for generation.", moved)
+                qm_log.info("%d item(s) scheduled for generation.", moved)
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": moved})
                 PromptServer.instance.queue_updated()
             return moved
@@ -611,7 +615,7 @@ class QM_Queue:
                 ORDER BY number
             """)
             if len(rows) > 0:
-                logging.info("[Queue Manager] Restoring unfinished jobs: %d item(s)", len(rows))
+                qm_log.info("Restoring unfinished jobs: %d item(s)", len(rows))
                 # Get current highest priority (lowest number for pending task) in the database
                 lowest = read_single("""
                     SELECT number
@@ -659,7 +663,7 @@ class QM_Queue:
             # Set the number in server
             PromptServer.instance.number = task_counter
 
-            logging.info("[Queue Manager] Task counter set to %d", task_counter)
+            qm_log.info("Task counter set to %d", task_counter)
 
             # Start queue processing
             # TODO: Add a setting to enable/disable auto-start

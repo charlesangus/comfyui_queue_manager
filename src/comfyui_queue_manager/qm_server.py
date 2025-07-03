@@ -2,11 +2,12 @@
 from aiohttp import web
 
 from server import PromptServer
-import logging, json
+import json
 from datetime import datetime, timezone
 
 from .helpers import sanitize_filename
 from .inc.exceptions import BadRouteException
+from .qm_log import qm_log
 
 
 class QM_Server:
@@ -46,7 +47,7 @@ class QM_Server:
         # Play entire archive
         @PromptServer.instance.routes.post("/queue_manager/play-archive")
         async def play_archive(request):
-            logging.info("[Queue Manager] Play archive")
+            qm_log.info("Play archive")
             json_data = await request.json()
             client_id = None
             filters = None
@@ -130,10 +131,10 @@ class QM_Server:
             if client_id is not None:
                 client_id = client_id.decode("ascii")
 
-            logging.info("[Queue Manager] Importing %s", "to archive." if is_archive else "to queue.")
+            qm_log.info("Importing %s", "to archive." if is_archive else "to queue.")
             imported, total = self.queue.import_queue(json_data, client_id, 3 if is_archive else 0)
-            logging.info(
-                "[Queue Manager] Imported %d of %d total submitted entries %s",
+            qm_log.info(
+                "Imported %d of %d total submitted entries %s",
                 imported,
                 total,
                 "to archive." if is_archive else "to queue.",
@@ -180,7 +181,7 @@ class QM_Server:
             filters = self.get_filters(request)
             total = self.queue.delete_from_queue(route, filters)
 
-            logging.info("[Queue Manager] Deleted %d items from the archive", total)
+            qm_log.info("Deleted %d items from the archive", total)
 
             return web.json_response({"deleted": total})
 
@@ -202,7 +203,7 @@ class QM_Server:
             self.queue_manager.queue.takeover_client = takeover_client
             self.queue_manager.options.set("takeover_client", client_id)
 
-            logging.info(f"[Queue Manager] Client takeover requested by {client_id}")
+            qm_log.info(f"Client takeover requested by {client_id}")
 
             return web.json_response(takeover_client)
 
@@ -224,7 +225,7 @@ class QM_Server:
                     case "/api/interrupt":
                         # delete the currently running item
                         total = self.queue.delete_running()
-                        logging.info(f"[Queue Manager] Deleted {total} items from the queue")
+                        qm_log.info(f"Deleted {total} items from the queue")
 
             return await handler(request)
 
@@ -239,7 +240,7 @@ class QM_Server:
             try:
                 return await handler(request)
             except BadRouteException as ae:
-                logging.error("[Queue Manager] " + ae.message)
+                qm_log.error(ae.message)
                 return web.json_response(
                     {"error": ae.message},
                     status=422,
