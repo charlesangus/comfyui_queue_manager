@@ -170,13 +170,16 @@ class QM_Queue:
         with self.native_queue.mutex:
             # log debug arguments
             # qm_log.info("Task done: item_id=%s, history_result=%s, status=%s", item_id, history_result, status)
-            qm_log.info("Task done: history_result = %s, status = %s", json.dumps(history_result), json.dumps(status))
+            qm_log.info("Task done: history_result = %s", json.dumps(history_result))
+            qm_log.info("Task done: status = %s", json.dumps(status))
+            qm_log.info("Task done: item_id = %s", item_id)
 
             # Mark the task as finished in the database
 
             # Get the running item from the native queue dictionary
             item = self.native_queue.currently_running.get(item_id, None)
             if item is not None:
+                prompt_id = item[1]  # Get the prompt_id from the item
                 # Mark the item as finished in the database
                 write_query(
                     """
@@ -184,9 +187,49 @@ class QM_Queue:
                     SET status = 2
                     WHERE prompt_id = ?
                 """,
-                    (item[1],),
+                    (prompt_id,),
                 )
-                # qm_log.info("Workflow finished: %s at %s", item[1], item[0])
+
+                outputs = {}
+                if history_result is not None and "outputs" in history_result:
+                    # get id column from the prompt
+                    db_id = read_single(
+                        """
+                        SELECT id
+                        FROM queue
+                        WHERE prompt_id = ?
+                    """,
+                        (prompt_id,),
+                    )
+                    if db_id is None:
+                        qm_log.error("History: Prompt with id %s not found in the queue", prompt_id)
+                        return
+                    db_id = db_id[0]  # get the first element of the tuple
+
+                    # Save only persistent outputs
+                    for node_id, output in history_result["outputs"].items():
+                        images = None
+                        if "images" in output:
+                            images = output["images"]
+                        elif "gifs" in output:
+                            images = output["gifs"]
+
+                        if images is not None:
+                            if images[0]["type"] == "output":
+                                outputs[node_id] = output
+
+                    if len(outputs) > 0:
+                        # Save outputs to the meta table
+                        write_query(
+                            """
+                                INSERT INTO meta (item_id, key, value)
+                                VALUES (?, 'outputs', ?)
+                            """,
+                            (
+                                db_id,
+                                json.dumps(outputs),
+                            ),
+                        )
 
                 # Call the original task_done method
                 self.original_task_done(item_id, history_result, status)
