@@ -243,6 +243,31 @@ footer.footer {
       }
     }
   }
+
+  .gallery {
+    .items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      .media-item {
+        flex: 1 1 calc(33.333% - 0.5rem);
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.25rem;
+        color: white;
+        padding: 0.5rem;
+        text-align: center;
+
+        img, video {
+          width: 100%;
+          height: auto;
+          border-radius: 0.25rem;
+        }
+      }
+    }
+  }
 }
 
 .tabs {

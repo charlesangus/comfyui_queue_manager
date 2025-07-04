@@ -146,10 +146,6 @@ export default function RootLayout({children}) {
     }
   }
 
-  async function takeOver() {
-    apiCall('queue_manager/takeover?client_id='+appStatus.clientId, null, "GET");
-  }
-
   function isFilterOn() {
     return appStatus.filters && Object.keys(appStatus.filters).length > 0;
   }
@@ -394,7 +390,13 @@ export default function RootLayout({children}) {
       <body className={`${geistSans.variable} ${geistMono.variable} route-${appStatus.route}`}>
       {/*{children}*/}
 
-      {/* Tabs Nav */}
+      <TopMenu />
+
+      {/*
+        *
+        *  Tabs Nav
+        *
+        */}
       <div className="tabs">
         {/* Queue */}
         <button
@@ -423,6 +425,12 @@ export default function RootLayout({children}) {
         </button>
 
       </div>
+
+      {/*
+        *
+        * Filters
+        *
+        */}
       {isFilterOn() &&
         <div className="filters flex items-center p-2">
           <span className="text-neutral-500">Filters:</span>
@@ -461,8 +469,13 @@ export default function RootLayout({children}) {
           </button>
         </div>
       }
+
+      {/*
+        *
+        * Queue items table
+        *
+        */}
       <div className={'queue-table' + (appStatus.shiftDown ? ' shift-down' : '')}>
-        {/* Tabs for Queue and Archive */}
         <Queue data={appStatus.queue}
                error={appStatus.error}
                isLoading={appStatus.loading}
@@ -471,7 +484,15 @@ export default function RootLayout({children}) {
                shiftDown={appStatus.shiftDown}
         />
       </div>
+
+      {/*
+        *
+        * Footer with paging and actions
+        *
+        */}
       <footer className={"footer"}>
+
+        {/* Paging */}
         <div className={"paging flex"}>
           {appStatus.queue && appStatus.queue.info && (appStatus.queue.info.last_page > 0) &&
             <>
@@ -510,9 +531,13 @@ export default function RootLayout({children}) {
             </>
           }
         </div>
+
+        {/* Footer Actions */}
         <div className="p-2 flex actions">
           {appStatus.queue && (appStatus.queue.running.length > 0 || appStatus.queue.pending.length > 0) &&
             <>
+
+              {/* Queue Actions  */}
               {appStatus.route === 'queue' &&
                 <>
                   <button onClick={archiveAll}
@@ -531,6 +556,8 @@ export default function RootLayout({children}) {
                   }
                 </>
               }
+
+              {/* Archive Actions */}
               {appStatus.route === 'archive' &&
                 <>
                   <button onClick={playAllArchive}
@@ -553,6 +580,8 @@ export default function RootLayout({children}) {
                   </button>
                 </>
               }
+
+              {/* Completed Actions */}
               {appStatus.route === 'completed' &&
                 <>
                   <a href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}

@@ -74,12 +74,18 @@ class QM_Queue:
             total_rows = 0
             last_page = 0
             order_string = "ORDER BY number"
+            join_string = ""
+            select_string = "SELECT queue.id as id, prompt, number"
 
             match route:
                 case "queue":
                     running.extend(self.native_queue.currently_running.values())
-                case "archive" | "completed":
-                    order_string = "ORDER BY updated_at"
+                case "archive":
+                    order_string = "ORDER BY queue.updated_at"
+                case "completed":
+                    order_string = "ORDER BY queue.updated_at DESC"
+                    join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
+                    select_string = f"{select_string}, outputs.value as outputs"
 
             where_clauses = [self.get_route_query(route)]
 
@@ -101,8 +107,9 @@ class QM_Queue:
 
                 rows = read_query(
                     f"""
-                    SELECT id, prompt, number
+                    {select_string}
                     FROM queue
+                    {join_string}
                     WHERE {where_string}
                     {order_string}
                     LIMIT ?, ?
@@ -112,12 +119,16 @@ class QM_Queue:
 
                 # array of prompts
                 for row in rows:
-                    item = json.loads(row[1])
+                    item = json.loads(row["prompt"])
                     # Add db_id to the item
-                    item[3]["db_id"] = row[0]
+                    item[3]["db_id"] = row["id"]
 
                     if route == "queue":
-                        item[0] = row[2]  # set the number to the one from the database
+                        item[0] = row["number"]  # set the number to the one from the database
+
+                    if route == "completed" and row["outputs"] is not None:
+                        # If we have outputs then add them to the item
+                        item[3]["outputs"] = json.loads(row["outputs"])
 
                     pending.append(tuple(item))
 
