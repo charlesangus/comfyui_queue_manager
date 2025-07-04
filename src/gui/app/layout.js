@@ -8,6 +8,7 @@ import useEvent from "react-use-event-hook";
 import {AppContext} from "@/internals/app-context";
 import {apiCall} from "@/internals/functions";
 import {EllipsisVertical} from "lucide-react";
+import TopMenu from "@/components/TopMenu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +32,6 @@ export default function RootLayout({children}) {
     filters: null
   });
 
-  const [uiState, setUiState] = useState({
-    menuOpen: false,
-  });
-
   const [currentJob, setProgress] = useState({
     id: null,
     nodes: {
@@ -43,10 +40,6 @@ export default function RootLayout({children}) {
     integrity: true, // false if events about workflow execution are received before the workflow data is loaded
     progress: 0.0,
   });
-
-  function toggleMenu() {
-    setUiState(prev => ({...prev, menuOpen: !prev.menuOpen}));
-  }
 
 
   const fetchQueueItems = async (page) => {
@@ -400,16 +393,6 @@ export default function RootLayout({children}) {
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} route-${appStatus.route}`}>
       {/*{children}*/}
-      <button className={'top-menu-toggle' + (uiState.menuOpen ? ' open' : '')} onClick={toggleMenu}>
-        <span>
-          <EllipsisVertical />
-        </span>
-      </button>
-      <section className={"top-menu" + (uiState.menuOpen ? ' open' : '')}>
-        <div className={"container"}>
-          <button className={"button"} onClick={takeOver}>🎯 Take over focus</button>
-        </div>
-      </section>
 
       {/* Tabs Nav */}
       <div className="tabs">
