@@ -28,13 +28,13 @@ body {
   overflow-x: hidden;
   height: 100%;
   background-color: transparent;
+  font-family: var(--font-roboto);
 }
 
 body {
   margin-top: calc(2.875rem + 1px);
   color: var(--foreground);
   background: transparent;
-  font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   display: flex;
@@ -85,7 +85,9 @@ footer.footer {
     }
 
     button {
-      color: white;
+      @media (prefers-color-scheme: light) {
+        color: white;
+      }
 
       &.run-all {
         padding-left: 1.6rem;
@@ -97,17 +99,35 @@ footer.footer {
     }
 
     @media (prefers-color-scheme: light) {
-      a,
-      button {
+      a
+      {
         color: black;
       }
     }
+  }
+
+  .MuiButton-root {
+    text-transform: none;
   }
 }
 
 .queue-table {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
+
+  .table-wrapper {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .MuiPaper-root {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .MuiTableContainer-root {
+    height: 100%;
+  }
 
   .route-archive & {
     background-color: $archive-color-darker;
@@ -118,7 +138,7 @@ footer.footer {
   }
 
   tr {
-    transition: all 0.2s ease-in-out;
+    //transition: all 0.2s ease-in-out;
     &:hover {
       background: var(--background-faded);
       color: var(--foreground-faded);
@@ -142,6 +162,10 @@ footer.footer {
 
         @media (prefers-color-scheme: light) {
           background-color: $archive-color-light !important;
+        }
+
+        .MuiTableCell-root {
+          background-color: #211;
         }
       }
     }
@@ -242,6 +266,10 @@ footer.footer {
         opacity: 1;
       }
     }
+  }
+
+  td.info-cell {
+    padding: 20px;
   }
 
   .gallery {
@@ -482,7 +510,7 @@ button {
     }
     &:hover {
       background-color: #00000022;
-      transition: 0.3s ease-in-out all;
+      //transition: 0.3s ease-in-out all;
 
       @media (prefers-color-scheme: dark) {
         background-color: #ffffff22;

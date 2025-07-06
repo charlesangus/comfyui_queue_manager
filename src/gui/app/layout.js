@@ -1,5 +1,5 @@
 "use client";
-import {Geist, Geist_Mono} from "next/font/google";
+
 import "./globals.scss";
 import {useEffect, useState} from "react";
 import Queue from "@/components/Queue";
@@ -7,22 +7,20 @@ import {baseURL} from "@/internals/config";
 import useEvent from "react-use-event-hook";
 import {AppContext} from "@/internals/app-context";
 import {apiCall} from "@/internals/functions";
-import {EllipsisVertical} from "lucide-react";
 import TopMenu from "@/components/TopMenu";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import { Roboto } from 'next/font/google';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from '../theme';
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const roboto = Roboto({
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto',
 });
 
 
@@ -386,16 +384,17 @@ export default function RootLayout({children}) {
 
   return (
     <AppContext.Provider value={{appStatus, setAppStatus}}>
-      <html lang="en">
+      <html lang="en" className={roboto.variable}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title>Queue Manager</title>
         <meta name="description" content="ComfyUI Queue Manager frontend"/>
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} route-${appStatus.route}`}>
-      {/*{children}*/}
+      <body className={`route-${appStatus.route}`}>
+      <AppRouterCacheProvider>
+        <ThemeProvider  theme={theme} disableTransitionOnChange>
 
-      <TopMenu />
+        <TopMenu />
 
       {/*
         *
@@ -539,25 +538,24 @@ export default function RootLayout({children}) {
 
         {/* Footer Actions */}
         <div className="p-2 flex actions">
+          <Stack direction="row" spacing={1} className={'min-w-full'}>
           {appStatus.queue && (appStatus.queue.running.length > 0 || appStatus.queue.pending.length > 0) &&
             <>
+
 
               {/* Queue Actions  */}
               {appStatus.route === 'queue' &&
                 <>
-                  <button onClick={archiveAll}
-                          className="hover:bg-neutral-700 bg-orange-200 py-1 px-2 rounded mr-1 border-0 dark:bg-orange-900">Archive
+                  <Button onClick={archiveAll} variant="contained" color="warning" size="small">Archive
                     All {isFilterOn() ? "*" : "Pending"}
-                  </button>
-                  <a href={baseURL + "queue_manager/export" + appendFilters("")}
-                     className="hover:bg-neutral-700 dark:bg-teal-700 bg-teal-200 text-neutral-900 py-1 px-2 rounded mr-1 border-0 ">📤
-                    Export {isFilterOn() ? "*" : "Queue"}
-                  </a>
+                  </Button>
+                  <Button variant="contained" color="secondary" size="small"  href={baseURL + "queue_manager/export" + appendFilters("")}>
+                    📤 Export {isFilterOn() ? "*" : "Queue"}
+                  </Button>
                   {isFilterOn() &&
-                    <button onClick={deleteFromQueue}
-                            className="hover:bg-neutral-700 dark:bg-gray-800 bg-gray-200 dark:text-neutral-200 text-neutral-800 py-1 px-2 rounded mr-1 border-0 order-last ml-auto">
+                    <Button variant="contained" color="error" size="small" onClick={deleteFromQueue} className={"order-last"} style={{ marginLeft: "auto" }}>
                       🗑️ Delete All *
-                    </button>
+                    </Button>
                   }
                 </>
               }
@@ -565,7 +563,7 @@ export default function RootLayout({children}) {
               {/* Archive Actions */}
               {appStatus.route === 'archive' &&
                 <>
-                  <button onClick={playAllArchive}
+                  <Button variant="contained" size="small" onClick={playAllArchive}
                           className="hover:bg-neutral-700 text-neutral-200 dark:text-neutral-900 py-1 px-2 rounded mr-1 border-0 run run-all">
                   <svg viewBox="0 0 24 24" width="1.2em" height="1.2em">
                       <path className={'run'} fill="none" stroke="currentColor" strokeLinecap="round"
@@ -574,33 +572,28 @@ export default function RootLayout({children}) {
                             d="m6 3l14 9l-14 9z"></path>
                     </svg>
                     Run All {isFilterOn() ? "*" : ""}
-                  </button>
-                  <a href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}
-                     className="hover:bg-neutral-700 dark:bg-teal-700 bg-teal-200 text-neutral-900  py-1 px-2 rounded mr-1 border-0">📤
+                  </Button>
+                  <Button variant="contained" color="secondary" size="small" href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>📤
                     Export {isFilterOn() ? "*" : "Archive"}
-                  </a>
-                  <button onClick={deleteFromQueue}
-                          className="hover:bg-neutral-700 dark:bg-gray-800 bg-gray-200 dark:text-neutral-200 text-neutral-800 py-1 px-2 rounded mr-1 border-0 order-last ml-auto">
+                  </Button>
+                  <Button onClick={deleteFromQueue} variant="contained" color="error" size="small" className={"order-last"} style={{ marginLeft: "auto" }}>
                     🗑️ Delete {isFilterOn() ? "All *" : "All Archive"}
-                  </button>
+                  </Button>
                 </>
               }
 
               {/* Completed Actions */}
               {appStatus.route === 'completed' &&
                 <>
-                  <a href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}
-                     className="hover:bg-neutral-700 dark:bg-teal-700 bg-teal-200 text-neutral-900  py-1 px-2 rounded mr-1 border-0">📤
+                  <Button variant="contained" color="secondary" size="small"  href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>📤
                     Export {isFilterOn() ? "*" : "Completed"}
-                  </a>
-                  <button onClick={deleteFromQueue}
-                          className="hover:bg-neutral-700 dark:bg-gray-800 bg-gray-200 dark:text-neutral-200 text-neutral-800 py-1 px-2 rounded mr-1 border-0 order-last ml-auto">
+                  </Button>
+                  <Button variant="contained" color="error" size="small"  onClick={deleteFromQueue} className={"order-last"} style={{ marginLeft: "auto" }}>
                     🗑️ Delete {isFilterOn() ? "All *" : "All Completed"}
-                  </button>
+                  </Button>
                 </>
               }
             </>
-
           }
 
           {['queue', 'archive'].includes(appStatus.route) &&
@@ -618,13 +611,19 @@ export default function RootLayout({children}) {
                 hidden
                 onChange={uploadQueue}
               />
-              <label htmlFor={"uploadQueueForm"}
-                     className={"hover:bg-neutral-700 py-1 px-2 rounded mr-1 border-0 dark:bg-teal-900 bg-teal-300"}>📁
-                Import {appStatus.route === 'queue' ? 'Queue' : 'Archive'}</label>
+              <label htmlFor={"uploadQueueForm"}>
+                <Button variant="contained" color="secondary" size="small">
+                📁 Import {appStatus.route === 'queue' ? 'Queue' : 'Archive'}
+                </Button>
+              </label>
             </form>
           }
+
+          </Stack>
         </div>
       </footer>
+      </ThemeProvider>
+      </AppRouterCacheProvider>
       </body>
       </html>
     </AppContext.Provider>
