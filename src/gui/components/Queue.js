@@ -14,6 +14,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 
 // take items from parent component
 export default function Queue( { data, isLoading, error, progress } ) {
@@ -106,18 +107,8 @@ export default function Queue( { data, isLoading, error, progress } ) {
                 <Button variant="contained" size="small" color="warning" onClick={archiveQueueItem}>Archive</Button>
               }
               {appStatus.route === 'archive' &&
-                <Button variant="contained" size="small" className={"run"} onClick={playItem}>
-                  <svg viewBox="0 0 24 24" width="1.2em" height="1.2em">
-                    <path className={'run'} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="m6 3l14 9l-14 9z"></path>
-                    <g className={'run-first'} fill="none" stroke="currentColor" strokeLinecap="round"
-                       strokeLinejoin="round" strokeWidth="2">
-                      <path d="M16 12H3m13 6H3m7-12H3m18 12V8a2 2 0 0 0-2-2h-5"></path>
-                      <path d="m16 8l-2-2l2-2"></path>
-                    </g>
-                  </svg>
-                  &nbsp;&nbsp;Run
+                <Button variant="contained" size="small" className={"run"} onClick={playItem} startIcon={<PlayArrowOutlinedIcon fontSize="small" />}>
+                  Run
                 </Button>
               }
             </Stack>
@@ -157,16 +148,16 @@ export default function Queue( { data, isLoading, error, progress } ) {
   }
 
   function QueueItems({running, pending, error, isLoading}) {
-    if (error) return <TableCell colSpan={3} className="text-red-500 text-center info-cell">Loading
-      failed: {error}</TableCell>;
-    if (!isLoading && (!data || (!data.running.length && !data.pending.length))) return <TableCell colSpan={3}
+    if (error) return <TableRow><TableCell colSpan={3} className="text-red-500 text-center info-cell">Loading
+      failed: {error}</TableCell></TableRow>;
+    if (!isLoading && (!data || (!data.running.length && !data.pending.length))) return <TableRow><TableCell colSpan={3}
                                                                                                    className="italic text-center info-cell">No
-      items.</TableCell>;
-    if (isLoading && !data) return <>
+      items.</TableCell></TableRow>;
+    if (isLoading && !data) return <TableRow>
       <TableCell className="px-3 py-1 serial">
         <LoaderSpinner />
       </TableCell>
-      <TableCell colSpan={2} className="italic text-center info-cell">Loading...</TableCell></>;
+      <TableCell colSpan={2} className="italic text-center info-cell">Loading...</TableCell></TableRow>;
 
     return (
       <>

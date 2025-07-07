@@ -9,6 +9,10 @@ import {AppContext} from "@/internals/app-context";
 import {apiCall} from "@/internals/functions";
 import TopMenu from "@/components/TopMenu";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import DriveFolderUploadOutlinedIcon from '@mui/icons-material/DriveFolderUploadOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
+import DeleteOutlineSharpIcon from '@mui/icons-material/DeleteOutlineSharp';
 
 import { Roboto } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
@@ -538,7 +542,7 @@ export default function RootLayout({children}) {
 
         {/* Footer Actions */}
         <div className="p-2 flex actions">
-          <Stack direction="row" spacing={1} className={'min-w-full'}>
+          <Stack direction="row" spacing={1} className={'min-w-full'} useFlexGap>
           {appStatus.queue && (appStatus.queue.running.length > 0 || appStatus.queue.pending.length > 0) &&
             <>
 
@@ -550,10 +554,10 @@ export default function RootLayout({children}) {
                     All {isFilterOn() ? "*" : "Pending"}
                   </Button>
                   <Button variant="contained" color="secondary" size="small"  href={baseURL + "queue_manager/export" + appendFilters("")}>
-                    📤 Export {isFilterOn() ? "*" : "Queue"}
+                    <FileDownloadOutlinedIcon />&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Queue"}
                   </Button>
                   {isFilterOn() &&
-                    <Button variant="contained" color="error" size="small" onClick={deleteFromQueue} className={"order-last"} style={{ marginLeft: "auto" }}>
+                    <Button variant="contained" color="error" size="small" onClick={deleteFromQueue} className={"order-last"} sx={{ ml: 'auto' }}>
                       🗑️ Delete All *
                     </Button>
                   }
@@ -565,19 +569,13 @@ export default function RootLayout({children}) {
                 <>
                   <Button variant="contained" size="small" onClick={playAllArchive}
                           className="hover:bg-neutral-700 text-neutral-200 dark:text-neutral-900 py-1 px-2 rounded mr-1 border-0 run run-all">
-                  <svg viewBox="0 0 24 24" width="1.2em" height="1.2em">
-                      <path className={'run'} fill="none" stroke="currentColor" strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="m6 3l14 9l-14 9z"></path>
-                    </svg>
-                    Run All {isFilterOn() ? "*" : ""}
+                  <PlayArrowOutlinedIcon />&nbsp;&nbsp;Run All {isFilterOn() ? "*" : ""}
                   </Button>
-                  <Button variant="contained" color="secondary" size="small" href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>📤
-                    Export {isFilterOn() ? "*" : "Archive"}
+                  <Button variant="contained" color="secondary" size="small" href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>
+                    <FileDownloadOutlinedIcon />&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Archive"}
                   </Button>
-                  <Button onClick={deleteFromQueue} variant="contained" color="error" size="small" className={"order-last"} style={{ marginLeft: "auto" }}>
-                    🗑️ Delete {isFilterOn() ? "All *" : "All Archive"}
+                  <Button onClick={deleteFromQueue} variant="contained" color="error" size="small" className={"order-last"} sx={{ ml: 'auto' }}>
+                    <DeleteOutlineSharpIcon />&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Archive"}
                   </Button>
                 </>
               }
@@ -585,11 +583,11 @@ export default function RootLayout({children}) {
               {/* Completed Actions */}
               {appStatus.route === 'completed' &&
                 <>
-                  <Button variant="contained" color="secondary" size="small"  href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>📤
-                    Export {isFilterOn() ? "*" : "Completed"}
+                  <Button variant="contained" color="secondary" size="small"  href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>
+                    <FileDownloadOutlinedIcon />&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Completed"}
                   </Button>
-                  <Button variant="contained" color="error" size="small"  onClick={deleteFromQueue} className={"order-last"} style={{ marginLeft: "auto" }}>
-                    🗑️ Delete {isFilterOn() ? "All *" : "All Completed"}
+                  <Button variant="contained" color="error" size="small"  onClick={deleteFromQueue} className={"order-last"} sx={{ ml: 'auto' }}>
+                    <DeleteOutlineSharpIcon />&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Completed"}
                   </Button>
                 </>
               }
@@ -613,7 +611,7 @@ export default function RootLayout({children}) {
               />
               <label htmlFor={"uploadQueueForm"}>
                 <Button variant="contained" color="secondary" size="small">
-                📁 Import {appStatus.route === 'queue' ? 'Queue' : 'Archive'}
+                  <DriveFolderUploadOutlinedIcon />&nbsp;&nbsp;Import {appStatus.route === 'queue' ? 'Queue' : 'Archive'}
                 </Button>
               </label>
             </form>
