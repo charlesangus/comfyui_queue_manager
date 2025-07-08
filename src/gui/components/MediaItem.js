@@ -1,15 +1,12 @@
-import React, {useContext, useState} from "react";
-// import {AppContext} from "@/internals/app-context";
+import {memo} from "react";
 import {baseURL} from "@/internals/config";
 
-export default function MediaItem({file}) {
-  // const {appStatus, setAppStatus} = useContext(AppContext)
 
-  const ext = file.filename.split('.').pop().toLowerCase();
-  const key = `${file.subfolder}/${file.filename}`;   // stable key
+export const MediaItem = memo(function MediaItem({filename, subfolder}) {
+  const ext = filename.split('.').pop().toLowerCase();
 
-  const src = `${baseURL}api/view?filename=${file.filename}` +
-              `&type=output&subfolder=${file.subfolder}`;
+  const src = `${baseURL}api/view?filename=${filename}` +
+              `&type=output&subfolder=${subfolder}`;
 
 
   return (
@@ -17,21 +14,20 @@ export default function MediaItem({file}) {
       {(ext === 'mp4' || ext === 'webm')
         ? (
           <video
-            key={key}
-            src={src}
             className="comfy-video-main galleria-image"
             controls
-          />
+          >
+            <source src={src} type={`video/${ext}`} />
+          </video>
         )
         : (
           <img
-            key={key}
             src={src}
             className="comfy-image-main galleria-image"
-            alt={file.filename}
+            alt={filename}
           />
         )
       }
     </div>
   );
-}
+});

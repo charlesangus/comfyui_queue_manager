@@ -2,7 +2,7 @@
 
 import "./globals.scss";
 import {useEffect, useState} from "react";
-import Queue from "@/components/Queue";
+import {Queue} from "@/components/Queue";
 import {baseURL} from "@/internals/config";
 import useEvent from "react-use-event-hook";
 import {AppContext} from "@/internals/app-context";
@@ -13,12 +13,14 @@ import DriveFolderUploadOutlinedIcon from '@mui/icons-material/DriveFolderUpload
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import DeleteOutlineSharpIcon from '@mui/icons-material/DeleteOutlineSharp';
+import PhotoOutlinedIcon from '@mui/icons-material/PhotoOutlined';
 
 import { Roboto } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '../theme';
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import {Slider} from "@mui/material";
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -161,7 +163,7 @@ export default function RootLayout({children}) {
 
     switch (event.data.message.name) {
       case "status":
-        if (appStatus.route === 'queue') {
+        if (appStatus.route === 'queue' || appStatus.route === 'completed') {
           fetchQueueItems((appStatus.queue && appStatus.queue.info) ? appStatus.queue.info.page : 0);
         }
         break;
@@ -302,6 +304,12 @@ export default function RootLayout({children}) {
       console.error("Error importing queue:", error);
     }
   });
+
+  function updateThumbnailSize(event, newValue) {
+    console.log("Thumbnail size updated: ", newValue);
+    // update root element CSS variable --thumb-size
+    document.documentElement.style.setProperty('--thumb-size', newValue + 'px');
+  }
 
   useEffect(() => {
     fetchQueueItems()
@@ -487,7 +495,7 @@ export default function RootLayout({children}) {
         <Queue data={appStatus.queue}
                error={appStatus.error}
                isLoading={appStatus.loading}
-               progress={currentJob.progress}
+               // progress={currentJob.progress}
                route={appStatus.route}
                shiftDown={appStatus.shiftDown}
         />
@@ -499,6 +507,17 @@ export default function RootLayout({children}) {
         *
         */}
       <footer className={"footer"}>
+        {/* On Complete route show thumbnail size control */}
+        {appStatus.route === 'completed' &&
+          <Stack spacing={1} direction="row" sx={{ alignItems: 'center', mb: 1 }} p={1} className={"thumb-size-slider"}>
+            <PhotoOutlinedIcon fontSize="small" />
+            <Slider aria-label="Size" size="small" onChange={updateThumbnailSize}
+              min={50}
+              max={500}
+            />
+            <PhotoOutlinedIcon fontSize="large" />
+          </Stack>
+        }
 
         {/* Paging */}
         <div className={"paging flex"}>
@@ -508,7 +527,7 @@ export default function RootLayout({children}) {
               <button
                 className={"page" + (appStatus.queue.info.page === 0 ? ' disabled' : '')}
                 onClick={() => {
-                  setAppStatus(prev => ({...prev, queue: null}));
+                  // setAppStatus(prev => ({...prev, queue: null}));
                   fetchQueueItems(appStatus.queue.info.page - 1);
                 }}
                 disabled={appStatus.queue.info.page === 0}
@@ -519,7 +538,7 @@ export default function RootLayout({children}) {
                     key={i}
                     className={"page" + (appStatus.queue.info.page === i ? ' active' : '')}
                     onClick={() => {
-                      setAppStatus(prev => ({...prev, queue: null}));
+                      // setAppStatus(prev => ({...prev, queue: null}));
                       fetchQueueItems(i);
                     }}
                   >
@@ -531,7 +550,7 @@ export default function RootLayout({children}) {
               <button
                 className={"page" + (appStatus.queue.info.page === appStatus.queue.info.last_page ? ' disabled' : '')}
                 onClick={() => {
-                  setAppStatus(prev => ({...prev, queue: null}));
+                  // setAppStatus(prev => ({...prev, queue: null}));
                   fetchQueueItems(appStatus.queue.info.page + 1);
                 }}
                 disabled={appStatus.queue.info.page === appStatus.queue.info.last_page}
@@ -584,10 +603,10 @@ export default function RootLayout({children}) {
               {appStatus.route === 'completed' &&
                 <>
                   <Button variant="contained" color="secondary" size="small"  href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>
-                    <FileDownloadOutlinedIcon />&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Completed"}
+                    <FileDownloadOutlinedIcon />&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Completed Jobs"}
                   </Button>
                   <Button variant="contained" color="error" size="small"  onClick={deleteFromQueue} className={"order-last"} sx={{ ml: 'auto' }}>
-                    <DeleteOutlineSharpIcon />&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Completed"}
+                    <DeleteOutlineSharpIcon />&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Completed Jobs"}
                   </Button>
                 </>
               }

@@ -275,22 +275,24 @@ footer.footer {
     .items {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0;
 
       .media-item {
-        flex: 1 1 calc(33.333% - 0.5rem);
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
         border-radius: 0.25rem;
         color: white;
-        padding: 0.5rem;
+        padding: 0.2rem;
         text-align: center;
+        max-width: var(--thumb-size);
+        min-width: var(--thumb-size);
 
         img, video {
           width: 100%;
           height: auto;
           border-radius: 0.25rem;
+          object-fit: contain;
         }
       }
     }
@@ -487,6 +489,7 @@ button {
 
   &.open {
     display: block;
+    z-index: 3;
   }
 
   .container {
@@ -568,4 +571,10 @@ button {
 
 .MuiSvgIcon-fontSizeSmall {
   font-size: 0.8rem !important;
+}
+
+.thumb-size-slider {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
 }
