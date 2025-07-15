@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import styles from "./page.module.scss";
 import TopMenu from "@/components/TopMenu";
 import {Queue} from "@/components/Queue";
 import Stack from "@mui/material/Stack";
@@ -19,7 +17,15 @@ import useEvent from "react-use-event-hook";
 import {AppContext} from "@/internals/app-context";
 
 export default function Home() {
-  const {appStatus, setAppStatus} = useContext(AppContext)
+  const [appStatus, setAppStatus] = useState({
+    loading: true,
+    error: null,
+    queue: null,
+    route: 'queue', // queue, archive, bin
+    shiftDown: false,
+    clientId: null,
+    filters: null
+  });
 
   const [currentJob, setProgress] = useState({
     id: null,
@@ -29,6 +35,8 @@ export default function Home() {
     integrity: true, // false if events about workflow execution are received before the workflow data is loaded
     progress: 0.0,
   });
+
+  const [galleryData, setGallery] = useState(null);
 
 
   const fetchQueueItems = async (page) => {
@@ -286,10 +294,71 @@ export default function Home() {
   });
 
   function updateThumbnailSize(event, newValue) {
-    console.log("Thumbnail size updated: ", newValue);
     // update root element CSS variable --thumb-size
     document.documentElement.style.setProperty('--thumb-size', newValue + 'px');
   }
+
+  /**
+   * Pack outputs and sent to gallery iframe
+   */
+  function onMediaItemClick(workflowIndex, nodeKey, fileIndex) {
+    console.log("workflowIndex", workflowIndex, "nodeKey", nodeKey, "fileIndex", fileIndex);
+    let currentItemIndex = 0;
+    let currentNode = null;
+    let currentItem = null;
+    let images = [];
+
+    if (!galleryData) {
+      const promptID = appStatus.queue.pending[workflowIndex][1];
+      const workflowName = appStatus.queue.pending[workflowIndex][3].extra_pnginfo.workflow.workflow_name;
+
+      appStatus.queue.pending.map((item, index) => {
+        // are there outputs for this item?
+        if (item[3] && item[3].outputs) {
+          images.push({
+            id: item[1],
+            outputs: item[3].outputs
+          });
+
+          if (item[1] === promptID) {
+            currentItemIndex = images.length - 1;
+            currentNode = item[3].outputs[nodeKey];
+            currentItem = currentNode.images[fileIndex];
+          }
+        }
+      });
+    } else {
+
+    }
+
+    setGallery({
+      outputs:images,
+      itemIndex: currentItemIndex,
+      nodeKey: nodeKey,
+      fileIndex: fileIndex,
+      workflowName: workflowName,
+      promptID: promptID
+    });
+
+  }
+
+  function postGalleryData() {
+    if (galleryData) {
+      window.parent.postMessage({
+        type: "QM_Gallery_Show",
+        galleryData: galleryData
+      }, "*");
+      // send message to parent window with outputs
+      window.parent.frames["qm_gallery_iframe"].postMessage({
+        type: "QM_Gallery_Load",
+        galleryData: galleryData
+      }, "*");
+    }
+  }
+
+  useEffect(() => {
+    postGalleryData();
+  }, [galleryData]);
 
   useEffect(() => {
     fetchQueueItems()
@@ -350,6 +419,12 @@ export default function Home() {
 
   useEffect(() => {
     setAppStatus(prev => ({ ...prev, queue: null }));
+
+    // When loading completed route, clear outputs if any (lightbox request will need to recalculate them)
+    if (appStatus.route === 'completed' && galleryData) {
+      setGallery(null);
+    }
+
     fetchQueueItems();
   }, [appStatus.route]);
 
@@ -375,7 +450,8 @@ export default function Home() {
   }, []);
 
   return (
-    <>
+    <div className={`route-${appStatus.route} qm-container`}>
+      <AppContext.Provider value={{appStatus, setAppStatus, onMediaItemClick}}>
       <TopMenu />
 
       {/*
@@ -609,6 +685,7 @@ export default function Home() {
           </Stack>
         </div>
       </footer>
-    </>
+      </AppContext.Provider>
+    </div>
   );
 }
