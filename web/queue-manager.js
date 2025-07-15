@@ -1,4 +1,11 @@
-import {QM_ENVIRONMENT, QM_DEV_URL, QM_PROD_URL, QueueManagerURL, QueueManagerOrigin} from './js/config.js';
+import {
+  QM_ENVIRONMENT,
+  QM_DEV_URL,
+  QM_PROD_URL,
+  QueueManagerURL,
+  QueueManagerOrigin,
+  QueueManagerGalleryURL
+} from './js/config.js';
 import {postMessageToIframe, postStatusMessageToIframe} from './js/functions.js';
 
 import { app } from '../../scripts/app.js'
@@ -103,22 +110,43 @@ app.registerExtension({
     });
 
 
-
     /**
-     * When workflow is received from iframe then load it into ComfyUI
+     * Messages from iframe
      */
     window.addEventListener("message", (event) => {
       if (event.origin !== QueueManagerOrigin) return;
       const { type, workflow, number } = event.data;
+
+      // When workflow is received from iframe then load it into ComfyUI
       if (type === "QM_LoadWorkflow" && workflow) {
         // e.g. forward into ComfyUI’s API
         app.loadGraphData(workflow, true, true, workflow.workflow_name + ' ' + number);
       }
+
+      // Handshake message from iframe
       if (type === "QM_QueueManager_Hello") {
         event.source.postMessage(
           { type: "QM_QueueManager_Hello", clientId: app.api.clientId },
           event.origin
         );
+      }
+
+      // Show gallery modal
+      if (type === "QM_Gallery_Show") {
+        const galleryOverlay = document.querySelector('.comfyui-gallery-overlay');
+        if (galleryOverlay) {
+          galleryOverlay.classList.add('open');
+        } else {
+          console.error("Gallery overlay not found");
+        }
+      }
+
+      // Close gallery modal
+      if (type === "QM_Gallery_Close") {
+        const galleryOverlay = document.querySelector('.comfyui-gallery-overlay');
+        if (galleryOverlay) {
+          galleryOverlay.classList.remove('open');
+        }
       }
     }, false);
 
@@ -137,7 +165,7 @@ app.registerExtension({
               QUEUE MANAGER
             </header>
             <section class='app-iframe flex-1'>
-              <iframe src="${QueueManagerURL}" class="w-full h-full border-0"></iframe>
+              <iframe name="qm_queue_iframe" src="${QueueManagerURL}" class="w-full h-full border-0"></iframe>
             </section>
             <footer>
             </footer>
@@ -155,6 +183,30 @@ app.registerExtension({
             // console.log("Queue Manager stylesheet loaded");
           };
           document.head.appendChild(style);
+        }
+
+        // if gallery overlay does not exist then create it
+        if (!document.querySelector('.comfyui-gallery-overlay')) {
+          const galleryOverlay = document.createElement('div');
+          galleryOverlay.className = 'comfyui-gallery-overlay';
+
+
+          galleryOverlay.innerHTML = `
+            <div class="qm-gallery-modal">
+              <section class="qm-gallery-content">
+                <iframe name="qm_gallery_iframe" src="${QueueManagerGalleryURL}" class="gallery-iframe"></iframe>
+              </section>
+            </div>
+          `;
+          document.body.appendChild(galleryOverlay);
+
+          // Close modal on click outside
+          galleryOverlay.addEventListener('click', (e) => {
+            if (e.target === galleryOverlay) {
+              // remove open class from overlay
+              galleryOverlay.classList.remove('open');
+            }
+          });
         }
       },
     });

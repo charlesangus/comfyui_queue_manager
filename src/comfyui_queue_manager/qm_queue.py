@@ -181,9 +181,9 @@ class QM_Queue:
         with self.native_queue.mutex:
             # log debug arguments
             # qm_log.info("Task done: item_id=%s, history_result=%s, status=%s", item_id, history_result, status)
-            qm_log.info("Task done: history_result = %s", json.dumps(history_result))
-            qm_log.info("Task done: status = %s", json.dumps(status))
-            qm_log.info("Task done: item_id = %s", item_id)
+            # qm_log.info("Task done: history_result = %s", json.dumps(history_result))
+            # qm_log.info("Task done: status = %s", json.dumps(status))
+            # qm_log.info("Task done: item_id = %s", item_id)
 
             # Mark the task as finished in the database
 

@@ -14,6 +14,7 @@ class QM_Server:
     def __init__(self, queue_manager, __version__):
         self.queue_manager = queue_manager
         self.queue = queue_manager.queue
+        self.gallery = queue_manager.gallery
         self.__version__ = __version__
 
         # Get queue items
@@ -206,6 +207,25 @@ class QM_Server:
             qm_log.info(f"Client takeover requested by {client_id}")
 
             return web.json_response(takeover_client)
+
+        # Endpoint to get gallery metadata and item
+        @PromptServer.instance.routes.get("/queue_manager/gallery")
+        async def get_gallery(request):
+            """
+            Get gallery metadata and item.
+            """
+            item_id = request.query.get("id", None)
+            filename = request.query.get("filename", None)
+            subfolder = request.query.get("subfolder", None)
+            if item_id is None or filename is None:
+                return web.json_response({"error": "Missing request data"}, status=400)
+
+            # Get the gallery item
+            gallery = self.gallery.get(item_id, filename, subfolder)
+            if gallery is None:
+                return web.json_response({"error": "Gallery item not found"}, status=404)
+
+            return web.json_response(gallery)
 
         # Hook us into the server's middleware so we can listen to some native api requests
         @web.middleware

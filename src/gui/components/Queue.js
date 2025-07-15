@@ -117,13 +117,17 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
         <tr className="dark:odd:bg-neutral-900 odd:bg-neutral-100 gallery" key={"gallery" + item[3].db_id}>
           <td colSpan={3} className="px-3 py-1">
             <div className="flex flex-wrap gap-2 items">
-              {Object.values(item[3].outputs).flatMap(output => {
+              {Object.keys(item[3].outputs).map(nodeID => {
+                const output = item[3].outputs[nodeID];
                 const images = output.images ?? output.gifs ?? [];
-                return images.map(image => (
+                return images.map((image, fileIndex) => (
                   <MediaItem
                     key={image.filename + '-' + image.subfolder}
                     filename={image.filename}
                     subfolder={image.subfolder}
+                    nodeID={nodeID}
+                    queueItemIndex={index}
+                    fileIndex={fileIndex}
                   />
                 ));
               })}

@@ -2,7 +2,7 @@
 import re
 import pathlib
 
-from src.comfyui_queue_manager.qm_log import qm_log
+from .src.comfyui_queue_manager.qm_log import qm_log
 
 
 def get_version() -> str:

@@ -6,7 +6,7 @@ export const QM_PROD_URL = window.location.protocol + "//" + window.location.hos
   "/extensions/comfyui_queue_manager/.gui/index.html"; // The path where the build sits in the comfyui frontend
 
 // Gallery URLs
-export const QM_GALLERY_DEV_URL = QM_DEV_URL + "/queue_manager/gallery";
+export const QM_GALLERY_DEV_URL = QM_DEV_URL + "/gallery";
 export const QM_GALLERY_PROD_URL = window.location.protocol + "//" + window.location.host +
   "/extensions/comfyui_queue_manager/.gui/gallery.html";
 
