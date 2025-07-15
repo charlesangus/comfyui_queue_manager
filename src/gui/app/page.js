@@ -308,10 +308,10 @@ export default function Home() {
     let currentItem = null;
     let images = [];
 
-    if (!galleryData) {
-      const promptID = appStatus.queue.pending[workflowIndex][1];
-      const workflowName = appStatus.queue.pending[workflowIndex][3].extra_pnginfo.workflow.workflow_name;
+    const promptID = appStatus.queue.pending[workflowIndex][1];
+    const workflowName = appStatus.queue.pending[workflowIndex][3].extra_pnginfo.workflow.workflow_name;
 
+    if (!galleryData) {
       appStatus.queue.pending.map((item, index) => {
         // are there outputs for this item?
         if (item[3] && item[3].outputs) {
@@ -322,31 +322,47 @@ export default function Home() {
 
           if (item[1] === promptID) {
             currentItemIndex = images.length - 1;
-            currentNode = item[3].outputs[nodeKey];
-            currentItem = currentNode.images[fileIndex];
           }
         }
       });
-    } else {
 
+      setGallery({
+        items:images
+      });
+
+      postGalleryData({
+        items:images,
+        itemIndex: currentItemIndex,
+        nodeKey: nodeKey,
+        fileIndex: fileIndex,
+        workflowName: workflowName,
+        promptID: promptID
+      })
+
+    } else {
+      galleryData.items.map((item, index) => {
+        if (item.id === promptID) {
+          currentItemIndex = index;
+        }
+      })
+
+      postGalleryData({
+        itemIndex: currentItemIndex,
+        nodeKey: nodeKey,
+        fileIndex: fileIndex,
+        workflowName: workflowName,
+        promptID: promptID
+      });
     }
 
-    setGallery({
-      outputs:images,
-      itemIndex: currentItemIndex,
-      nodeKey: nodeKey,
-      fileIndex: fileIndex,
-      workflowName: workflowName,
-      promptID: promptID
-    });
+
 
   }
 
-  function postGalleryData() {
+  function postGalleryData(galleryData = null) {
     if (galleryData) {
       window.parent.postMessage({
         type: "QM_Gallery_Show",
-        galleryData: galleryData
       }, "*");
       // send message to parent window with outputs
       window.parent.frames["qm_gallery_iframe"].postMessage({
@@ -356,9 +372,9 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    postGalleryData();
-  }, [galleryData]);
+  // useEffect(() => {
+  //   postGalleryData();
+  // }, [galleryData]);
 
   useEffect(() => {
     fetchQueueItems()

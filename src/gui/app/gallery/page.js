@@ -6,6 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
 import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
 import {baseURL} from "@/internals/config";
+import useEvent from "react-use-event-hook";
 
 export default function Gallery() {
   /**
@@ -47,41 +48,51 @@ export default function Gallery() {
     window.parent.postMessage({ type: "QM_Gallery_Close" }, "*");
   }
 
+  const handleMessage = useEvent((event) => {
+    const { type } = event.data;
+
+    // Request to load gallery item
+    if (type === "QM_Gallery_Load") {
+      console.log('Gallery loaded:', event.data);
+      const data = event.data.galleryData;
+      let queueItem = null;
+      if (data.items) {
+        queueItem = data.items[data.itemIndex];
+      } else {
+        queueItem = gallery.items[data.itemIndex];
+      }
+      const node = queueItem.outputs[data.nodeKey];
+      const file = node.images[data.fileIndex];
+
+      // calculate total of all images in all nodes of the queue item, queueItem.outputs is an object with node keys
+      const totalItemImages = Object.values(queueItem.outputs).reduce((acc, node) => {
+        if (node.images && Array.isArray(node.images)) {
+          return acc + node.images.length;
+        }
+        return acc;
+      }, 0);
+
+      if (gallery) {
+        setGallery({...gallery, ...event.data.galleryData});
+      } else {
+        setGallery(event.data.galleryData);
+      }
+
+      setMediaItem({
+        queueItem: queueItem,
+        node: node,
+        file: file,
+        totalImages: totalItemImages
+      });
+    }
+
+  });
+
   useEffect(() => {
     /**
      * Messages from iframe
      */
-    window.addEventListener("message", (event) => {
-      const { type } = event.data;
-
-      // Request to load gallery item
-      if (type === "QM_Gallery_Load") {
-        console.log('Gallery loaded:', event.data);
-        const data = event.data.galleryData;
-        const queueItem = data.outputs[data.itemIndex];
-        const node = queueItem.outputs[data.nodeKey];
-        const file = node.images[data.fileIndex];
-
-        // calculate total of all images in all nodes of the queue item, queueItem.outputs is an object with node keys
-        const totalItemImages = Object.values(queueItem.outputs).reduce((acc, node) => {
-          if (node.images && Array.isArray(node.images)) {
-            return acc + node.images.length;
-          }
-          return acc;
-        }, 0);
-
-
-        setGallery(event.data.galleryData);
-
-        setMediaItem({
-          queueItem: queueItem,
-          node: node,
-          file: file,
-          totalImages: totalItemImages
-        });
-      }
-
-    }, false);
+    window.addEventListener("message", handleMessage, false);
   }, []);
 
 
