@@ -1,25 +1,21 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import Button from "@mui/material/Button";
+
 import IconButton from "@mui/material/IconButton";
-import CloseIcon from '@mui/icons-material/Close';
 import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+
+
 import {baseURL} from "@/internals/config";
 import useEvent from "react-use-event-hook";
 
 export default function Gallery() {
   /**
    * Gallery state
-   * @type {Object|null}
-   * @property {Array} outputs - Array of output files
-   * @property {number} itemIndex - Index of the queue item
-   * @property {string} nodeKey - Key of the node in the queue item
-   * @property {number} fileIndex - Index of the output file
-   * @property {string} workflowName - Name of the workflow
-   * @property {string} promptID - ID of the workflow in the queue
+   * @type {Array} - array of gallery items
    */
-  const [ gallery, setGallery ] = useState(null);
+  const [ galleryItems, setGalleryItems ] = useState(null);
   const [ mediaItem, setMediaItem ] = useState(null);
 
 
@@ -55,32 +51,48 @@ export default function Gallery() {
     if (type === "QM_Gallery_Load") {
       console.log('Gallery loaded:', event.data);
       const data = event.data.galleryData;
-      let queueItem = null;
-      if (data.items) {
-        queueItem = data.items[data.itemIndex];
-      } else {
-        queueItem = gallery.items[data.itemIndex];
+      const items = data.items ? data.items : galleryItems;
+
+      // in items find one that has promptID equal to data.promptID
+      if (!items || items.length === 0) {
+        console.error('No items found in gallery data:', data);
+        return;
       }
-      const node = queueItem.outputs[data.nodeKey];
+      const itemIndex = items.findIndex(item => item.promptID === data.promptID);
+      if (itemIndex === -1) {
+        console.error('Item with promptID not found in gallery data:', data.promptID);
+        return;
+      }
+
+      const queueItem = items[itemIndex];
+
+      const nodeIndex = queueItem.outputs.findIndex(item => item.nodeKey === data.nodeKey);
+
+      if (nodeIndex === -1) {
+        console.error('Node not found in queue item outputs:', data.nodeKey);
+        return;
+      }
+      const node = queueItem.outputs[nodeIndex];
       const file = node.images[data.fileIndex];
 
-      // calculate total of all images in all nodes of the queue item, queueItem.outputs is an object with node keys
-      const totalItemImages = Object.values(queueItem.outputs).reduce((acc, node) => {
+      // calculate total of all images in all nodes of the queue item, queueItem.outputs is an array with nodes
+      const totalItemImages = queueItem.outputs.reduce((acc, node) => {
         if (node.images && Array.isArray(node.images)) {
           return acc + node.images.length;
         }
         return acc;
       }, 0);
 
-      if (gallery) {
-        setGallery({...gallery, ...event.data.galleryData});
-      } else {
-        setGallery(event.data.galleryData);
+      if (data.items) {
+        setGalleryItems(data.items);
       }
 
       setMediaItem({
+        itemIndex: itemIndex,
         queueItem: queueItem,
+        nodeIndex: nodeIndex,
         node: node,
+        fileIndex: data.fileIndex,
         file: file,
         totalImages: totalItemImages
       });
@@ -103,9 +115,9 @@ export default function Gallery() {
         <DisabledByDefaultIcon fontSize="large" />
       </IconButton>
 
-      {gallery &&
+      {galleryItems &&
       <div className="image-box">
-        <header>{gallery.workflowName} <span>({gallery.fileIndex+1} / {mediaItem.totalImages})</span></header>
+        <header>{mediaItem.queueItem.workflowName} <span>({mediaItem.fileIndex+1} / {mediaItem.totalImages})</span></header>
 
         <figure>
           <img
@@ -118,6 +130,14 @@ export default function Gallery() {
             {/*</Button>*/}
           </figcaption>
         </figure>
+        <nav className={"gallery-nav"}>
+          <IconButton color="primary" size="large" onClick={previousImage} disabled={mediaItem.fileIndex === 0} className={"previous-button"}>
+            <ArrowForwardIosIcon fontSize="inherit" />
+          </IconButton>
+          <IconButton color="primary" size="large" onClick={nextImage} disabled={mediaItem.fileIndex === mediaItem.totalImages - 1} className={"next-button"}>
+            <ArrowForwardIosIcon fontSize="inherit" />
+          </IconButton>
+        </nav>
 
         <footer></footer>
       </div>

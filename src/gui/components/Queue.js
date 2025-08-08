@@ -125,9 +125,11 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
                     key={image.filename + '-' + image.subfolder}
                     filename={image.filename}
                     subfolder={image.subfolder}
-                    nodeID={nodeID}
-                    queueItemIndex={index}
-                    fileIndex={fileIndex}
+                    galleryData={{
+                      promptID: item[1],
+                      nodeKey: nodeID,
+                      fileIndex: fileIndex
+                    }}
                   />
                 ));
               })}

@@ -301,58 +301,42 @@ export default function Home() {
   /**
    * Pack outputs and sent to gallery iframe
    */
-  function onMediaItemClick(workflowIndex, nodeKey, fileIndex) {
-    console.log("workflowIndex", workflowIndex, "nodeKey", nodeKey, "fileIndex", fileIndex);
-    let currentItemIndex = 0;
-    let currentNode = null;
-    let currentItem = null;
-    let images = [];
-
-    const promptID = appStatus.queue.pending[workflowIndex][1];
-    const workflowName = appStatus.queue.pending[workflowIndex][3].extra_pnginfo.workflow.workflow_name;
+  function onMediaItemClick(imageGalleryData) {
+    console.log("imageGalleryData", imageGalleryData);
+    let items = [];
 
     if (!galleryData) {
       appStatus.queue.pending.map((item, index) => {
         // are there outputs for this item?
         if (item[3] && item[3].outputs) {
-          images.push({
-            id: item[1],
-            outputs: item[3].outputs
-          });
-
-          if (item[1] === promptID) {
-            currentItemIndex = images.length - 1;
+          let outputs = [];
+          if (item[3].outputs) {
+            Object.keys(item[3].outputs).map((nodeKey) => {
+              outputs.push({
+                nodeKey: nodeKey,
+                images: item[3].outputs[nodeKey].images,
+              })
+            })
           }
+          items.push({
+            promptID: item[1],
+            workflowName: item[3].extra_pnginfo.workflow.workflow_name,
+            outputs: outputs
+          });
         }
       });
 
       setGallery({
-        items:images
+        items:items
       });
 
       postGalleryData({
-        items:images,
-        itemIndex: currentItemIndex,
-        nodeKey: nodeKey,
-        fileIndex: fileIndex,
-        workflowName: workflowName,
-        promptID: promptID
+        ...imageGalleryData,
+        items:items,
       })
 
     } else {
-      galleryData.items.map((item, index) => {
-        if (item.id === promptID) {
-          currentItemIndex = index;
-        }
-      })
-
-      postGalleryData({
-        itemIndex: currentItemIndex,
-        nodeKey: nodeKey,
-        fileIndex: fileIndex,
-        workflowName: workflowName,
-        promptID: promptID
-      });
+      postGalleryData(imageGalleryData);
     }
 
 

@@ -3,7 +3,7 @@ import {baseURL} from "@/internals/config";
 import {AppContext} from "@/internals/app-context";
 
 
-export const MediaItem = memo(function MediaItem({filename, subfolder, nodeID, queueItemIndex, fileIndex, imageIndex}) {
+export const MediaItem = memo(function MediaItem({filename, subfolder, galleryData}) {
   const {onMediaItemClick} = useContext(AppContext)
 
   const ext = filename.split('.').pop().toLowerCase();
@@ -15,7 +15,7 @@ export const MediaItem = memo(function MediaItem({filename, subfolder, nodeID, q
     e.stopPropagation();
     e.preventDefault();
 
-    onMediaItemClick(queueItemIndex, nodeID, fileIndex);
+    onMediaItemClick(galleryData);
   }
 
   return (
