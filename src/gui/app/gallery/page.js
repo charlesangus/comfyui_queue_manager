@@ -219,20 +219,31 @@ export default function Gallery() {
             src={baseURL + `api/view?filename=${mediaItem.file.filename}&type=output&subfolder=${mediaItem.file.subfolder}`}
             alt={mediaItem.file.filename}
           />
-          <figcaption>
-            {/*<Button variant="contained" color="primary" onClick={() => fetchGallery(gallery.itemIndex)}>*/}
-            {/*  Reload Gallery*/}
-            {/*</Button>*/}
-          </figcaption>
+          <div className={'node-thumbs'}>
+            {/*  Display all images from the node */}
+            {mediaItem.node.images.map((image, index) => (
+                <img
+                  key={index}
+                  src={baseURL + `api/view?filename=${image.filename}&type=output&subfolder=${image.subfolder}`}
+                  alt={image.filename}
+                  className={`node-thumb ${index === mediaItem.fileIndex ? 'active' : ''}`}
+                  onClick={() => setMediaItem(prev => ({
+                    ...prev,
+                    fileIndex: index,
+                    file: image
+                  }))}
+                />
+            ))}
+          </div>
         </figure>
         <nav className={"gallery-nav"}>
           <IconButton color="primary" size="large" onClick={previousImage}
-                      // disabled={mediaItem.fileIndex === 0}
+            // disabled={mediaItem.fileIndex === 0}
                       className={"previous-button"}>
-            <ArrowForwardIosIcon fontSize="inherit" />
+            <ArrowForwardIosIcon fontSize="inherit"/>
           </IconButton>
           <IconButton color="primary" size="large" onClick={nextImage}
-                      // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
+            // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
                       className={"next-button"}>
             <ArrowForwardIosIcon fontSize="inherit" />
           </IconButton>
