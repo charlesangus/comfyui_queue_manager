@@ -44,6 +44,106 @@ export default function Gallery() {
     window.parent.postMessage({ type: "QM_Gallery_Close" }, "*");
   }
 
+  function totalItemImages(item) {
+    // Calculate total of all images in all nodes of the queue item, queueItem.outputs is an array with nodes
+    return item.outputs.reduce((acc, node) => {
+      if (node.images && Array.isArray(node.images)) {
+        return acc + node.images.length;
+      }
+      return acc;
+    }, 0);
+  }
+
+  function nextImage() {
+    let newData = null;
+
+    // us there next file in the current node?
+    if (mediaItem.fileIndex < mediaItem.node.images.length - 1) {
+      newData = {
+        fileIndex: mediaItem.fileIndex + 1,
+        file: mediaItem.node.images[mediaItem.fileIndex + 1]
+      }
+
+    // is there next node in the current queue item?
+    } else if (mediaItem.nodeIndex < mediaItem.queueItem.outputs.length - 1) {
+      // yes, increment nodeIndex and reset fileIndex to 0
+      const nextNodeIndex = mediaItem.nodeIndex + 1;
+      const nextNode = mediaItem.queueItem.outputs[nextNodeIndex];
+      newData = {
+        nodeIndex: nextNodeIndex,
+        node: nextNode,
+        fileIndex: 0,
+        file: nextNode.images[0]
+      }
+
+    // is there next item in the gallery?
+    } else if (mediaItem.itemIndex < galleryItems.length - 1) {
+      const nextItemIndex = mediaItem.itemIndex + 1;
+      const nextQueueItem = galleryItems[nextItemIndex];
+      const nextNode = nextQueueItem.outputs[0];
+      newData = {
+        itemIndex: nextItemIndex,
+        queueItem: nextQueueItem,
+        nodeIndex: 0,
+        node: nextNode,
+        fileIndex: 0,
+        file: nextNode.images[0],
+        totalImages: totalItemImages(nextQueueItem)
+      }
+    }
+
+    if (newData) {
+      setMediaItem(prev => ({
+        ...prev,
+        ...newData
+      }));
+    }
+  }
+  function previousImage() {
+    let newData = null;
+
+    // is there previous file in the current node?
+    if (mediaItem.fileIndex > 0) {
+      newData = {
+        fileIndex: mediaItem.fileIndex - 1,
+        file: mediaItem.node.images[mediaItem.fileIndex - 1]
+      }
+
+    // is there previous node in the current queue item?
+    } else if (mediaItem.nodeIndex > 0) {
+      const prevNodeIndex = mediaItem.nodeIndex - 1;
+      const prevNode = mediaItem.queueItem.outputs[prevNodeIndex];
+      newData = {
+        nodeIndex: prevNodeIndex,
+        node: prevNode,
+        fileIndex: prevNode.images.length - 1,
+        file: prevNode.images[prevNode.images.length - 1]
+      }
+
+    // is there previous item in the gallery?
+    } else if (mediaItem.itemIndex > 0) {
+      const prevItemIndex = mediaItem.itemIndex - 1;
+      const prevQueueItem = galleryItems[prevItemIndex];
+      const prevNode = prevQueueItem.outputs[prevQueueItem.outputs.length - 1];
+      newData = {
+        itemIndex: prevItemIndex,
+        queueItem: prevQueueItem,
+        nodeIndex: prevQueueItem.outputs.length - 1,
+        node: prevNode,
+        fileIndex: prevNode.images.length - 1,
+        file: prevNode.images[prevNode.images.length - 1],
+        totalImages: totalItemImages(prevQueueItem)
+      }
+    }
+
+    if (newData) {
+      setMediaItem(prev => ({
+        ...prev,
+        ...newData
+      }));
+    }
+  }
+
   const handleMessage = useEvent((event) => {
     const { type } = event.data;
 
@@ -76,12 +176,7 @@ export default function Gallery() {
       const file = node.images[data.fileIndex];
 
       // calculate total of all images in all nodes of the queue item, queueItem.outputs is an array with nodes
-      const totalItemImages = queueItem.outputs.reduce((acc, node) => {
-        if (node.images && Array.isArray(node.images)) {
-          return acc + node.images.length;
-        }
-        return acc;
-      }, 0);
+      const totalImages = totalItemImages(queueItem);
 
       if (data.items) {
         setGalleryItems(data.items);
@@ -94,7 +189,7 @@ export default function Gallery() {
         node: node,
         fileIndex: data.fileIndex,
         file: file,
-        totalImages: totalItemImages
+        totalImages: totalImages
       });
     }
 
@@ -131,10 +226,14 @@ export default function Gallery() {
           </figcaption>
         </figure>
         <nav className={"gallery-nav"}>
-          <IconButton color="primary" size="large" onClick={previousImage} disabled={mediaItem.fileIndex === 0} className={"previous-button"}>
+          <IconButton color="primary" size="large" onClick={previousImage}
+                      // disabled={mediaItem.fileIndex === 0}
+                      className={"previous-button"}>
             <ArrowForwardIosIcon fontSize="inherit" />
           </IconButton>
-          <IconButton color="primary" size="large" onClick={nextImage} disabled={mediaItem.fileIndex === mediaItem.totalImages - 1} className={"next-button"}>
+          <IconButton color="primary" size="large" onClick={nextImage}
+                      // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
+                      className={"next-button"}>
             <ArrowForwardIosIcon fontSize="inherit" />
           </IconButton>
         </nav>
