@@ -5,6 +5,8 @@ import {useEffect, useState} from "react";
 import IconButton from "@mui/material/IconButton";
 import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import KeyboardDoubleArrowRightSharpIcon from '@mui/icons-material/KeyboardDoubleArrowRightSharp';
+import KeyboardDoubleArrowLeftSharpIcon from '@mui/icons-material/KeyboardDoubleArrowLeftSharp';
 
 
 import {baseURL} from "@/internals/config";
@@ -54,34 +56,115 @@ export default function Gallery() {
     }, 0);
   }
 
+  function previousImage() {
+
+    // is there previous file in the current node?
+    if (mediaItem.fileIndex > 0) {
+      setMediaItem(prev => ({
+        ...prev,
+        fileIndex: mediaItem.fileIndex - 1,
+        file: mediaItem.node.images[mediaItem.fileIndex - 1]
+      }));
+    }
+
+    // no more image, show previous node with last file
+    previousNode(true);
+  }
+
+  function previousNode(showLastFile = false) {
+    // is there previous node in the current queue item?
+    if (mediaItem.nodeIndex > 0) {
+      const prevNodeIndex = mediaItem.nodeIndex - 1;
+      const prevNode = mediaItem.queueItem.outputs[prevNodeIndex];
+      // if showLastFile is true, then show last file in the previous node
+      const prevFileIndex = showLastFile ? prevNode.images.length - 1 : 0;
+
+      setMediaItem(prev => ({
+        ...prev,
+        nodeIndex: prevNodeIndex,
+        node: prevNode,
+        fileIndex: prevFileIndex,
+        file: prevNode.images[prevFileIndex]
+      }));
+
+      return;
+    }
+
+    // no more nodes, show previous item with last file
+    previousItem(showLastFile);
+  }
+
+  function previousItem(showLastFile = false) {
+    // is there previous item in the gallery?
+    if (mediaItem.itemIndex > 0) {
+      const prevItemIndex = mediaItem.itemIndex - 1;
+      const prevQueueItem = galleryItems[prevItemIndex];
+      // if showLastFile is true, then show last file in the previous node
+      const prevNodeIndex = showLastFile ? mediaItem.queueItem.outputs.length - 1 : 0;
+      const prevNode = prevQueueItem.outputs[prevNodeIndex];
+      const prevFileIndex = showLastFile ? prevNode.images.length - 1 : 0;
+
+      setMediaItem(prev => ({
+        ...prev,
+        itemIndex: prevItemIndex,
+        queueItem: prevQueueItem,
+        nodeIndex: prevNodeIndex,
+        node: prevNode,
+        fileIndex: prevFileIndex,
+        file: prevNode.images[prevFileIndex],
+        totalImages: totalItemImages(prevQueueItem)
+      }));
+    }
+  }
+
   function nextImage() {
     let newData = null;
 
     // us there next file in the current node?
     if (mediaItem.fileIndex < mediaItem.node.images.length - 1) {
-      newData = {
+      setMediaItem(prev => ({
+        ...prev,
         fileIndex: mediaItem.fileIndex + 1,
         file: mediaItem.node.images[mediaItem.fileIndex + 1]
-      }
+      }));
 
+      return;
+    }
+
+    // no more image, show next node
+    nextNode();
+  }
+
+  function nextNode() {
     // is there next node in the current queue item?
-    } else if (mediaItem.nodeIndex < mediaItem.queueItem.outputs.length - 1) {
-      // yes, increment nodeIndex and reset fileIndex to 0
+    if (mediaItem.nodeIndex < mediaItem.queueItem.outputs.length - 1) {
       const nextNodeIndex = mediaItem.nodeIndex + 1;
       const nextNode = mediaItem.queueItem.outputs[nextNodeIndex];
-      newData = {
+
+      setMediaItem(prev => ({
+        ...prev,
         nodeIndex: nextNodeIndex,
         node: nextNode,
         fileIndex: 0,
         file: nextNode.images[0]
-      }
+      }));
 
+      return;
+    }
+
+    // no more nodes, show next item
+    nextItem();
+  }
+
+  function nextItem() {
     // is there next item in the gallery?
-    } else if (mediaItem.itemIndex < galleryItems.length - 1) {
+    if (mediaItem.itemIndex < galleryItems.length - 1) {
       const nextItemIndex = mediaItem.itemIndex + 1;
       const nextQueueItem = galleryItems[nextItemIndex];
       const nextNode = nextQueueItem.outputs[0];
-      newData = {
+
+      setMediaItem(prev => ({
+        ...prev,
         itemIndex: nextItemIndex,
         queueItem: nextQueueItem,
         nodeIndex: 0,
@@ -89,57 +172,6 @@ export default function Gallery() {
         fileIndex: 0,
         file: nextNode.images[0],
         totalImages: totalItemImages(nextQueueItem)
-      }
-    }
-
-    if (newData) {
-      setMediaItem(prev => ({
-        ...prev,
-        ...newData
-      }));
-    }
-  }
-  function previousImage() {
-    let newData = null;
-
-    // is there previous file in the current node?
-    if (mediaItem.fileIndex > 0) {
-      newData = {
-        fileIndex: mediaItem.fileIndex - 1,
-        file: mediaItem.node.images[mediaItem.fileIndex - 1]
-      }
-
-    // is there previous node in the current queue item?
-    } else if (mediaItem.nodeIndex > 0) {
-      const prevNodeIndex = mediaItem.nodeIndex - 1;
-      const prevNode = mediaItem.queueItem.outputs[prevNodeIndex];
-      newData = {
-        nodeIndex: prevNodeIndex,
-        node: prevNode,
-        fileIndex: prevNode.images.length - 1,
-        file: prevNode.images[prevNode.images.length - 1]
-      }
-
-    // is there previous item in the gallery?
-    } else if (mediaItem.itemIndex > 0) {
-      const prevItemIndex = mediaItem.itemIndex - 1;
-      const prevQueueItem = galleryItems[prevItemIndex];
-      const prevNode = prevQueueItem.outputs[prevQueueItem.outputs.length - 1];
-      newData = {
-        itemIndex: prevItemIndex,
-        queueItem: prevQueueItem,
-        nodeIndex: prevQueueItem.outputs.length - 1,
-        node: prevNode,
-        fileIndex: prevNode.images.length - 1,
-        file: prevNode.images[prevNode.images.length - 1],
-        totalImages: totalItemImages(prevQueueItem)
-      }
-    }
-
-    if (newData) {
-      setMediaItem(prev => ({
-        ...prev,
-        ...newData
       }));
     }
   }
@@ -220,6 +252,9 @@ export default function Gallery() {
             alt={mediaItem.file.filename}
           />
           <div className={'node-thumbs'}>
+            <button type={"button"} className={"prev-node"} onClick={() => previousNode()}>
+              <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
+            </button>
             {/*  Display all images from the node */}
             {mediaItem.node.images.map((image, index) => (
                 <img
@@ -234,15 +269,18 @@ export default function Gallery() {
                   }))}
                 />
             ))}
+            <button type={"button"} className={"next-node"} onClick={() => nextNode()}>
+              <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
+            </button>
           </div>
         </figure>
         <nav className={"gallery-nav"}>
-          <IconButton color="primary" size="large" onClick={previousImage}
+          <IconButton color="primary" size="large" onClick={() => previousImage()}
             // disabled={mediaItem.fileIndex === 0}
                       className={"previous-button"}>
             <ArrowForwardIosIcon fontSize="inherit"/>
           </IconButton>
-          <IconButton color="primary" size="large" onClick={nextImage}
+          <IconButton color="primary" size="large" onClick={() => nextImage()}
             // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
                       className={"next-button"}>
             <ArrowForwardIosIcon fontSize="inherit" />
