@@ -178,6 +178,26 @@ export default function Gallery() {
     }
   }
 
+  function isFirstItem() {
+    return mediaItem.itemIndex === 0;
+  }
+  function isLastItem() {
+    return mediaItem.itemIndex === galleryItems.length - 1;
+  }
+  function isFirstNode() {
+    return mediaItem.nodeIndex === 0 && isFirstItem();
+  }
+  function isLastNode() {
+    return mediaItem.nodeIndex === mediaItem.queueItem.outputs.length - 1 &&
+           isLastItem();
+  }
+  function isFirstImage() {
+    return mediaItem.fileIndex === 0 && isFirstNode();
+  }
+  function isLastImage() {
+    return mediaItem.fileIndex === mediaItem.node.images.length - 1 && isLastNode();
+  }
+
   const handleMessage = useEvent((event) => {
     const { type } = event.data;
 
@@ -254,9 +274,12 @@ export default function Gallery() {
             alt={mediaItem.file.filename}
           />
           <div className={'node-thumbs'}>
-            <button type={"button"} className={"prev-node"} onClick={() => previousNode()}>
-              <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
-            </button>
+            {!isFirstNode() &&
+              <button type={"button"} className={"prev-node"} onClick={() => previousNode()} title={'Previous Node'}>
+                <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
+              </button>
+            }
+
             {/*  Display all images from the node */}
             {mediaItem.node.images.map((image, index) => (
                 <img
@@ -271,28 +294,36 @@ export default function Gallery() {
                   }))}
                 />
             ))}
-            <button type={"button"} className={"next-node"} onClick={() => nextNode()}>
-              <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
-            </button>
+
+            {!isLastNode() &&
+              <button type={"button"} className={"next-node"} onClick={() => nextNode()} title={'Next Node'}>
+                <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
+              </button>
+            }
           </div>
         </figure>
         <nav className={"gallery-nav"}>
-          <IconButton color="primary" size="large" onClick={() => previousImage()}
-            // disabled={mediaItem.fileIndex === 0}
-                      className={"previous-button"}>
-            <ArrowForwardIosIcon fontSize="inherit"/>
-          </IconButton>
-          <IconButton color="primary" size="large" onClick={() => nextImage()}
-            // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
-                      className={"next-button"}>
-            <ArrowForwardIosIcon fontSize="inherit" />
-          </IconButton>
+          {!isFirstImage() &&
+            <IconButton color="primary" size="large" onClick={() => previousImage()}
+              // disabled={mediaItem.fileIndex === 0}
+                        className={"previous-button"} title={'Previous Image'}>
+              <ArrowForwardIosIcon fontSize="inherit"/>
+            </IconButton>
+          }
+
+          {!isLastImage() &&
+            <IconButton color="primary" size="large" onClick={() => nextImage()}
+              // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
+                        className={"next-button"} title={'Next Image'}>
+              <ArrowForwardIosIcon fontSize="inherit" />
+            </IconButton>
+          }
         </nav>
 
         <nav className={"footer-nav"}>
         {/*  Nav to go to next / previous item.*/}
           {mediaItem.itemIndex > 0 && (
-            <button type={"button"} className={"prev-item"} onClick={() => previousItem()}>
+            <button type={"button"} className={"prev-item"} onClick={() => previousItem()} title={'Previous Prompt'}>
               <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
               <img
                 src={baseURL + `api/view?filename=${galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].filename}&type=output&subfolder=${galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].subfolder}`}
@@ -302,7 +333,7 @@ export default function Gallery() {
           )}
 
           {mediaItem.itemIndex < galleryItems.length - 1 && (
-            <button type={"button"} className={"next-item"} onClick={() => nextItem()}>
+            <button type={"button"} className={"next-item"} onClick={() => nextItem()} title={'Next Prompt'}>
               <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
               <img
                 src={baseURL + `api/view?filename=${galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].filename}&type=output&subfolder=${galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].subfolder}`}
@@ -311,6 +342,7 @@ export default function Gallery() {
             </button>
           )}
         </nav>
+
       </div>
       }
     </div>
