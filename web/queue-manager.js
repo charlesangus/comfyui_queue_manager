@@ -125,6 +125,7 @@ app.registerExtension({
 
       // Handshake message from iframe
       if (type === "QM_QueueManager_Hello") {
+        // send back clientId to iframe
         event.source.postMessage(
           { type: "QM_QueueManager_Hello", clientId: app.api.clientId },
           event.origin

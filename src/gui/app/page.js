@@ -241,7 +241,11 @@ export default function Home() {
 
   const handleMessage = useEvent((event) => {
     // console.log("Received message from parent", event,event.data.type, event.data.message);
-    // SIML: check if event.origin is the same as baseURL
+    // In production must be same origin, in development as set in config.js
+    if (event.origin !== (baseURL === '/' ? window.location.protocol + "//" + window.location.host : baseURL.replace(/\/+$/, ""))) {
+      return;
+    }
+
     switch (event.data.type) {
       case "QM_queueStatusUpdated":
         onQueueStatusUpdated(event);

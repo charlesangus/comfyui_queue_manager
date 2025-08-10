@@ -199,6 +199,10 @@ export default function Gallery() {
   }
 
   const handleMessage = useEvent((event) => {
+    if (event.origin !== (baseURL === '/' ? window.location.protocol + "//" + window.location.host : baseURL.replace(/\/+$/, ""))) {
+      return;
+    }
+
     const { type } = event.data;
 
     // Request to load gallery item
