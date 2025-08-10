@@ -65,6 +65,8 @@ export default function Gallery() {
         fileIndex: mediaItem.fileIndex - 1,
         file: mediaItem.node.images[mediaItem.fileIndex - 1]
       }));
+
+      return;
     }
 
     // no more image, show previous node with last file

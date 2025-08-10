@@ -653,7 +653,7 @@ button {
     gap: 10px;
     background: transparent;
 
-    img {
+    img, video {
       height: 100px;
       border: 1px solid #ffffff22;
       width: auto;
@@ -666,6 +666,11 @@ button {
       &:hover {
         border-color: white;
         transform: scale(1.1);
+      }
+
+      &.active {
+        border-color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 1);
       }
     }
 
