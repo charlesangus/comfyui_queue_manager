@@ -287,7 +287,28 @@ export default function Gallery() {
           </IconButton>
         </nav>
 
-        <footer></footer>
+        <nav className={"footer-nav"}>
+        {/*  Nav to go to next / previous item.*/}
+          {mediaItem.itemIndex > 0 && (
+            <button type={"button"} className={"prev-item"} onClick={() => previousItem()}>
+              <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
+              <img
+                src={baseURL + `api/view?filename=${galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].filename}&type=output&subfolder=${galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].subfolder}`}
+                alt={galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].filename}
+              />
+            </button>
+          )}
+
+          {mediaItem.itemIndex < galleryItems.length - 1 && (
+            <button type={"button"} className={"next-item"} onClick={() => nextItem()}>
+              <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
+              <img
+                src={baseURL + `api/view?filename=${galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].filename}&type=output&subfolder=${galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].subfolder}`}
+                alt={galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].filename}
+              />
+            </button>
+          )}
+        </nav>
       </div>
       }
     </div>
