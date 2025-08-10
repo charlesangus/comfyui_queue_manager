@@ -213,8 +213,11 @@ class QM_Queue:
                         (prompt_id,),
                     )
                     if db_id is None:
-                        qm_log.error("History: Prompt with id %s not found in the queue", prompt_id)
+                        # Most likely because the item execution was interrupted and the handler deleted the item already
+                        # Call the original task_done method so it clears the native queue
+                        self.original_task_done(item_id, history_result, status)
                         return
+
                     db_id = db_id[0]  # get the first element of the tuple
 
                     # Save only persistent outputs
