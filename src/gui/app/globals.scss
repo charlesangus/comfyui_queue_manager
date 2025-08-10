@@ -726,6 +726,10 @@ button {
       position: sticky;
       right: 0;
     }
+    .inactive {
+      opacity: 0.3;
+      pointer-events: none;
+    }
   }
 
   .close-button {

@@ -278,11 +278,9 @@ export default function Gallery() {
             alt={mediaItem.file.filename}
           />
           <div className={'node-thumbs'}>
-            {!isFirstNode() &&
-              <button type={"button"} className={"prev-node"} onClick={() => previousNode()} title={'Previous Node'}>
-                <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
-              </button>
-            }
+            <button type={"button"} className={"prev-node" + (isFirstNode() ? ' inactive':'')} onClick={() => previousNode()} title={'Previous Node'}>
+              <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
+            </button>
 
             {/*  Display all images from the node */}
             {mediaItem.node.images.map((image, index) => (
@@ -299,11 +297,9 @@ export default function Gallery() {
                 />
             ))}
 
-            {!isLastNode() &&
-              <button type={"button"} className={"next-node"} onClick={() => nextNode()} title={'Next Node'}>
-                <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
-              </button>
-            }
+            <button type={"button"} className={"next-node" + (isLastNode() ? ' inactive':'')} onClick={() => nextNode()} title={'Next Node'}>
+              <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
+            </button>
           </div>
         </figure>
         <nav className={"gallery-nav"}>
