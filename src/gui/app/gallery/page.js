@@ -199,7 +199,8 @@ export default function Gallery() {
   }
 
   const handleMessage = useEvent((event) => {
-    if (event.origin !== (baseURL === '/' ? window.location.protocol + "//" + window.location.host : baseURL.replace(/\/+$/, ""))) {
+    // Events coming from QM iframe
+    if (event.origin !== window.location.protocol + "//" + window.location.host) {
       return;
     }
 
