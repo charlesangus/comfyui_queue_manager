@@ -59,6 +59,11 @@ export default function Home() {
       const queue = await response.json();
       setAppStatus(prev => ({...prev, loading: false, error: null, queue}));
 
+      // if updated completed route, clear gallery data
+      if (appStatus.route === 'completed' && galleryData) {
+        setGallery(null);
+      }
+
     } catch (error) {
       setAppStatus(prev => ({...prev, loading: false, error: error.message, queue: null}));
       console.error("Error fetching " + appStatus.route + " items:", error);
