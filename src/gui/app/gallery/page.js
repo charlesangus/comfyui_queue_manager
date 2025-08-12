@@ -10,6 +10,7 @@ import KeyboardDoubleArrowLeftSharpIcon from '@mui/icons-material/KeyboardDouble
 import InputSharpIcon from '@mui/icons-material/InputSharp';
 import PhotoSizeSelectActualSharpIcon from '@mui/icons-material/PhotoSizeSelectActualSharp';
 import DriveFileMoveSharpIcon from '@mui/icons-material/DriveFileMoveSharp';
+import MoreVertSharpIcon from '@mui/icons-material/MoreVertSharp';
 
 import {baseURL} from "@/internals/config";
 import useEvent from "react-use-event-hook";
@@ -24,6 +25,9 @@ export default function Gallery() {
    */
   const [ galleryItems, setGalleryItems ] = useState(null);
   const [ mediaItem, setMediaItem ] = useState(null);
+  const [ uiState, setUiState ] = useState({
+    actionsMenuOpen: false,
+  });
 
 
   /**
@@ -203,6 +207,22 @@ export default function Gallery() {
     return mediaItem.fileIndex === mediaItem.node.images.length - 1 && isLastNode();
   }
 
+  function toggleActionsMenu() {
+    setUiState((prev) => ({
+      ...prev,
+      actionsMenuOpen: !prev.actionsMenuOpen
+    }));
+  }
+
+  const onOutsideClickActionsMenu = useEvent((event) => {
+    if (uiState.actionsMenuOpen && !event.target.closest('.media-actions')) {
+      setUiState((prev) => ({
+        ...prev,
+        actionsMenuOpen: false
+      }));
+    }
+  });
+
   const loadWorkflow = useEvent((event) => {
     msgLoadWorkflow(mediaItem.queueItem.workflow, mediaItem.queueItem.number);
   });
@@ -277,6 +297,11 @@ export default function Gallery() {
      * Messages from iframe
      */
     window.addEventListener("message", handleMessage, false);
+
+    /**
+     * When clicked outside actions menu, close it
+     */
+    window.addEventListener("click", onOutsideClickActionsMenu);
   }, []);
 
 
@@ -362,28 +387,37 @@ export default function Gallery() {
           )}
         </nav>
 
-        <footer className={"media-actions"}>
+        <nav className={"media-actions"}>
+          <IconButton size="large" variant="contained" className={"trigger"} onClick={toggleActionsMenu}>
+            <MoreVertSharpIcon fontSize="medium" />
+          </IconButton>
 
-          <Button type={"button"} variant="contained" color="success" size="small" className={"load-workflow"} onClick={loadWorkflow}>
-            <InputSharpIcon />&nbsp;
-            Load Workflow
-          </Button>
 
-          <Button type={"button"} variant="contained" color="success" size="small" className={"load-image"} onClick={loadImage}>
-            <PhotoSizeSelectActualSharpIcon  />&nbsp;
-            Load Image
-          </Button>
+          {uiState.actionsMenuOpen &&
+            <div className={"action-buttons"}>
+              <Button type={"button"} variant="contained" color="secondary" size="small" className={"load-workflow"} onClick={loadWorkflow}>
+                <InputSharpIcon />&nbsp;
+                Load Workflow
+              </Button>
 
-          <Button type={"button"} variant="contained" color="secondary" size="small" className={"open-image-location"} onClick={openImageLocation}>
-            <DriveFileMoveSharpIcon />&nbsp;
-            Open Image Location
-          </Button>
+              <Button type={"button"} variant="contained" color="secondary" size="small" className={"load-image"} onClick={loadImage}>
+                <PhotoSizeSelectActualSharpIcon  />&nbsp;
+                Load Image Workflow
+              </Button>
 
-          <Button type={"button"} variant="contained" color="error" size="small" className={"delete-workflow"} onClick={deleteWorkflow}>
-            <DeleteOutlineSharpIcon />
-            Delete Workflow
-          </Button>
-        </footer>
+              <Button type={"button"} variant="contained" color="secondary" size="small" className={"open-image-location"} onClick={openImageLocation}>
+                <DriveFileMoveSharpIcon />&nbsp;
+                Open Image Location
+              </Button>
+
+              <Button type={"button"} variant="contained" color="secondary" size="small" className={"delete-workflow"} onClick={deleteWorkflow}>
+                <DeleteOutlineSharpIcon />&nbsp;
+                Delete Workflow
+              </Button>
+            </div>
+          }
+
+        </nav>
       </div>
       }
     </div>

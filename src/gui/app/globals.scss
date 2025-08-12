@@ -808,13 +808,32 @@ button {
 
   .media-actions {
     display: flex;
-    padding: 10px;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    align-items: flex-end;
+    position: absolute;
+    top: 45px;
+    right: 5px;
+    flex-direction: column;
+    z-index: 2;
+
+    .action-buttons {
+      display: flex;
+      padding: 0 10px;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      flex-direction: column;
+
+      button {
+        width: 100%;
+        justify-content: left;
+        text-transform: none;
+      }
+    }
+
+
 
     svg {
-      font-size: 1.25rem;
+      //font-size: 1.25rem;
     }
   }
 }
