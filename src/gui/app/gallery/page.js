@@ -227,14 +227,52 @@ export default function Gallery() {
     msgLoadWorkflow(mediaItem.queueItem.workflow, mediaItem.queueItem.number);
   });
   function loadImage() {
-
+    // Todo: implement loading image workflow
   }
   function deleteWorkflow() {
-
+    // Todo: implement deleting workflow
   }
   function openImageLocation() {
-
+    // Todo: implement opening image location
   }
+
+  const keyboardNavigation = useEvent((event) => {
+    // SIML: make it configurable in options
+
+    // Images
+    if (event.key === 'ArrowLeft') {
+      if (!isFirstImage()) {
+        previousImage();
+      }
+    } else if (event.key === 'ArrowRight') {
+      if (!isLastImage()) {
+        nextImage();
+      }
+
+      // Nodes
+    } else if (event.key === 'ArrowUp') {
+      if (!isFirstNode()) {
+        previousNode();
+      }
+    } else if (event.key === 'ArrowDown') {
+      if (!isLastNode()) {
+        nextNode();
+      }
+
+      // Items
+    } else if (event.key === 'PageUp') {
+      if (!isFirstItem()) {
+        previousItem();
+      }
+    } else if (event.key === 'PageDown') {
+      if (!isLastItem()) {
+        nextItem();
+      }
+      // Close gallery
+    } else if (event.key === 'Escape') {
+      closeGallery();
+    }
+  });
 
   const handleMessage = useEvent((event) => {
     // Events coming from QM iframe
@@ -302,13 +340,18 @@ export default function Gallery() {
      * When clicked outside actions menu, close it
      */
     window.addEventListener("click", onOutsideClickActionsMenu);
+
+    /**
+     * Keyboard navigation
+     */
+    window.addEventListener("keydown", keyboardNavigation);
   }, []);
 
 
   return (
     <div className={"gallery-page"}>
 
-      <IconButton size="large" variant="contained" className={"close-button"} onClick={closeGallery}>
+      <IconButton size="large" variant="contained" className={"close-button"} onClick={closeGallery} title={"Close (Esc)"}>
         <DisabledByDefaultIcon fontSize="large" />
       </IconButton>
 
@@ -322,7 +365,7 @@ export default function Gallery() {
             alt={mediaItem.file.filename}
           />
           <div className={'node-thumbs'}>
-            <button type={"button"} className={"prev-node" + (isFirstNode() ? ' inactive':'')} onClick={() => previousNode()} title={'Previous Node'}>
+            <button type={"button"} className={"prev-node" + (isFirstNode() ? ' inactive':'')} onClick={() => previousNode()} title={'Previous Node (↑)'}>
               <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
             </button>
 
@@ -341,7 +384,7 @@ export default function Gallery() {
                 />
             ))}
 
-            <button type={"button"} className={"next-node" + (isLastNode() ? ' inactive':'')} onClick={() => nextNode()} title={'Next Node'}>
+            <button type={"button"} className={"next-node" + (isLastNode() ? ' inactive':'')} onClick={() => nextNode()} title={'Next Node (↓)'}>
               <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
             </button>
           </div>
@@ -350,7 +393,7 @@ export default function Gallery() {
           {!isFirstImage() &&
             <IconButton color="primary" size="large" onClick={() => previousImage()}
               // disabled={mediaItem.fileIndex === 0}
-                        className={"previous-button"} title={'Previous Image'}>
+                        className={"previous-button"} title={'Previous Image (←)'}>
               <ArrowForwardIosIcon fontSize="inherit"/>
             </IconButton>
           }
@@ -358,7 +401,7 @@ export default function Gallery() {
           {!isLastImage() &&
             <IconButton color="primary" size="large" onClick={() => nextImage()}
               // disabled={mediaItem.fileIndex === mediaItem.totalImages - 1}
-                        className={"next-button"} title={'Next Image'}>
+                        className={"next-button"} title={'Next Image (→)'}>
               <ArrowForwardIosIcon fontSize="inherit" />
             </IconButton>
           }
@@ -367,7 +410,7 @@ export default function Gallery() {
         <nav className={"footer-nav"}>
         {/*  Nav to go to next / previous item.*/}
           {mediaItem.itemIndex > 0 && (
-            <button type={"button"} className={"prev-item"} onClick={() => previousItem()} title={'Previous Prompt'}>
+            <button type={"button"} className={"prev-item"} onClick={() => previousItem()} title={'Previous Prompt (PgUp)'}>
               <KeyboardDoubleArrowLeftSharpIcon fontSize="inherit" />
               <img
                 src={baseURL + `api/view?filename=${galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].filename}&type=output&subfolder=${galleryItems[mediaItem.itemIndex - 1].outputs[0].images[0].subfolder}`}
@@ -377,7 +420,7 @@ export default function Gallery() {
           )}
 
           {mediaItem.itemIndex < galleryItems.length - 1 && (
-            <button type={"button"} className={"next-item"} onClick={() => nextItem()} title={'Next Prompt'}>
+            <button type={"button"} className={"next-item"} onClick={() => nextItem()} title={'Next Prompt (PgDown)'}>
               <KeyboardDoubleArrowRightSharpIcon fontSize="inherit" />
               <img
                 src={baseURL + `api/view?filename=${galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].filename}&type=output&subfolder=${galleryItems[mediaItem.itemIndex + 1].outputs[0].images[0].subfolder}`}

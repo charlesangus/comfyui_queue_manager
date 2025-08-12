@@ -141,6 +141,13 @@ app.registerExtension({
         const galleryOverlay = document.querySelector('.comfyui-gallery-overlay');
         if (galleryOverlay) {
           galleryOverlay.classList.add('open');
+
+          // Give focus to the gallery iframe
+          const galleryIframe = document.querySelector('.gallery-iframe');
+          console.log("QM Gallery iframe", galleryIframe);
+          if (galleryIframe) {
+            galleryIframe.focus();
+          }
         } else {
           console.error("Gallery overlay not found");
         }
