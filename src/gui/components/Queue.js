@@ -2,7 +2,7 @@
 
 import React, {useContext, useEffect, useState} from "react";
 import {baseURL} from "@/internals/config";
-import {apiCall} from "@/internals/functions";
+import {apiCall, msgLoadWorkflow} from "@/internals/functions";
 import {AppContext} from "@/internals/app-context";
 import {MediaItem} from "@/components/MediaItem";
 import Button from '@mui/material/Button';
@@ -39,10 +39,7 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
    */
   async function loadQueueItem() {
     // console.log("Loading queue item", item);
-    window.parent.postMessage(
-      { type: "QM_LoadWorkflow", workflow: item[3].extra_pnginfo.workflow, number: item[0] },
-      "*"
-    );
+    msgLoadWorkflow(item[3].extra_pnginfo.workflow, item[0]);
   }
 
   // POST to /api/archive with array of item ids to archive

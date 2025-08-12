@@ -114,6 +114,10 @@ app.registerExtension({
      * Messages from iframe
      */
     window.addEventListener("message", (event) => {
+      if (event.data.type) {
+        console.log("QM Received message", event.data);
+      }
+
       if (event.origin !== QueueManagerOrigin) return;
       const { type, workflow, number } = event.data;
 

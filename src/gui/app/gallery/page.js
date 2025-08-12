@@ -7,10 +7,15 @@ import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import KeyboardDoubleArrowRightSharpIcon from '@mui/icons-material/KeyboardDoubleArrowRightSharp';
 import KeyboardDoubleArrowLeftSharpIcon from '@mui/icons-material/KeyboardDoubleArrowLeftSharp';
-
+import InputSharpIcon from '@mui/icons-material/InputSharp';
+import PhotoSizeSelectActualSharpIcon from '@mui/icons-material/PhotoSizeSelectActualSharp';
+import DriveFileMoveSharpIcon from '@mui/icons-material/DriveFileMoveSharp';
 
 import {baseURL} from "@/internals/config";
 import useEvent from "react-use-event-hook";
+import Button from "@mui/material/Button";
+import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
+import {msgLoadWorkflow} from "@/internals/functions";
 
 export default function Gallery() {
   /**
@@ -198,6 +203,19 @@ export default function Gallery() {
     return mediaItem.fileIndex === mediaItem.node.images.length - 1 && isLastNode();
   }
 
+  const loadWorkflow = useEvent((event) => {
+    msgLoadWorkflow(mediaItem.queueItem.workflow, mediaItem.queueItem.number);
+  });
+  function loadImage() {
+
+  }
+  function deleteWorkflow() {
+
+  }
+  function openImageLocation() {
+
+  }
+
   const handleMessage = useEvent((event) => {
     // Events coming from QM iframe
     if (event.origin !== window.location.protocol + "//" + window.location.host) {
@@ -271,7 +289,7 @@ export default function Gallery() {
 
       {galleryItems &&
       <div className="image-box">
-        <header>{mediaItem.queueItem.workflowName} <span>({mediaItem.fileIndex+1} / {mediaItem.totalImages})</span></header>
+        <header>{mediaItem.queueItem.workflow.workflow_name} <span>({mediaItem.fileIndex+1} / {mediaItem.totalImages})</span></header>
 
         <figure>
           <img
@@ -344,6 +362,28 @@ export default function Gallery() {
           )}
         </nav>
 
+        <footer className={"media-actions"}>
+
+          <Button type={"button"} variant="contained" color="success" size="small" className={"load-workflow"} onClick={loadWorkflow}>
+            <InputSharpIcon />&nbsp;
+            Load Workflow
+          </Button>
+
+          <Button type={"button"} variant="contained" color="success" size="small" className={"load-image"} onClick={loadImage}>
+            <PhotoSizeSelectActualSharpIcon  />&nbsp;
+            Load Image
+          </Button>
+
+          <Button type={"button"} variant="contained" color="secondary" size="small" className={"open-image-location"} onClick={openImageLocation}>
+            <DriveFileMoveSharpIcon />&nbsp;
+            Open Image Location
+          </Button>
+
+          <Button type={"button"} variant="contained" color="error" size="small" className={"delete-workflow"} onClick={deleteWorkflow}>
+            <DeleteOutlineSharpIcon />
+            Delete Workflow
+          </Button>
+        </footer>
       </div>
       }
     </div>

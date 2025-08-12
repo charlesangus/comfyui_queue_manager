@@ -42,3 +42,10 @@ export async function apiCall(endpoint, data, method = "POST") {
     console.error("Error running apiCall:", error);
   }
 }
+
+export const msgLoadWorkflow = (workflow, number) => {
+  window.parent.postMessage(
+    { type: "QM_LoadWorkflow", workflow, number },
+    "*"
+  );
+}
