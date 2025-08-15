@@ -113,7 +113,7 @@ app.registerExtension({
     /**
      * Messages from iframe
      */
-    window.addEventListener("message", (event) => {
+    window.addEventListener("message", async (event) => {
       if (event.data.type) {
         console.log("QM Received message", event.data);
       }
@@ -159,6 +159,19 @@ app.registerExtension({
         if (galleryOverlay) {
           galleryOverlay.classList.remove('open');
         }
+      }
+
+      // Load workflow from image file
+      if (type === "QM_LoadWorkflowFromImage") {
+        const filename = event.data.filename;
+        const res = await fetch(event.data.fileURL, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const blob = await res.blob();
+        const type =  res.headers.get('Content-Type');
+        const theFile = new File([blob], filename, {type: type});
+
+        app.handleFile(theFile);
       }
     }, false);
 

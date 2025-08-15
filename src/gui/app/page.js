@@ -228,7 +228,7 @@ export default function Home() {
         break;
 
       case "queue-manager-queue-updated":
-        console.log("Queue Manager: queue updated: ", event.data.message);
+        // console.log("Queue Manager: queue updated: ", event.data.message);
         fetchQueueItems()
         break;
     }
@@ -311,7 +311,7 @@ export default function Home() {
    * Pack outputs and sent to gallery iframe
    */
   function onMediaItemClick(imageGalleryData) {
-    console.log("imageGalleryData", imageGalleryData);
+    // console.log("imageGalleryData", imageGalleryData);
     let items = [];
 
     if (!galleryData) {

@@ -29,27 +29,6 @@ export default function Gallery() {
     actionsMenuOpen: false,
   });
 
-
-  /**
-   * Fetches the gallery metadata and info about item if specified
-   * @param item {string|null} - queue item ID
-   * @returns {Promise<void>}
-   */
-  const fetchGallery = async (item) => {
-    const itemQuery = item ? `?item=${encodeURIComponent(item)}` : '';
-
-    try {
-      const response = await fetch('/queue_manager/gallery' + itemQuery);
-      if (!response.ok) {
-        throw new Error('Failed to fetch gallery');
-      }
-      const data = await response.json();
-      console.log('Gallery data:', data);
-    } catch (error) {
-      console.error('Error fetching gallery:', error);
-    }
-  };
-
   function closeGallery() {
     // Post message to parent window to close gallery
     window.parent.postMessage({ type: "QM_Gallery_Close" }, "*");
@@ -226,9 +205,16 @@ export default function Gallery() {
   const loadWorkflow = useEvent((event) => {
     msgLoadWorkflow(mediaItem.queueItem.workflow, mediaItem.queueItem.number);
   });
-  function loadImage() {
-    // Todo: implement loading image workflow
-  }
+  const loadImage = useEvent(async (event) => {
+    const fileURL = baseURL + `api/view?filename=${mediaItem.file.filename}&type=output&subfolder=${mediaItem.file.subfolder}`;
+
+    // post message to parent window to load image
+    window.parent.postMessage({
+      type: "QM_LoadWorkflowFromImage",
+      fileURL: fileURL,
+      filename: mediaItem.file.filename,
+    }, "*");
+  });
   function deleteWorkflow() {
     // Todo: implement deleting workflow
   }
@@ -284,7 +270,6 @@ export default function Gallery() {
 
     // Request to load gallery item
     if (type === "QM_Gallery_Load") {
-      console.log('Gallery loaded:', event.data);
       const data = event.data.galleryData;
       const items = data.items ? data.items : galleryItems;
 
@@ -440,22 +425,22 @@ export default function Gallery() {
             <div className={"action-buttons"}>
               <Button type={"button"} variant="contained" color="secondary" size="small" className={"load-workflow"} onClick={loadWorkflow}>
                 <InputSharpIcon />&nbsp;
-                Load Workflow
+                Load queued workflow
               </Button>
 
               <Button type={"button"} variant="contained" color="secondary" size="small" className={"load-image"} onClick={loadImage}>
                 <PhotoSizeSelectActualSharpIcon  />&nbsp;
-                Load Image Workflow
+                Load saved file
               </Button>
 
               <Button type={"button"} variant="contained" color="secondary" size="small" className={"open-image-location"} onClick={openImageLocation}>
                 <DriveFileMoveSharpIcon />&nbsp;
-                Open Image Location
+                Open image location
               </Button>
 
               <Button type={"button"} variant="contained" color="secondary" size="small" className={"delete-workflow"} onClick={deleteWorkflow}>
                 <DeleteOutlineSharpIcon />&nbsp;
-                Delete Workflow
+                Delete workflow
               </Button>
             </div>
           }
