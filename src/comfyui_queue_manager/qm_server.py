@@ -208,25 +208,6 @@ class QM_Server:
 
             return web.json_response(takeover_client)
 
-        # Endpoint to get gallery metadata and item
-        @PromptServer.instance.routes.get("/queue_manager/gallery")
-        async def get_gallery(request):
-            """
-            Get gallery metadata and item.
-            """
-            item_id = request.query.get("id", None)
-            filename = request.query.get("filename", None)
-            subfolder = request.query.get("subfolder", None)
-            if item_id is None or filename is None:
-                return web.json_response({"error": "Missing request data"}, status=400)
-
-            # Get the gallery item
-            gallery = self.gallery.get(item_id, filename, subfolder)
-            if gallery is None:
-                return web.json_response({"error": "Gallery item not found"}, status=404)
-
-            return web.json_response(gallery)
-
         # Hook us into the server's middleware so we can listen to some native api requests
         @web.middleware
         async def post_queue(request, handler):
