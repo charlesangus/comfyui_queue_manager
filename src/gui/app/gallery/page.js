@@ -17,6 +17,7 @@ import useEvent from "react-use-event-hook";
 import Button from "@mui/material/Button";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import {apiCall, msgLoadWorkflow} from "@/internals/functions";
+import GalleryProgressBar from "@/components/GalleryProgressBar";
 
 export default function Gallery() {
   /**
@@ -306,6 +307,23 @@ export default function Gallery() {
     }
   });
 
+  function onItemClick(itemIndex) {
+    // go to item in gallery
+    if (galleryItems && galleryItems.length > 0 && itemIndex >= 0 && itemIndex < galleryItems.length) {
+      const queueItem = galleryItems[itemIndex];
+      const firstNode = queueItem.outputs[0];
+      setMediaItem({
+        itemIndex: itemIndex,
+        queueItem: queueItem,
+        nodeIndex: 0,
+        node: firstNode,
+        fileIndex: 0,
+        file: firstNode.images[0],
+        totalImages: totalItemImages(queueItem)
+      });
+    }
+  }
+
   const handleMessage = useEvent((event) => {
     // Events coming from QM iframe
     if (event.origin !== window.location.protocol + "//" + window.location.host) {
@@ -492,6 +510,10 @@ export default function Gallery() {
           }
 
         </nav>
+
+        {galleryItems && galleryItems.length > 0 &&
+          <GalleryProgressBar galleryItems={galleryItems} mediaItem={mediaItem} onItemClick={onItemClick} />
+        }
       </div>
       }
     </div>

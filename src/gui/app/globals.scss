@@ -648,7 +648,7 @@ button {
     justify-content: center;
     height: 125px;
     overflow-x: auto;
-    padding: 0 10px 10px 10px;
+    padding: 0 10px 25px 10px;
     white-space: nowrap;
     gap: 10px;
     background: transparent;
@@ -665,7 +665,7 @@ button {
 
       &:hover {
         border-color: white;
-        transform: scale(1.1);
+        box-shadow: 0 2px 4px rgba(255, 255, 255, 1);
       }
 
       &.active {
@@ -834,6 +834,70 @@ button {
 
     svg {
       //font-size: 1.25rem;
+    }
+  }
+
+  .gallery-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 25px;
+    display: flex;
+    align-items: flex-end;
+
+    .progress-item {
+      flex: 1;
+      height: 5px;
+      background-color: rgba(0, 0, 0, 0.75);
+      //transition: all 0.3s ease;
+      outline: 1px solid rgba(0, 0, 0, 0.75);
+      position: relative;
+
+      &:before {
+        //transition: all 0.3s ease;
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0;
+        background-color: transparent;
+      }
+
+      &.active {
+        background-color: green;
+      }
+
+      &:hover {
+        background-color: white;
+        cursor: pointer;
+
+        &:before {
+          background-color: white;
+        }
+      }
+
+      &.current {
+        background-color: #00ff0022;
+        position: relative;
+        //transition: all 0.3s ease;
+        cursor: default;
+        outline-color: white;
+        outline-offset: -1px;
+        z-index: 1;
+
+        &:before {
+          width: var(--item-progress);
+          background-color: #00ff00;
+        }
+      }
+    }
+
+    &:hover {
+      .progress-item {
+        height: 20px;
+      }
     }
   }
 }
