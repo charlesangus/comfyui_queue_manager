@@ -205,6 +205,7 @@ export default function Gallery() {
   const loadWorkflow = useEvent((event) => {
     msgLoadWorkflow(mediaItem.queueItem.workflow, mediaItem.queueItem.number);
   });
+
   const loadImage = useEvent(async (event) => {
     const fileURL = baseURL + `api/view?filename=${mediaItem.file.filename}&type=output&subfolder=${mediaItem.file.subfolder}`;
 
@@ -215,9 +216,52 @@ export default function Gallery() {
       filename: mediaItem.file.filename,
     }, "*");
   });
-  function deleteWorkflow() {
-    // Todo: implement deleting workflow
-  }
+
+  const deleteWorkflow = useEvent(async (event) => {
+    try {
+      await apiCall(`api/queue`, {
+        delete: [mediaItem.queueItem.promptID],
+      })
+
+      // if there are no more items, close gallery
+      if (galleryItems.length <= 1) {
+        closeGallery();
+      }
+
+      // reset media item to a new image
+      // if we are deleting the last item, new image will be from previous item, otherwise it will be from the next item
+      const nextItemIndex = mediaItem.itemIndex < galleryItems.length - 1 ? mediaItem.itemIndex + 1 : mediaItem.itemIndex - 1;
+      const nextQueueItem = galleryItems[nextItemIndex];
+      const nextNode = nextQueueItem.outputs[0];
+
+      // console.log("Deleting workflow:", {
+      //   itemIndex: mediaItem.itemIndex,
+      //   nextItemIndex,
+      // })
+
+      setMediaItem({
+        itemIndex: (mediaItem.itemIndex === galleryItems.length - 1) ? nextItemIndex : mediaItem.itemIndex, // actual index changes only if we deleted the last item
+        queueItem: nextQueueItem,
+        nodeIndex: 0,
+        node: nextNode,
+        fileIndex: 0,
+        file: nextNode.images[0],
+        totalImages: totalItemImages(nextQueueItem)
+      });
+
+      // delete workflow from gallery items
+      setGalleryItems(prevItems => {
+        if (!prevItems || prevItems.length === 0) {
+          return [];
+        }
+        return prevItems.filter(item => item.dbID !== mediaItem.queueItem.dbID);
+      });
+
+    } catch (error) {
+      console.error("Error deleting workflow:", error);
+    }
+  })
+
   const openImageLocation = useEvent(async (event) => {
     const queryArgs = `?id=${mediaItem.queueItem.dbID}&nodeKey=${mediaItem.node.nodeKey}&fileIndex=${mediaItem.fileIndex}`;
 

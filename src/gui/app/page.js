@@ -329,6 +329,7 @@ export default function Home() {
           }
           items.push({
             dbID: item[3].db_id,
+            promptID: item[1],
             number: item[0],
             workflow: item[3].extra_pnginfo.workflow,
             outputs: outputs

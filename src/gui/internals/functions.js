@@ -40,6 +40,7 @@ export async function apiCall(endpoint, data, method = "POST") {
     }
   } catch (error) {
     console.error("Error running apiCall:", error);
+    throw error;
   }
 }
 
