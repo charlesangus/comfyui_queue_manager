@@ -304,6 +304,41 @@ export default function Gallery() {
       // Close gallery
     } else if (event.key === 'Escape') {
       closeGallery();
+
+      // Home
+    } else if (event.key === 'Home') {
+      // Go to first item
+      if (galleryItems && galleryItems.length > 0) {
+        const firstItem = galleryItems[0];
+        const firstNode = firstItem.outputs[0];
+        setMediaItem({
+          itemIndex: 0,
+          queueItem: firstItem,
+          nodeIndex: 0,
+          node: firstNode,
+          fileIndex: 0,
+          file: firstNode.images[0],
+          totalImages: totalItemImages(firstItem)
+        });
+      }
+
+      // End
+    } else if (event.key === 'End') {
+      // Go to last item
+      if (galleryItems && galleryItems.length > 0) {
+        const lastItem = galleryItems[galleryItems.length - 1];
+        const lastNode = lastItem.outputs[lastItem.outputs.length - 1];
+        const lastFileIndex = lastNode.images.length - 1;
+        setMediaItem({
+          itemIndex: galleryItems.length - 1,
+          queueItem: lastItem,
+          nodeIndex: lastItem.outputs.length - 1,
+          node: lastNode,
+          fileIndex: lastFileIndex,
+          file: lastNode.images[lastFileIndex],
+          totalImages: totalItemImages(lastItem)
+        });
+      }
     }
   });
 
