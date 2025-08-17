@@ -5,7 +5,10 @@ from execution import PromptQueue
 from server import PromptServer
 import json
 import heapq
+import folder_paths
+import os
 
+from .helpers import reveal_file
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -758,3 +761,44 @@ class QM_Queue:
                 return "status = 2"  # completed
 
         return ""
+
+    def open_file_location(self, db_id, node_key, file_index=0):
+        # Get outputs metadata for the given item ID
+        row = read_single(
+            """
+            SELECT value
+            FROM meta
+            WHERE item_id = ? AND key = 'outputs'
+        """,
+            (db_id,),
+        )
+
+        if row is None:
+            return None
+
+        file_index = int(file_index)
+
+        row = json.loads(row[0])
+        # Check if the nodeKey exists in the outputs
+        if node_key not in row:
+            qm_log.error("Node key '%s' not found in outputs", node_key)
+            return None
+
+        # Check if the fileIndex is valid
+        if file_index < 0 or file_index >= len(row[node_key]["images"]):
+            qm_log.error("File index %d is out of range for node key '%s'", file_index, node_key)
+            return None
+        # Get the file path from the outputs
+        filename = row[node_key]["images"][file_index].get("filename", None)
+        subfolder = row[node_key]["images"][file_index].get("subfolder", None)
+
+        if filename is None:
+            qm_log.error("Filename not found in outputs for node key '%s'", node_key)
+            return None
+
+        # Get outputs folder path from settings
+        target_path = os.path.join(folder_paths.get_output_directory(), subfolder, filename)
+
+        reveal_file(target_path)
+
+        return target_path

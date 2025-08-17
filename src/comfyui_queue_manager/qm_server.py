@@ -208,6 +208,24 @@ class QM_Server:
 
             return web.json_response(takeover_client)
 
+        @PromptServer.instance.routes.get("/queue_manager/open_location")
+        async def open_location(request):
+            id = request.query.get("id", None)
+            nodeKey = request.query.get("nodeKey", None)
+            fileIndex = request.query.get("fileIndex", None)
+
+            # If any is None, return error
+            if id is None or nodeKey is None or fileIndex is None:
+                return web.json_response({"error": "Missing parameters"}, status=400)
+
+            result = self.queue_manager.queue.open_file_location(id, nodeKey, fileIndex)
+
+            # Return result of the operation
+            if result is None:
+                return web.json_response({"error": "File not found"}, status=404)
+
+            return web.json_response("Location opened")
+
         # Hook us into the server's middleware so we can listen to some native api requests
         @web.middleware
         async def post_queue(request, handler):

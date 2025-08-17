@@ -16,7 +16,7 @@ import {baseURL} from "@/internals/config";
 import useEvent from "react-use-event-hook";
 import Button from "@mui/material/Button";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
-import {msgLoadWorkflow} from "@/internals/functions";
+import {apiCall, msgLoadWorkflow} from "@/internals/functions";
 
 export default function Gallery() {
   /**
@@ -218,9 +218,11 @@ export default function Gallery() {
   function deleteWorkflow() {
     // Todo: implement deleting workflow
   }
-  function openImageLocation() {
-    // Todo: implement opening image location
-  }
+  const openImageLocation = useEvent(async (event) => {
+    const queryArgs = `?id=${mediaItem.queueItem.dbID}&nodeKey=${mediaItem.node.nodeKey}&fileIndex=${mediaItem.fileIndex}`;
+
+    await apiCall(`${baseURL}queue_manager/open_location` + queryArgs, null, "GET");
+  });
 
   const keyboardNavigation = useEvent((event) => {
     // SIML: make it configurable in options
@@ -273,14 +275,14 @@ export default function Gallery() {
       const data = event.data.galleryData;
       const items = data.items ? data.items : galleryItems;
 
-      // in items find one that has promptID equal to data.promptID
+      // in items find one that has dbID equal to data.dbID
       if (!items || items.length === 0) {
         console.error('No items found in gallery data:', data);
         return;
       }
-      const itemIndex = items.findIndex(item => item.promptID === data.promptID);
+      const itemIndex = items.findIndex(item => item.dbID === data.dbID);
       if (itemIndex === -1) {
-        console.error('Item with promptID not found in gallery data:', data.promptID);
+        console.error('Item with dbID not found in gallery data:', data);
         return;
       }
 

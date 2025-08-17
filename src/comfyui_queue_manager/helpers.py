@@ -1,4 +1,7 @@
 import re
+import os
+import subprocess
+import platform
 
 WINDOWS_BAD = r'<>:"/\\|?*'
 CONTROL_CHARS = "".join(map(chr, range(32)))
@@ -17,3 +20,16 @@ def sanitize_filename(name: str, replacement: str = "_") -> str:
     if name.upper() in {"CON", "PRN", "AUX", "NUL", *(f"{d}{n}" for d in ("COM", "LPT") for n in "123456789")}:
         name = f"_{name}"
     return name or "_"
+
+
+def reveal_file(path):
+    path = os.path.abspath(path)
+    system = platform.system()
+
+    if system == "Windows":
+        subprocess.run(["explorer", "/select,", path])
+    elif system == "Darwin":  # macOS
+        subprocess.run(["open", "-R", path])
+    else:  # Linux / Unix
+        folder = os.path.dirname(path)
+        subprocess.run(["xdg-open", folder])

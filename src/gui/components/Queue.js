@@ -123,7 +123,7 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
                     filename={image.filename}
                     subfolder={image.subfolder}
                     galleryData={{
-                      promptID: item[1],
+                      dbID: item[3].db_id,
                       nodeKey: nodeID,
                       fileIndex: fileIndex
                     }}
