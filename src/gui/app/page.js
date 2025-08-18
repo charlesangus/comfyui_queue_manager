@@ -15,16 +15,18 @@ import {useContext, useEffect, useState} from "react";
 import {apiCall} from "@/internals/functions";
 import useEvent from "react-use-event-hook";
 import {AppContext} from "@/internals/app-context";
+import {fetchOptions} from "@/internals/functions";
 
 export default function Home() {
   const [appStatus, setAppStatus] = useState({
     loading: true,
     error: null,
     queue: null,
-    route: 'queue', // queue, archive, bin
+    route: 'queue', // queue, archive, completed, bin
     shiftDown: false,
     clientId: null,
-    filters: null
+    filters: null,
+    options: {},
   });
 
   const [currentJob, setProgress] = useState({
@@ -456,6 +458,17 @@ export default function Home() {
       { type: "QM_QueueManager_Hello" },
       "*"
     );
+
+    (async() => {
+      const options = await fetchOptions();
+      if (options) {
+        setAppStatus(prev => ({...prev, options}));
+        updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
+      } else {
+        console.error("Failed to fetch options");
+      }
+    })()
+
 
     return () => window.removeEventListener("message", handleMessage);
   }, []);

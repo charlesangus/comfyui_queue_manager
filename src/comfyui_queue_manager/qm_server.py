@@ -226,6 +226,71 @@ class QM_Server:
 
             return web.json_response("Location opened")
 
+        # Allowed options with their default values
+        self.allowed_options = {
+            "thumb_size": 150,
+            "thumb_mode": "cover",
+            "queue_paused": False,
+        }
+
+        # Get options
+        @PromptServer.instance.routes.get("/queue_manager/options")
+        async def get_options(request):
+            # Does option is allowed?
+            option = request.query.get("key", None)
+            if option is not None:
+                if option not in self.allowed_options:
+                    return web.json_response({"error": "Option not allowed"}, status=400)
+
+                # Get the specific option
+                value = self.queue_manager.options.get(option, None)
+                if value is None:
+                    return web.json_response({"error": "Option not found"}, status=404)
+
+                return web.json_response({option: value})
+            else:
+                # Get all options
+                options = self.queue_manager.options.get_all()
+
+                # Return only allowed options
+                options = {key: value for key, value in options.items() if key in self.allowed_options}
+
+                # Add default values for any missing allowed options
+                for key, default_value in self.allowed_options.items():
+                    if key not in options:
+                        options[key] = default_value
+
+                return web.json_response(options)
+
+        # Set options
+        @PromptServer.instance.routes.post("/queue_manager/options")
+        async def set_options(request):
+            # Does option is allowed?
+            json_data = await request.json()
+            if "key" not in json_data or "value" not in json_data:
+                return web.json_response({"error": "Missing parameters"}, status=400)
+
+            option = json_data["key"]
+            value = json_data["value"]
+
+            if option not in self.allowed_options:
+                return web.json_response({"error": "Option not allowed"}, status=400)
+
+            # Validate value based on option
+            if option == "thumb_size":  # thumb size must be a positive integer less than 501
+                if not isinstance(value, int) or value <= 0 or value > 500:
+                    return web.json_response({"error": "Invalid thumb_size value"}, status=400)
+            elif option == "thumb_mode":  # thumb mode must be one of the allowed modes
+                allowed_modes = ["cover", "grid"]
+                if value not in allowed_modes:
+                    return web.json_response({"error": "Invalid thumb_mode value"}, status=400)
+
+            # Set the specific option
+            self.queue_manager.options.set(option, value)
+            qm_log.info(f"Set option {option} to {value}")
+
+            return web.json_response({"success": True})
+
         # Hook us into the server's middleware so we can listen to some native api requests
         @web.middleware
         async def post_queue(request, handler):

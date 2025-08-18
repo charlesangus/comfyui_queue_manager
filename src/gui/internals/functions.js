@@ -50,3 +50,8 @@ export const msgLoadWorkflow = (workflow, number) => {
     "*"
   );
 }
+
+
+export async function fetchOptions() {
+  return await apiCall(`queue_manager/options`, null, "GET");
+}
