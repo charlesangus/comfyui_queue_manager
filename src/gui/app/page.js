@@ -369,6 +369,11 @@ export default function Home() {
     }
   }
 
+  function onThumbSizeCommited(event, newValue) {
+    // update options on the server
+    apiCall('queue_manager/options', {key:"thumb_size", value: newValue}, 'POST')
+  }
+
   // useEffect(() => {
   //   postGalleryData();
   // }, [galleryData]);
@@ -581,9 +586,12 @@ export default function Home() {
         {appStatus.route === 'completed' &&
           <Stack spacing={1} direction="row" sx={{ alignItems: 'center', mb: 1 }} p={1} className={"thumb-size-slider"}>
             <PhotoOutlinedIcon fontSize="small" />
-            <Slider aria-label="Size" size="small" onChange={updateThumbnailSize}
+            <Slider aria-label="Size" size="small"
+              onChange={updateThumbnailSize}
+              onChangeCommitted={onThumbSizeCommited}
               min={50}
               max={500}
+              defaultValue={appStatus.options.thumb_size ? appStatus.options.thumb_size : 150}
             />
             <PhotoOutlinedIcon fontSize="large" />
           </Stack>
