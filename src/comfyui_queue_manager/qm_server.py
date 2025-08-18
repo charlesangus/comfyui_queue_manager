@@ -277,8 +277,8 @@ class QM_Server:
                 return web.json_response({"error": "Option not allowed"}, status=400)
 
             # Validate value based on option
-            if option == "thumb_size":  # thumb size must be a positive integer less than 501
-                if not isinstance(value, int) or value <= 0 or value > 500:
+            if option == "thumb_size":  # thumb size must be a positive integer between 50 and 500
+                if not isinstance(value, int) or value < 50 or value > 500:
                     return web.json_response({"error": "Invalid thumb_size value"}, status=400)
             elif option == "thumb_mode":  # thumb mode must be one of the allowed modes
                 allowed_modes = ["cover", "grid"]

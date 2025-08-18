@@ -26,7 +26,7 @@ export default function GalleryProgressBar({galleryItems, mediaItem, onItemClick
     <div className="gallery-progress-bar" style={{'--item-progress': itemProgress+'%'}}>
       {galleryItems.map((item, index) => (
         <div
-          key={item.index}
+          key={item.dbID}
           className={`progress-item${index < mediaItem.itemIndex ? ' active' : ''}${index === mediaItem.itemIndex ? ' current' : ''}`}
           onClick={() => onItemClick(index)}
         >

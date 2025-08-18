@@ -307,6 +307,8 @@ export default function Home() {
   function updateThumbnailSize(event, newValue) {
     // update root element CSS variable --thumb-size
     document.documentElement.style.setProperty('--thumb-size', newValue + 'px');
+    // update appStatus options
+    setAppStatus(prev => ({ ...prev, options: {...prev.options, thumb_size: newValue} }));
   }
 
   /**
@@ -373,6 +375,18 @@ export default function Home() {
     // update options on the server
     apiCall('queue_manager/options', {key:"thumb_size", value: newValue}, 'POST')
   }
+
+  const stepUpThumb = useEvent((e) => {
+    const newSize = Math.min(appStatus.options.thumb_size + 10, 500);
+    updateThumbnailSize(null, newSize);
+    onThumbSizeCommited(null, newSize);
+  });
+
+  const stepDownThumb = useEvent((e) => {
+    const newSize = Math.max(appStatus.options.thumb_size - 10, 50);
+    updateThumbnailSize(null, newSize);
+    onThumbSizeCommited(null, newSize);
+  });
 
   // useEffect(() => {
   //   postGalleryData();
@@ -585,15 +599,15 @@ export default function Home() {
         {/* On Complete route show thumbnail size control */}
         {appStatus.route === 'completed' &&
           <Stack spacing={1} direction="row" sx={{ alignItems: 'center', mb: 1 }} p={1} className={"thumb-size-slider"}>
-            <PhotoOutlinedIcon fontSize="small" />
+            <PhotoOutlinedIcon fontSize="small" onClick={stepDownThumb} className={"thumb-size-icon"} />
             <Slider aria-label="Size" size="small"
               onChange={updateThumbnailSize}
               onChangeCommitted={onThumbSizeCommited}
               min={50}
               max={500}
-              defaultValue={appStatus.options.thumb_size ? appStatus.options.thumb_size : 150}
+              value={appStatus.options.thumb_size ? appStatus.options.thumb_size : 150}
             />
-            <PhotoOutlinedIcon fontSize="large" />
+            <PhotoOutlinedIcon fontSize="large" onClick={stepUpThumb} className={"thumb-size-icon"} />
           </Stack>
         }
 

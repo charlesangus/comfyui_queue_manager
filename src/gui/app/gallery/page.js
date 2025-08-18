@@ -91,7 +91,7 @@ export default function Gallery() {
       const prevItemIndex = mediaItem.itemIndex - 1;
       const prevQueueItem = galleryItems[prevItemIndex];
       // if showLastFile is true, then show last file in the previous node
-      const prevNodeIndex = showLastFile ? mediaItem.queueItem.outputs.length - 1 : 0;
+      const prevNodeIndex = showLastFile ? prevQueueItem.outputs.length - 1 : 0;
       const prevNode = prevQueueItem.outputs[prevNodeIndex];
       const prevFileIndex = showLastFile ? prevNode.images.length - 1 : 0;
 

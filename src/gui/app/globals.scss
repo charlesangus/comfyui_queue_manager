@@ -108,6 +108,14 @@ footer.footer {
   .MuiButton-root {
     text-transform: none;
   }
+
+  .thumb-size-icon {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    &:hover {
+      transform: scale(1.2);
+    }
+  }
 }
 
 .queue-table {
