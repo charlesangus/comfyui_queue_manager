@@ -338,8 +338,8 @@ footer.footer {
 
   .cover {
     .media-item {
-      width: 80px;
-      height: 80px;
+      width: var(--cover-size);
+      height: var(--cover-size);
       transition: all 0.3s ease;
       border-radius: 10px;
       outline: 1px solid transparent;

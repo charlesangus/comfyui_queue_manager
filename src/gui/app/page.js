@@ -471,15 +471,7 @@ export default function Home() {
         setGallery(null);
       }
 
-      (async() => {
-        const options = await fetchOptions();
-        if (options) {
-          setAppStatus(prev => ({...prev, options}));
-          updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
-        } else {
-          console.error("Failed to fetch options");
-        }
-      })()
+      fetchOptions();
     }
 
     fetchQueueItems();
@@ -503,17 +495,6 @@ export default function Home() {
       { type: "QM_QueueManager_Hello" },
       "*"
     );
-
-    // (async() => {
-    //   const options = await fetchOptions();
-    //   if (options) {
-    //     setAppStatus(prev => ({...prev, options}));
-    //     updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
-    //   } else {
-    //     console.error("Failed to fetch options");
-    //   }
-    // })()
-
 
     return () => window.removeEventListener("message", handleMessage);
   }, []);

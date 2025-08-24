@@ -19,7 +19,7 @@ export const MediaItem = memo(function MediaItem({filename, subfolder, galleryDa
   }
 
   return (
-    <div className={"media-item"}>
+    <div className={"media-item"} title={"Open gallery"}>
       {(ext === 'mp4' || ext === 'webm')
         ? (
           <video

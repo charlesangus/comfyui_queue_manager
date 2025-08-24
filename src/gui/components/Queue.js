@@ -96,7 +96,7 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
 
         {/* Workflow Name */}
         <TableCell className="px-3 py-1 text-left name">
-          <button className={'plain'} onClick={filterByWorkflow}>
+          <button className={'plain'} onClick={filterByWorkflow} title={"Filter view by the workflow"}>
             {item[3].extra_pnginfo.workflow.workflow_name ? item[3].extra_pnginfo.workflow.workflow_name : ""}
           </button>
         </TableCell>
@@ -104,13 +104,13 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
         {/* Item Actions */}
         <TableCell className={'px-3 py-1 text-right actions'}>
           <Stack direction="row" sx={{ justifyContent: "flex-end" }} spacing={1}>
-            <Button variant="contained" size="small" color="error"  onClick={cancelQueueItem}>Delete</Button>
-            <Button variant="contained" size="small" color="success" onClick={loadQueueItem}>Load</Button>
+            <Button variant="contained" size="small" color="error"  onClick={cancelQueueItem} title="Delete workflow from queue">Delete</Button>
+            <Button variant="contained" size="small" color="success" onClick={loadQueueItem} title="Load workflow">Load</Button>
             {appStatus.route === 'queue' && mode !== 'running' &&
-              <Button variant="contained" size="small" color="warning" onClick={archiveQueueItem}>Archive</Button>
+              <Button variant="contained" size="small" color="warning" onClick={archiveQueueItem} title="Move to the archive">Archive</Button>
             }
             {appStatus.route === 'archive' &&
-              <Button variant="contained" size="small" className={"run"} onClick={playItem} startIcon={<PlayArrowOutlinedIcon fontSize="small" />}>
+              <Button variant="contained" size="small" className={"run"} onClick={playItem} title="Move to queue" startIcon={<PlayArrowOutlinedIcon fontSize="small" />}>
                 Run
               </Button>
             }
