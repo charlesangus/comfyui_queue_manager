@@ -229,6 +229,7 @@ class QM_Server:
         # Allowed options with their default values
         self.allowed_options = {
             "thumb_size": 150,
+            "cover_size": 50,
             "thumb_mode": "cover",
             "queue_paused": False,
         }
@@ -281,9 +282,12 @@ class QM_Server:
                 if not isinstance(value, int) or value < 50 or value > 500:
                     return web.json_response({"error": "Invalid thumb_size value"}, status=400)
             elif option == "thumb_mode":  # thumb mode must be one of the allowed modes
-                allowed_modes = ["cover", "grid"]
+                allowed_modes = ["none", "cover", "grid"]
                 if value not in allowed_modes:
                     return web.json_response({"error": "Invalid thumb_mode value"}, status=400)
+            elif option == "cover_size":  # cover size must be a positive integer between 50 and 500
+                if not isinstance(value, int) or value < 25 or value > 200:
+                    return web.json_response({"error": "Invalid cover_size value"}, status=400)
 
             # Set the specific option
             self.queue_manager.options.set(option, value)

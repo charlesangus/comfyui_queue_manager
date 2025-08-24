@@ -1,21 +1,25 @@
 "use client";
 
-import TopMenu from "@/components/TopMenu";
-import {Queue} from "@/components/Queue";
-import Stack from "@mui/material/Stack";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
-import {Slider} from "@mui/material";
-import Button from "@mui/material/Button";
-import {baseURL} from "@/internals/config";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
+import ImageNotSupportedSharpIcon from '@mui/icons-material/ImageNotSupportedSharp';
+import WallpaperSharpIcon from '@mui/icons-material/WallpaperSharp';
+import ViewModuleSharpIcon from '@mui/icons-material/ViewModuleSharp';
+
+import TopMenu from "@/components/TopMenu";
+import {Queue} from "@/components/Queue";
+import Stack from "@mui/material/Stack";
+import {Slider} from "@mui/material";
+import Button from "@mui/material/Button";
+import {baseURL} from "@/internals/config";
 import {useContext, useEffect, useState} from "react";
 import {apiCall} from "@/internals/functions";
 import useEvent from "react-use-event-hook";
 import {AppContext} from "@/internals/app-context";
-import {fetchOptions} from "@/internals/functions";
+import ThumbSlider from "@/components/ThumbSlider";
 
 export default function Home() {
   const [appStatus, setAppStatus] = useState({
@@ -71,6 +75,16 @@ export default function Home() {
       console.error("Error fetching " + appStatus.route + " items:", error);
     }
   };
+
+  async function fetchOptions() {
+    const options = await apiCall(`queue_manager/options`, null, "GET");
+      if (options) {
+        setAppStatus(prev => ({...prev, options}));
+        updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
+      } else {
+        console.error("Failed to fetch options");
+    }
+  }
 
   function getNodeIDs(nodes) {
     const nodeIDs = {};
@@ -304,13 +318,6 @@ export default function Home() {
     }
   });
 
-  function updateThumbnailSize(event, newValue) {
-    // update root element CSS variable --thumb-size
-    document.documentElement.style.setProperty('--thumb-size', newValue + 'px');
-    // update appStatus options
-    setAppStatus(prev => ({ ...prev, options: {...prev.options, thumb_size: newValue} }));
-  }
-
   /**
    * Pack outputs and sent to gallery iframe
    */
@@ -371,26 +378,37 @@ export default function Home() {
     }
   }
 
-  function onThumbSizeCommited(event, newValue) {
-    // update options on the server
-    apiCall('queue_manager/options', {key:"thumb_size", value: newValue}, 'POST')
+  function updateThumbnailSize(event, newValue) {
+    document.documentElement.style.setProperty('--thumb-size', newValue + 'px');
+    // setAppStatus(prev => ({ ...prev, options: {...prev.options, thumb_size: newValue} }));
   }
 
-  const stepUpThumb = useEvent((e) => {
-    const newSize = Math.min(appStatus.options.thumb_size + 10, 500);
-    updateThumbnailSize(null, newSize);
-    onThumbSizeCommited(null, newSize);
+  function onThumbSizeCommited(event, newValue) {
+    // update options on the server
+    setTimeout(() =>{
+      setAppStatus(prev => ({ ...prev, options: {...prev.options, thumb_size: newValue} }));
+      apiCall('queue_manager/options', {key:"thumb_size", value: newValue}, 'POST')
+    })
+  }
+
+  function updateCoverSize(event, newValue) {
+    document.documentElement.style.setProperty('--cover-size', newValue + 'px');
+  }
+
+  function onCoverSizeCommited(event, newValue) {
+    // update options on the server
+    setTimeout(() =>{
+      setAppStatus(prev => ({ ...prev, options: {...prev.options, cover_size: newValue} }));
+      apiCall('queue_manager/options', {key:"cover_size", value: newValue}, 'POST')
+    })
+  }
+
+  const setThumbMode = useEvent((mode) => {
+    // update options on the server
+    setAppStatus(prev => ({...prev, options: {...prev.options, thumb_mode: mode}}));
+    apiCall('queue_manager/options', {key:"thumb_mode", value: mode}, 'POST');
   });
 
-  const stepDownThumb = useEvent((e) => {
-    const newSize = Math.max(appStatus.options.thumb_size - 10, 50);
-    updateThumbnailSize(null, newSize);
-    onThumbSizeCommited(null, newSize);
-  });
-
-  // useEffect(() => {
-  //   postGalleryData();
-  // }, [galleryData]);
 
   useEffect(() => {
     fetchQueueItems()
@@ -409,11 +427,6 @@ export default function Home() {
         )
         :
         0;
-    // console.log("Job progress updated: ",
-    //   currentJob,
-    //   progress,
-    //   Object.values(currentJob.nodes).filter(v => typeof v === 'boolean').length,
-    //   Object.values(currentJob.nodes).length);
 
     setProgress(prev => ({
       ...prev,
@@ -452,9 +465,21 @@ export default function Home() {
   useEffect(() => {
     setAppStatus(prev => ({ ...prev, queue: null }));
 
-    // When loading completed route, clear outputs if any (lightbox request will need to recalculate them)
-    if (appStatus.route === 'completed' && galleryData) {
-      setGallery(null);
+    // When loading completed route, clear outputs if any (lightbox request will need to recalculate them) and pull options (since they can be changed in another tab
+    if (appStatus.route === 'completed') {
+      if (galleryData) {
+        setGallery(null);
+      }
+
+      (async() => {
+        const options = await fetchOptions();
+        if (options) {
+          setAppStatus(prev => ({...prev, options}));
+          updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
+        } else {
+          console.error("Failed to fetch options");
+        }
+      })()
     }
 
     fetchQueueItems();
@@ -463,6 +488,7 @@ export default function Home() {
   // on mount get the queue items from the server
   useEffect(() => {
     fetchQueueItems();
+    fetchOptions();
 
     window.addEventListener("message", handleMessage);
 
@@ -478,15 +504,15 @@ export default function Home() {
       "*"
     );
 
-    (async() => {
-      const options = await fetchOptions();
-      if (options) {
-        setAppStatus(prev => ({...prev, options}));
-        updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
-      } else {
-        console.error("Failed to fetch options");
-      }
-    })()
+    // (async() => {
+    //   const options = await fetchOptions();
+    //   if (options) {
+    //     setAppStatus(prev => ({...prev, options}));
+    //     updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
+    //   } else {
+    //     console.error("Failed to fetch options");
+    //   }
+    // })()
 
 
     return () => window.removeEventListener("message", handleMessage);
@@ -598,17 +624,26 @@ export default function Home() {
       <footer className={"footer"}>
         {/* On Complete route show thumbnail size control */}
         {appStatus.route === 'completed' &&
-          <Stack spacing={1} direction="row" sx={{ alignItems: 'center', mb: 1 }} p={1} className={"thumb-size-slider"}>
-            <PhotoOutlinedIcon fontSize="small" onClick={stepDownThumb} className={"thumb-size-icon"} />
-            <Slider aria-label="Size" size="small"
-              onChange={updateThumbnailSize}
-              onChangeCommitted={onThumbSizeCommited}
-              min={50}
-              max={500}
-              value={appStatus.options.thumb_size ? appStatus.options.thumb_size : 150}
-            />
-            <PhotoOutlinedIcon fontSize="large" onClick={stepUpThumb} className={"thumb-size-icon"} />
+          <Stack spacing={1} direction="row" sx={{ alignItems: 'center' }}>
+            <Stack spacing={1} className={"thumb-mode"} direction="row" sx={{ alignItems: 'center', justifyContent: 'start', flex:1 }} p={1}>
+              <ImageNotSupportedSharpIcon className={appStatus.options.thumb_mode === "none" ? 'active' : ''} onClick={() => setThumbMode("none")} />
+              <WallpaperSharpIcon className={appStatus.options.thumb_mode === "cover" ? 'active' : ''} onClick={() => setThumbMode("cover")}  />
+              <ViewModuleSharpIcon className={appStatus.options.thumb_mode === "grid" ? 'active' : ''} onClick={() => setThumbMode("grid")}  />
+            </Stack>
+            {appStatus.options.thumb_mode === "grid" &&
+              <ThumbSlider min={50} max={500} value={appStatus.options.thumb_size ? appStatus.options.thumb_size : 150}
+                           onChange={updateThumbnailSize}
+                           onChangeCommitted={onThumbSizeCommited}
+              />
+            }
+            {appStatus.options.thumb_mode === "cover" &&
+              <ThumbSlider min={25} max={200} value={appStatus.options.cover_size ? appStatus.options.cover_size : 50}
+                           onChange={updateCoverSize}
+                           onChangeCommitted={onCoverSizeCommited}
+              />
+            }
           </Stack>
+
         }
 
         {/* Paging */}
