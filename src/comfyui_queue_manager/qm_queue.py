@@ -129,9 +129,20 @@ class QM_Queue:
                     if route == "queue":
                         item[0] = row["number"]  # set the number to the one from the database
 
-                    if route == "completed" and row["outputs"] is not None:
-                        # If we have outputs then add them to the item
-                        item[3]["outputs"] = json.loads(row["outputs"])
+                    if route == "completed":
+                        if row["outputs"] is not None:
+                            # If we have outputs then add them to the item
+                            item[3]["outputs"] = json.loads(row["outputs"])
+                            # Count all files in outputs
+                            total_files = 0
+                            for output in item[3]["outputs"].values():
+                                if "images" in output:
+                                    total_files += len(output["images"])
+                                if "gifs" in output:
+                                    total_files += len(output["gifs"])
+                            item[3]["total_files"] = total_files
+                        else:
+                            item[3]["total_files"] = 0
 
                     pending.append(tuple(item))
 

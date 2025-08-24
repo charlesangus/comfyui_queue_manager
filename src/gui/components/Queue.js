@@ -24,7 +24,7 @@ import {memo} from "react";
  */
 const QueueItemRow = memo(function QueueItemRow({item, className, loader, index, mode, info}) {
 
-  const {appStatus, setAppStatus} = useContext(AppContext)
+  const {appStatus, setAppStatus, onMediaItemClick} = useContext(AppContext)
 
   async function cancelQueueItem() {
     const route = mode === 'running' ? 'interrupt' : 'queue';
@@ -96,9 +96,17 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
 
         {/* Workflow Name */}
         <TableCell className="px-3 py-1 text-left name">
+          <div className={"name-cell"}>
+            {item[3].total_files > 0 &&
+            <span className="total" title={"Total file outputs: " + item[3].total_files}
+              onClick={() => {onMediaItemClick({dbID: item[3].db_id, nodeKey: Object.keys(item[3].outputs)[0], fileIndex: 0})}}
+            >{item[3].total_files}</span>
+          }
           <button className={'plain'} onClick={filterByWorkflow} title={"Filter view by the workflow"}>
             {item[3].extra_pnginfo.workflow.workflow_name ? item[3].extra_pnginfo.workflow.workflow_name : ""}
           </button>
+          </div>
+
         </TableCell>
 
         {/* Item Actions */}
@@ -123,7 +131,7 @@ const QueueItemRow = memo(function QueueItemRow({item, className, loader, index,
         * Queue Item Outputs
         *
         */}
-      {item[3].outputs && Object.values(item[3].outputs).length > 0 && appStatus.route === 'completed' && appStatus.options.thumb_mode === "grid" &&
+      {item[3].total_files > 0 && appStatus.route === 'completed' && appStatus.options.thumb_mode === "grid" &&
         <tr className="dark:odd:bg-neutral-900 odd:bg-neutral-100 gallery" key={"gallery" + item[3].db_id}>
           <td colSpan={3} className="px-3 py-1">
             <div className="flex flex-wrap gap-2 items">

@@ -292,15 +292,57 @@ footer.footer {
   }
 
   .pending {
-    td:not(.actions):not(.cover) {
-      opacity: 0.6;
+    td {
+      &:not(.actions):not(.cover) {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+      }
 
+      &.name {
+        .name-cell {
+          display: flex;
+          align-items: center;
+        }
 
+        .total {
+          display: inline-block;
+          outline: 1px solid var(--color-neutral-400);
+          padding: 0 5px;
+          margin-right: 0.5em;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background-color: white;
+            color: black;
+
+            @media (prefers-color-scheme: light) {
+              background-color: black;
+              color: white;
+            }
+          }
+        }
+
+        button {
+          transition: all 0.3s ease;
+          &:hover {
+            opacity: 1 !important;
+            color: gold;
+
+            @media (prefers-color-scheme: light) {
+              color: saddlebrown;
+            }
+          }
+        }
+      }
     }
+
+
 
     &:hover {
       td {
-        opacity: 1;
+        opacity: 1 !important;
       }
     }
   }
