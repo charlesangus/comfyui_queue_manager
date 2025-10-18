@@ -81,6 +81,7 @@ export default function Home() {
       if (options) {
         setAppStatus(prev => ({...prev, options}));
         updateThumbnailSize(null, options.thumb_size ? options.thumb_size : 150);
+        updateCoverSize(null, options.cover_size ? options.cover_size : 50);
       } else {
         console.error("Failed to fetch options");
     }
@@ -603,13 +604,19 @@ export default function Home() {
         *
         */}
       <footer className={"footer"}>
-        {/* On Complete route show thumbnail size control */}
+        {/* On Complete route show thumbnail mode and size controls */}
         {appStatus.route === 'completed' &&
           <Stack spacing={1} direction="row" sx={{ alignItems: 'center' }}>
             <Stack spacing={1} className={"thumb-mode"} direction="row" sx={{ alignItems: 'center', justifyContent: 'start', flex:1 }} p={1}>
-              <ImageNotSupportedSharpIcon className={appStatus.options.thumb_mode === "none" ? 'active' : ''} onClick={() => setThumbMode("none")} />
-              <WallpaperSharpIcon className={appStatus.options.thumb_mode === "cover" ? 'active' : ''} onClick={() => setThumbMode("cover")}  />
-              <ViewModuleSharpIcon className={appStatus.options.thumb_mode === "grid" ? 'active' : ''} onClick={() => setThumbMode("grid")}  />
+              <div title="No thumbnails">
+                <ImageNotSupportedSharpIcon className={appStatus.options.thumb_mode === "none" ? 'active' : ''} onClick={() => setThumbMode("none")} />
+              </div>
+              <div title="Cover image only" >
+                <WallpaperSharpIcon className={appStatus.options.thumb_mode === "cover" ? 'active' : ''} onClick={() => setThumbMode("cover")} />
+              </div>
+              <div title="Show all outputs">
+                <ViewModuleSharpIcon className={appStatus.options.thumb_mode === "grid" ? 'active' : ''} onClick={() => setThumbMode("grid")} />
+              </div>
             </Stack>
             {appStatus.options.thumb_mode === "grid" &&
               <ThumbSlider min={50} max={500} value={appStatus.options.thumb_size ? appStatus.options.thumb_size : 150}
