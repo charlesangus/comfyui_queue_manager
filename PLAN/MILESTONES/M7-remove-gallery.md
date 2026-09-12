@@ -39,7 +39,7 @@ before M2 so the card component is built from the trimmed row, not the gallery-e
     of the deleted files in the same change).
   - size: S
 
-- [ ] M7.P2.T2 — Strip gallery state from `index.jsx`, the stores and the models
+- [x] M7.P2.T2 — Strip gallery state from `index.jsx`, the stores and the models
   - files: `src/gui/app/index.jsx`, `src/gui/app/stores/appStore.js`, `src/gui/app/stores/optionsStore.js`, `src/gui/app/models/MediaOutputs.js`, `src/gui/app/models/OrderedMap.js` (delete if unused), `src/gui/app/internals/app-context.jsx`
   - approach: In `index.jsx` remove the gallery `mode`, `galleryData`, `onMediaItemClick`, the
     `QM_Gallery_Show` postMessage, the `ThumbSlider`s and the thumb-mode toggle in the footer,
@@ -101,3 +101,10 @@ check in ComfyUI that all three tabs work and completed thumbnails open in a new
 - 2026-09-11 — Settings consolidation resolves itself once the gallery options go: the
   `options` table keeps only server state, native ComfyUI settings hold every user preference.
   No further migration needed.
+- 2026-09-12 — M7.P2.T2 also touched `Queue.jsx`, `QueueItemRow.jsx` and `internals/functions.js`
+  (not in the task's declared file list): they were broken callers of the removed store
+  fields/context value (`thumb_mode`, `Gallery` options, `onMediaItemClick`) and needed their
+  dead gallery-wiring stripped for the app to build; no new UI was added there — that's still
+  M7.P2.T3. `MediaItem.jsx` is temporarily unused (0 importers) until T3 rewires it. Also
+  committed the `npm run build` output with this task's commit rather than deferring the
+  rebuild to T3, per the board's build convention (any `src/gui/` change ships its rebuild).
