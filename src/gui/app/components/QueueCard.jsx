@@ -1,4 +1,3 @@
-// `src/gui/app/components/QueueItemRow.jsx`
 "use client";
 
 import React, { memo, useCallback, useContext, useMemo } from "react";
@@ -9,9 +8,10 @@ import { LoaderSpinner } from "../components/LoaderSpinner";
 import {useAppStore} from "@/app/stores/appStore";
 import { MediaItem, viewURL } from "./MediaItem";
 import { MediaOutputs } from "../models/MediaOutputs";
+import { CardInfo } from "./CardInfo";
 
-export const QueueItemRow = memo(
-  function QueueItemRow({
+export const QueueCard = memo(
+  function QueueCard({
     item,
     className,
     loader,
@@ -99,92 +99,41 @@ const executionTimeLabel = useMemo(() => {
     }, []);
 
     return (
-      <>
-        {/*
-        *
-        * Queue Item Details
-        *
-        */}
-        <tr className={className ? ` ${className}` : ""}>
-          <td className="px-3 py-1 serial">
-            <span>{rowIndex}</span>
-            {loader ? <LoaderSpinner /> : null}
-          </td>
+      <article className={`qm-card${className ? ` ${className}` : ""}`}>
+        <div className="card-header">
+          <span className="serial">{rowIndex}</span>
+          {loader ? <LoaderSpinner /> : null}
 
-          {/* Workflow Name */}
-          <td className="px-3 py-1 text-left name">
-            <div className="name-cell">
-              <button className="plain" onClick={filterByWorkflow} title="Filter view by the workflow">
-                {mode === "external"
-                  ? "External job"
-                  : workflow?.workflow_name
-                    ? workflow.workflow_name
-                    : ""}
-              </button>
+          <div className="name-cell">
+            <button className="plain" onClick={filterByWorkflow} title="Filter view by the workflow">
+              {mode === "external"
+                ? "External job"
+                : workflow?.workflow_name
+                  ? workflow.workflow_name
+                  : ""}
+            </button>
+          </div>
 
-
+          {route === "completed" && executionTimeLabel ? (
+            <div className="execution-time" title="Execution time">
+              {executionTimeLabel}
             </div>
-          </td>
+          ) : null}
 
-          {route === "completed" &&
-            <td className={'meta-info'}>
-              {executionTimeLabel ? (
-                <div className="execution-time" title="Execution time">
-                  {executionTimeLabel}
-                </div>
-              ) : null}
-            </td>
-          }
+          {mediaOutputs.total > 0 ? (
+            <span className="qm-badge" title="Output count">
+              {mediaOutputs.total}
+            </span>
+          ) : null}
+        </div>
 
+        <div className="card-body">
+          <div className="card-info">
+            <CardInfo entries={item?.[3]?.card} />
+          </div>
 
-          {/* Item Actions */}
-          <td className="px-3 py-1 text-right actions">
-            <div style={{ justifyContent: "flex-end" }}  className="buttons">
-              <button
-                className="delete qm-btn qm-btn-danger"
-                onClick={cancelQueueItem}
-                title="Delete workflow from queue"
-              >
-                Delete
-              </button>
-
-              {mode !== "external" ? (
-                <button
-                  className="load qm-btn qm-btn-primary"
-                  onClick={loadQueueItem}
-                  title="Load workflow"
-                >
-                  Load
-                </button>
-              ) : null}
-
-              {route === "queue" && mode !== "running" ? (
-                <button
-                  className="archive qm-btn"
-                  onClick={archiveQueueItem}
-                  title="Move to the archive"
-                >
-                  Archive
-                </button>
-              ) : null}
-
-              {route === "archive" ? (
-                <button
-                  className="run qm-btn qm-btn-primary"
-                  onClick={playItem}
-                  title="Move to queue"
-                >
-                  <PlayArrowOutlinedIcon fontSize="small" />
-                  Run
-                </button>
-              ) : null}
-            </div>
-          </td>
-        </tr>
-
-        {route === "completed" && mediaOutputs.total > 0 && (
-          <tr className="outputs-row">
-            <td colSpan={100}>
+          <div className="card-outputs">
+            {route === "completed" && mediaOutputs.total > 0 && (
               <div className="outputs">
                 {mediaOutputs.files.map((file, idx) => (
                   <MediaItem
@@ -197,14 +146,56 @@ const executionTimeLabel = useMemo(() => {
                   />
                 ))}
               </div>
-            </td>
-          </tr>
-        )}
-      </>
+            )}
+          </div>
+        </div>
+
+        <div className="card-actions">
+          <div style={{ justifyContent: "flex-end" }} className="buttons">
+            <button
+              className="delete qm-btn qm-btn-danger"
+              onClick={cancelQueueItem}
+              title="Delete workflow from queue"
+            >
+              Delete
+            </button>
+
+            {mode !== "external" ? (
+              <button
+                className="load qm-btn qm-btn-primary"
+                onClick={loadQueueItem}
+                title="Load workflow"
+              >
+                Load
+              </button>
+            ) : null}
+
+            {route === "queue" && mode !== "running" ? (
+              <button
+                className="archive qm-btn"
+                onClick={archiveQueueItem}
+                title="Move to the archive"
+              >
+                Archive
+              </button>
+            ) : null}
+
+            {route === "archive" ? (
+              <button
+                className="run qm-btn qm-btn-primary"
+                onClick={playItem}
+                title="Move to queue"
+              >
+                <PlayArrowOutlinedIcon fontSize="small" />
+                Run
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </article>
     );
   },
   (prev, next) => {
-    // Custom compare: skip re\-render if the item identity changes but the content  hasn’t.
     const prevId = prev.item?.[3]?.db_id;
     const nextId = next.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
@@ -216,7 +207,8 @@ const executionTimeLabel = useMemo(() => {
       prev.route === next.route &&
       prev.filters === next.filters &&
       prev.info?.page === next.info?.page &&
-      prev.info?.page_size === next.info?.page_size
+      prev.info?.page_size === next.info?.page_size &&
+      prev.item?.[3]?.card === next.item?.[3]?.card
     );
   }
 );

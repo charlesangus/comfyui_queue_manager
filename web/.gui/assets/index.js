@@ -19488,8 +19488,59 @@ class MediaOutputs {
     return this.files.length;
   }
 }
-const QueueItemRow = reactExports.memo(
-  function QueueItemRow2({
+function TextTile({ label, value }) {
+  const [expanded, setExpanded] = reactExports.useState(false);
+  const toggleExpanded = () => setExpanded((prev2) => !prev2);
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      if (event.key === " ") event.preventDefault();
+      toggleExpanded();
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: `card-info-tile${expanded ? " expanded" : ""}`,
+      title: value,
+      role: "button",
+      tabIndex: 0,
+      "aria-expanded": expanded,
+      onClick: toggleExpanded,
+      onKeyDown: handleKeyDown,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: value })
+      ]
+    }
+  );
+}
+function ImageTile({ label, value }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
+    value?.filename ? /* @__PURE__ */ jsxRuntimeExports.jsx(MediaItem, { file: value, controls: false, autoplay: false, className: "tile-media" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: baseURL + value?.url, className: "tile-media", alt: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label })
+  ] });
+}
+function OtherTile({ label, value }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: String(value) })
+  ] });
+}
+function CardInfo({ entries }) {
+  if (!entries?.length) return null;
+  const sorted = [...entries].sort((a, b) => a.index - b.index);
+  return sorted.map((entry) => {
+    if (entry.kind === "image") {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, entry.index);
+    }
+    if (entry.kind === "text") {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, entry.index);
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, entry.index);
+  });
+}
+const QueueCard = reactExports.memo(
+  function QueueCard2({
     item,
     className,
     loader,
@@ -19556,74 +19607,76 @@ const QueueItemRow = reactExports.memo(
     const handleThumbnailClick = reactExports.useCallback((file) => {
       window.open(viewURL(file), "_blank");
     }, []);
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: className ? ` ${className}` : "", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { className: "px-3 py-1 serial", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: rowIndex }),
-          loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-left name", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }) }),
-        route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "meta-info", children: executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-right actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "delete qm-btn qm-btn-danger",
-              onClick: cancelQueueItem,
-              title: "Delete workflow from queue",
-              children: "Delete"
-            }
-          ),
-          mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "load qm-btn qm-btn-primary",
-              onClick: loadQueueItem,
-              title: "Load workflow",
-              children: "Load"
-            }
-          ) : null,
-          route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "archive qm-btn",
-              onClick: archiveQueueItem,
-              title: "Move to the archive",
-              children: "Archive"
-            }
-          ) : null,
-          route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              className: "run qm-btn qm-btn-primary",
-              onClick: playItem,
-              title: "Move to queue",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
-                "Run"
-              ]
-            }
-          ) : null
-        ] }) })
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("article", { className: `qm-card${className ? ` ${className}` : ""}`, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
+        loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
+        route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+        mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
       ] }),
-      route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { className: "outputs-row", children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-        MediaItem,
-        {
-          file,
-          onClick: () => handleThumbnailClick(file),
-          controls: false,
-          autoplay: false,
-          className: "thumbnail"
-        },
-        idx
-      )) }) }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-outputs", children: route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          MediaItem,
+          {
+            file,
+            onClick: () => handleThumbnailClick(file),
+            controls: false,
+            autoplay: false,
+            className: "thumbnail"
+          },
+          idx
+        )) }) })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            className: "delete qm-btn qm-btn-danger",
+            onClick: cancelQueueItem,
+            title: "Delete workflow from queue",
+            children: "Delete"
+          }
+        ),
+        mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            className: "load qm-btn qm-btn-primary",
+            onClick: loadQueueItem,
+            title: "Load workflow",
+            children: "Load"
+          }
+        ) : null,
+        route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            className: "archive qm-btn",
+            onClick: archiveQueueItem,
+            title: "Move to the archive",
+            children: "Archive"
+          }
+        ) : null,
+        route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            className: "run qm-btn qm-btn-primary",
+            onClick: playItem,
+            title: "Move to queue",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
+              "Run"
+            ]
+          }
+        ) : null
+      ] }) })
     ] });
   },
   (prev2, next2) => {
     const prevId = prev2.item?.[3]?.db_id;
     const nextId = next2.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card;
   }
 );
 const QueueItems = reactExports.memo(function QueueItems2({ running, pending, info }) {
@@ -19631,7 +19684,7 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
   const filters = useAppStore((state) => state.filters);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     running.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-      QueueItemRow,
+      QueueCard,
       {
         item,
         className: "running",
@@ -19644,7 +19697,7 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
       item?.[3]?.db_id ?? item?.[1]
     )),
     pending.map((item, index) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-      QueueItemRow,
+      QueueCard,
       {
         item,
         className: "pending",
@@ -19658,7 +19711,6 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
   ] });
 });
 const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {
-  const route = useAppStore((state) => state.route);
   const running = data?.running ?? [];
   const pending = data?.pending ?? [];
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -19666,26 +19718,18 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
     {
       className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : ""),
       style: { "--job-progress": progress + "%" },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "min-w-full border border-0", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "text-xs uppercase", style: { backgroundColor: "var(--qm-surface)" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "#" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left workflow-column", children: "Workflow" }),
-          route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "Info" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2", align: "right", children: "Actions" })
-        ] }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("tbody", { children: [
-          error && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { colSpan: 100, className: "text-red-500 text-center info-cell", children: [
-            "Loading failed: ",
-            error
-          ] }) }),
-          !isLoading && (!data || !running.length && !pending.length) && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, className: "italic text-center info-cell", style: { color: "var(--qm-fg-muted)" }, children: "No items." }) }),
-          isLoading && !data && /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 serial", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, className: "italic text-center info-cell", style: { color: "var(--qm-fg-muted)" }, children: "Loading..." })
-          ] }),
-          data && /* @__PURE__ */ jsxRuntimeExports.jsx(QueueItems, { running, pending, info: data.info })
-        ] })
-      ] }) }) })
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-cards", children: [
+        error && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell text-red-500 text-center", children: [
+          "Loading failed: ",
+          error
+        ] }),
+        !isLoading && (!data || !running.length && !pending.length) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "info-cell italic text-center", style: { color: "var(--qm-fg-muted)" }, children: "No items." }),
+        isLoading && !data && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell italic text-center", style: { color: "var(--qm-fg-muted)" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}),
+          " Loading..."
+        ] }),
+        data && /* @__PURE__ */ jsxRuntimeExports.jsx(QueueItems, { running, pending, info: data.info })
+      ] }) })
     }
   );
 });
@@ -19699,6 +19743,27 @@ const Stack = createStack({
     name: "MuiStack"
   })
 });
+const useInsertionEffect = typeof window !== "undefined" ? (
+  // useInsertionEffect is available in React 18+
+  React.useInsertionEffect || React.useLayoutEffect
+) : () => {
+};
+function useEvent(callback) {
+  const latestRef = React.useRef(useEvent_shouldNotBeInvokedBeforeMount);
+  useInsertionEffect(() => {
+    latestRef.current = callback;
+  }, [callback]);
+  const stableRef = React.useRef(null);
+  if (!stableRef.current) {
+    stableRef.current = function() {
+      return latestRef.current.apply(this, arguments);
+    };
+  }
+  return stableRef.current;
+}
+function useEvent_shouldNotBeInvokedBeforeMount() {
+  throw new Error("INVALID_USEEVENT_INVOCATION: the callback from useEvent cannot be invoked before the component has mounted.");
+}
 function isFocusVisible(element) {
   try {
     return element.matches(":focus-visible");
@@ -21633,27 +21698,6 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     children: [startIcon, loadingPosition !== "end" && loader, children, loadingPosition === "end" && loader, endIcon]
   });
 });
-const useInsertionEffect = typeof window !== "undefined" ? (
-  // useInsertionEffect is available in React 18+
-  React.useInsertionEffect || React.useLayoutEffect
-) : () => {
-};
-function useEvent(callback) {
-  const latestRef = React.useRef(useEvent_shouldNotBeInvokedBeforeMount);
-  useInsertionEffect(() => {
-    latestRef.current = callback;
-  }, [callback]);
-  const stableRef = React.useRef(null);
-  if (!stableRef.current) {
-    stableRef.current = function() {
-      return latestRef.current.apply(this, arguments);
-    };
-  }
-  return stableRef.current;
-}
-function useEvent_shouldNotBeInvokedBeforeMount() {
-  throw new Error("INVALID_USEEVENT_INVOCATION: the callback from useEvent cannot be invoked before the component has mounted.");
-}
 const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
 }));
@@ -27763,7 +27807,7 @@ function Home({ onDarkChange }) {
               method: "post",
               encType: "multipart/form-data",
               className: "import-form",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { variant: "contained", color: "inherit", size: "small", component: "label", className: "qm-btn", children: [
+              children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "qm-btn", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(DriveFolderUploadOutlinedIcon, {}),
                 "  Import ",
                 route === "queue" ? "Queue" : "Archive",
@@ -27789,6 +27833,7 @@ function Home({ onDarkChange }) {
 }
 function buildTheme(dark2) {
   return createTheme({
+    cssVariables: { nativeColor: true },
     palette: {
       mode: dark2 ? "dark" : "light",
       background: {

@@ -4,6 +4,7 @@
 _Sep 12, 2026_
 ### New features and enhancements
 - Panel now follows the ComfyUI color palette and font, with theme switching synchronized to the ComfyUI interface.
+- Queue entries are now displayed as individual cards for improved layout and interaction.
 
 ---
 
