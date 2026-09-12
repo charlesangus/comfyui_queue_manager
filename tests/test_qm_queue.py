@@ -72,3 +72,71 @@ def test_queue_put_upsert_preserves_row_id_and_meta(qm_queue):
         (first_id,),
     )["count"]
     assert meta_count_after == 1
+
+
+def test_queue_put_ignores_resubmission_of_running_item(qm_queue):
+    item = _make_item(100, "prompt-running-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+
+    row_running = qm_queue.qm_db.read_single(
+        "SELECT id, number, status FROM queue WHERE prompt_id = ?",
+        ("prompt-running-1",),
+    )
+    assert row_running["status"] == 1
+
+    resubmit = _make_item(200, "prompt-running-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(resubmit)
+
+    row_after = qm_queue.qm_db.read_single(
+        "SELECT id, number, status FROM queue WHERE prompt_id = ?",
+        ("prompt-running-1",),
+    )
+    assert row_after["id"] == row_running["id"]
+    assert row_after["status"] == 1
+    assert row_after["number"] == row_running["number"]
+
+
+def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):
+    history_result = {
+        "outputs": {
+            "9": {
+                "images": [{"filename": "out.png", "subfolder": "", "type": "output"}],
+            }
+        }
+    }
+    status = (
+        "success",
+        None,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            ("execution_success", {"timestamp": 2000}),
+        ],
+    )
+
+    item = _make_item(100, "prompt-repeat-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-repeat-1",),
+    )["id"]
+
+    resubmit = _make_item(50, "prompt-repeat-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(resubmit)
+    _, task_id2 = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id2, history_result, status)
+
+    outputs_count = qm_queue.qm_db.read_single(
+        "SELECT COUNT(*) as count FROM meta WHERE item_id = ? AND key = 'outputs'",
+        (db_id,),
+    )["count"]
+    exec_time_count = qm_queue.qm_db.read_single(
+        "SELECT COUNT(*) as count FROM meta WHERE item_id = ? AND key = 'execution_time'",
+        (db_id,),
+    )["count"]
+
+    assert outputs_count == 1
+    assert exec_time_count == 1
