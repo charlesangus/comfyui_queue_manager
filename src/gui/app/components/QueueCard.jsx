@@ -9,6 +9,7 @@ import { LoaderSpinner } from "../components/LoaderSpinner";
 import {useAppStore} from "@/app/stores/appStore";
 import { MediaItem, viewURL } from "./MediaItem";
 import { MediaOutputs } from "../models/MediaOutputs";
+import { CardInfo } from "./CardInfo";
 
 export const QueueCard = memo(
   function QueueCard({
@@ -128,7 +129,9 @@ const executionTimeLabel = useMemo(() => {
         </div>
 
         <div className="card-body">
-          <div className="card-info" />
+          <div className="card-info">
+            <CardInfo entries={item?.[3]?.card} />
+          </div>
 
           <div className="card-outputs">
             {route === "completed" && mediaOutputs.total > 0 && (
@@ -205,7 +208,8 @@ const executionTimeLabel = useMemo(() => {
       prev.route === next.route &&
       prev.filters === next.filters &&
       prev.info?.page === next.info?.page &&
-      prev.info?.page_size === next.info?.page_size
+      prev.info?.page_size === next.info?.page_size &&
+      prev.item?.[3]?.card === next.item?.[3]?.card
     );
   }
 );

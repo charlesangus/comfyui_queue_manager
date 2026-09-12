@@ -109,6 +109,67 @@ header.header {
     .card-outputs:empty {
       display: none;
     }
+
+    .card-info:empty {
+      display: none;
+    }
+  }
+
+  .card-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--qm-space);
+    padding: 0.5rem 0.75rem;
+
+    .card-info-tile {
+      flex: 0 0 var(--qm-thumb, 96px);
+      width: var(--qm-thumb, 96px);
+      border: 1px solid var(--qm-border);
+      border-radius: var(--qm-radius-sm);
+      padding: 4px;
+      box-sizing: border-box;
+      cursor: default;
+
+      .tile-caption {
+        color: var(--qm-fg-muted);
+        font-size: 0.7rem;
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tile-body {
+        color: var(--qm-fg);
+        font-size: 0.75rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      &.expanded .tile-body {
+        display: block;
+        -webkit-line-clamp: unset;
+        overflow: visible;
+      }
+    }
+
+    .tile-media {
+      flex: 0 0 var(--qm-thumb, 96px);
+      width: var(--qm-thumb, 96px);
+      height: var(--qm-thumb, 96px);
+      border-radius: 4px;
+      overflow: hidden;
+      display: block;
+
+      img, video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
   }
 
   .card-outputs {
