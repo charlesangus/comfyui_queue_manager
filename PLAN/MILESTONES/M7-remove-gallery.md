@@ -26,7 +26,7 @@ before M2 so the card component is built from the trimmed row, not the gallery-e
 
 ## Phase 7.2: Frontend
 
-- [ ] M7.P2.T1 — Delete the Gallery components, styles, settings and parent-page hooks
+- [x] M7.P2.T1 — Delete the Gallery components, styles, settings and parent-page hooks
   - files: `src/gui/app/components/Gallery.jsx` (delete), `src/gui/app/components/GalleryProgressBar.jsx` (delete), `src/gui/app/components/ThumbSlider.jsx` (delete), `src/gui/styles/_gallery.scss` (delete), `src/gui/styles/styles.scss`, `web/js/settings.js`, `web/js/functions.js`, `web/styles/manager.css`
   - approach: Remove the three components and the SCSS partial (and its `@use` in
     `styles.scss`). In `settings.js` delete `QueueManager.Completed.GridThumbMode`,
