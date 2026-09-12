@@ -109,7 +109,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `_variables.scss`); buttons look like ComfyUI's own in both palettes.
   - size: M
 
-- [ ] M10.P2.T2 — Tabs, list and footer layout
+- [x] M10.P2.T2 — Tabs, list and footer layout
   - files: `src/gui/styles/_queue.scss`, `src/gui/styles/_footer.scss`, `src/gui/styles/_layout.scss`, `src/gui/styles/_splash.scss`, `src/gui/app/index.jsx`, `src/gui/app/components/Queue.jsx`
   - approach: M10.P1.T3 deleted `main.jsx`'s `GlobalStyles` block, which was the only definition
     of `--color-neutral-100`…`--color-neutral-900` — every other `var(--color-neutral-*)`
@@ -140,6 +140,21 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `grep -rn "color-neutral\|var(--background" src/gui/styles` finds nothing.
   - size: M
 
+- [ ] M10.P2.T4 — Filters panel and top-menu dropdown restyle
+  - files: `src/gui/styles/_queue.scss`
+  - approach: Added after M10.P2.T2 (freshness gap found while verifying it): `.filters`
+    (~line 476), `.top-menu`/`.top-menu-toggle` (~line 538-630) in `_queue.scss` weren't in any
+    M10 task's file scope and still carry ~10 `prefers-color-scheme` blocks and hardcoded
+    colors (`#ffffff44`, `#00000022`, `#333`, `white`, `black`, box-shadow alpha swaps) — this
+    milestone's own verification gate requires zero `prefers-color-scheme` dependence, so it
+    has to close before the gate. Replace every hardcoded color/`prefers-color-scheme` pair in
+    those three blocks with the matching `--qm-*` token (backgrounds → `--qm-surface`/
+    `--qm-surface-hover`, text → `--qm-fg`/`--qm-fg-muted`, borders → `--qm-border`), deleting
+    the media queries once nothing inside them differs from the token's own light/dark value.
+  - verify: `grep -n "prefers-color-scheme" src/gui/styles/_queue.scss` finds nothing;
+    `npm run lint`/`npm run build` pass.
+  - size: S
+
 - [ ] M10.P2.T3 — Rebuild, changelog, screenshot note
   - files: `web/.gui/**`, `CHANGELOG.md`, `README.md`
   - approach: `npm run build`; commit `web/.gui/` (note the font files disappearing). Changelog
@@ -155,6 +170,12 @@ one custom palette: the panel recolours live, buttons/tabs/footer match native c
 
 ## Decisions
 
+- 2026-09-12 — M10.P2.T2 verification surfaced a further gap: `.filters`/`.top-menu`/
+  `.top-menu-toggle` in `_queue.scss` were never in any M10 task's file scope and still carry
+  `prefers-color-scheme` blocks and hardcoded colors, which the milestone's own verification
+  gate ("no `prefers-color-scheme` dependence remains") requires closed. Added
+  M10.P2.T4 (before M10.P2.T3's final rebuild) to cover it rather than silently letting the
+  gate check fail or expanding T2 after the fact.
 - 2026-09-12 — Deleting `main.jsx`'s `GlobalStyles` block in M10.P1.T3 left every
   `var(--color-neutral-*)` reference in `_queue.scss`/`_footer.scss`/`_splash.scss` dangling
   (they aren't Tailwind classes, so T3's JSX-only sweep didn't touch them), and left
