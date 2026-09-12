@@ -10,6 +10,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Building for production
+
+```bash
+npm install
+npm run build
+```
+
+This outputs to `../../web/.gui/` (i.e. `web/.gui/` at the repo root), which is what ComfyUI actually serves — there's no build step at install time, so the built output has to be committed. **Any change under `src/gui/` must be followed by `npm run build` here, and the resulting `web/.gui/` diff committed together with the source change.** Commits that do this are tagged `- Release build;` in the git history.
+
 ## Gotchas
 ### Frontend in development mode vs production mode
 Coding front end in development mode (with `npm run dev`) is faster thanks to fast reloads.
