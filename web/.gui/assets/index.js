@@ -12728,8 +12728,8 @@ function merge(acc, item) {
     // No need to clone deep, it's way faster.
   });
 }
-function sortContainerQueries(theme2, css2) {
-  if (!theme2.containerQueries) {
+function sortContainerQueries(theme, css2) {
+  if (!theme.containerQueries) {
     return css2;
   }
   const sorted = Object.keys(css2).filter((key) => key.startsWith("@container")).sort((a, b) => {
@@ -12751,14 +12751,14 @@ function sortContainerQueries(theme2, css2) {
 function isCqShorthand(breakpointKeys, value) {
   return value === "@" || value.startsWith("@") && (breakpointKeys.some((key) => value.startsWith(`@${key}`)) || !!value.match(/^@\d/));
 }
-function getContainerQuery(theme2, shorthand) {
+function getContainerQuery(theme, shorthand) {
   const matches = shorthand.match(/^@([^/]+)?\/?(.+)?$/);
   if (!matches) {
     return null;
   }
   const [, containerQuery, containerName] = matches;
   const value = Number.isNaN(+containerQuery) ? containerQuery || 0 : +containerQuery;
-  return theme2.containerQueries(containerName).up(value);
+  return theme.containerQueries(containerName).up(value);
 }
 function cssContainerQueries(themeInput) {
   const toContainerQuery = (mediaQuery, name) => mediaQuery.replace("@media", name ? `@container ${name}` : "@container");
@@ -12816,19 +12816,19 @@ const defaultContainerQueries = {
   })
 };
 function handleBreakpoints(props, propValue, styleFromPropValue) {
-  const theme2 = props.theme || {};
+  const theme = props.theme || {};
   if (Array.isArray(propValue)) {
-    const themeBreakpoints = theme2.breakpoints || defaultBreakpoints;
+    const themeBreakpoints = theme.breakpoints || defaultBreakpoints;
     return propValue.reduce((acc, item, index) => {
       acc[themeBreakpoints.up(themeBreakpoints.keys[index])] = styleFromPropValue(propValue[index]);
       return acc;
     }, {});
   }
   if (typeof propValue === "object") {
-    const themeBreakpoints = theme2.breakpoints || defaultBreakpoints;
+    const themeBreakpoints = theme.breakpoints || defaultBreakpoints;
     return Object.keys(propValue).reduce((acc, breakpoint) => {
       if (isCqShorthand(themeBreakpoints.keys, breakpoint)) {
-        const containerKey = getContainerQuery(theme2.containerQueries ? theme2 : defaultContainerQueries, breakpoint);
+        const containerKey = getContainerQuery(theme.containerQueries ? theme : defaultContainerQueries, breakpoint);
         if (containerKey) {
           acc[containerKey] = styleFromPropValue(propValue[breakpoint], breakpoint);
         }
@@ -12956,8 +12956,8 @@ function style$2(options) {
       return null;
     }
     const propValue = props[prop];
-    const theme2 = props.theme;
-    const themeMapping = getPath(theme2, themeKey) || {};
+    const theme = props.theme;
+    const themeMapping = getPath(theme, themeKey) || {};
     const styleFromPropValue = (propValueFinal) => {
       let value = getStyleValue$1(themeMapping, transform, propValueFinal);
       if (propValueFinal === value && typeof propValueFinal === "string") {
@@ -13019,8 +13019,8 @@ const getCssProperties = memoize$1((prop) => {
 const marginKeys = ["m", "mt", "mr", "mb", "ml", "mx", "my", "margin", "marginTop", "marginRight", "marginBottom", "marginLeft", "marginX", "marginY", "marginInline", "marginInlineStart", "marginInlineEnd", "marginBlock", "marginBlockStart", "marginBlockEnd"];
 const paddingKeys = ["p", "pt", "pr", "pb", "pl", "px", "py", "padding", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "paddingX", "paddingY", "paddingInline", "paddingInlineStart", "paddingInlineEnd", "paddingBlock", "paddingBlockStart", "paddingBlockEnd"];
 [...marginKeys, ...paddingKeys];
-function createUnaryUnit(theme2, themeKey, defaultValue, propName) {
-  const themeSpacing = getPath(theme2, themeKey, true) ?? defaultValue;
+function createUnaryUnit(theme, themeKey, defaultValue, propName) {
+  const themeSpacing = getPath(theme, themeKey, true) ?? defaultValue;
   if (typeof themeSpacing === "number" || typeof themeSpacing === "string") {
     return (val) => {
       if (typeof val === "string") {
@@ -13062,8 +13062,8 @@ function createUnaryUnit(theme2, themeKey, defaultValue, propName) {
   }
   return () => void 0;
 }
-function createUnarySpacing(theme2) {
-  return createUnaryUnit(theme2, "spacing", 8);
+function createUnarySpacing(theme) {
+  return createUnaryUnit(theme, "spacing", 8);
 }
 function getValue(transformer, propValue) {
   if (typeof propValue === "string" || propValue == null) {
@@ -13601,10 +13601,10 @@ function callIfFn(maybeFn, arg2) {
   return typeof maybeFn === "function" ? maybeFn(arg2) : maybeFn;
 }
 function unstable_createStyleFunctionSx() {
-  function getThemeValue(prop, val, theme2, config2) {
+  function getThemeValue(prop, val, theme, config2) {
     const props = {
       [prop]: val,
-      theme: theme2
+      theme
     };
     const options = config2[prop];
     if (!options) {
@@ -13626,7 +13626,7 @@ function unstable_createStyleFunctionSx() {
         [prop]: val
       };
     }
-    const themeMapping = getPath(theme2, themeKey) || {};
+    const themeMapping = getPath(theme, themeKey) || {};
     if (style2) {
       return style2(props);
     }
@@ -13647,42 +13647,42 @@ function unstable_createStyleFunctionSx() {
   function styleFunctionSx2(props) {
     const {
       sx,
-      theme: theme2 = {},
+      theme = {},
       nested: nested2
     } = props || {};
     if (!sx) {
       return null;
     }
-    const config2 = theme2.unstable_sxConfig ?? defaultSxConfig;
+    const config2 = theme.unstable_sxConfig ?? defaultSxConfig;
     function traverse(sxInput) {
       let sxObject = sxInput;
       if (typeof sxInput === "function") {
-        sxObject = sxInput(theme2);
+        sxObject = sxInput(theme);
       } else if (typeof sxInput !== "object") {
         return sxInput;
       }
       if (!sxObject) {
         return null;
       }
-      const emptyBreakpoints = createEmptyBreakpointObject(theme2.breakpoints);
+      const emptyBreakpoints = createEmptyBreakpointObject(theme.breakpoints);
       const breakpointsKeys = Object.keys(emptyBreakpoints);
       let css2 = emptyBreakpoints;
       Object.keys(sxObject).forEach((styleKey) => {
-        const value = callIfFn(sxObject[styleKey], theme2);
+        const value = callIfFn(sxObject[styleKey], theme);
         if (value !== null && value !== void 0) {
           if (typeof value === "object") {
             if (config2[styleKey]) {
-              css2 = merge(css2, getThemeValue(styleKey, value, theme2, config2));
+              css2 = merge(css2, getThemeValue(styleKey, value, theme, config2));
             } else {
               const breakpointsValues = handleBreakpoints({
-                theme: theme2
+                theme
               }, value, (x) => ({
                 [styleKey]: x
               }));
               if (objectsHaveSameKeys(breakpointsValues, value)) {
                 css2[styleKey] = styleFunctionSx2({
                   sx: value,
-                  theme: theme2,
+                  theme,
                   nested: true
                 });
               } else {
@@ -13690,16 +13690,16 @@ function unstable_createStyleFunctionSx() {
               }
             }
           } else {
-            css2 = merge(css2, getThemeValue(styleKey, value, theme2, config2));
+            css2 = merge(css2, getThemeValue(styleKey, value, theme, config2));
           }
         }
       });
-      if (!nested2 && theme2.modularCssLayers) {
+      if (!nested2 && theme.modularCssLayers) {
         return {
-          "@layer sx": sortContainerQueries(theme2, removeUnusedBreakpoints(breakpointsKeys, css2))
+          "@layer sx": sortContainerQueries(theme, removeUnusedBreakpoints(breakpointsKeys, css2))
         };
       }
-      return sortContainerQueries(theme2, removeUnusedBreakpoints(breakpointsKeys, css2));
+      return sortContainerQueries(theme, removeUnusedBreakpoints(breakpointsKeys, css2));
     }
     return Array.isArray(sx) ? sx.map(traverse) : traverse(sx);
   }
@@ -15582,12 +15582,12 @@ function createSpacing(spacingInput = 8, transform = createUnarySpacing({
   return spacing;
 }
 function applyStyles(key, styles2) {
-  const theme2 = this;
-  if (theme2.vars) {
-    if (!theme2.colorSchemes?.[key] || typeof theme2.getColorSchemeSelector !== "function") {
+  const theme = this;
+  if (theme.vars) {
+    if (!theme.colorSchemes?.[key] || typeof theme.getColorSchemeSelector !== "function") {
       return {};
     }
-    let selector = theme2.getColorSchemeSelector(key);
+    let selector = theme.getColorSchemeSelector(key);
     if (selector === "&") {
       return styles2;
     }
@@ -15598,7 +15598,7 @@ function applyStyles(key, styles2) {
       [selector]: styles2
     };
   }
-  if (theme2.palette.mode === key) {
+  if (theme.palette.mode === key) {
     return styles2;
   }
   return {};
@@ -15879,8 +15879,8 @@ function createStyled2(input = {}) {
       expressionsHead.push(styleAttachTheme);
       if (componentName && overridesResolver2) {
         expressionsTail.push(function styleThemeOverrides(props) {
-          const theme2 = props.theme;
-          const styleOverrides = theme2.components?.[componentName]?.styleOverrides;
+          const theme = props.theme;
+          const styleOverrides = theme.components?.[componentName]?.styleOverrides;
           if (!styleOverrides) {
             return null;
           }
@@ -15893,8 +15893,8 @@ function createStyled2(input = {}) {
       }
       if (componentName && !skipVariantsResolver) {
         expressionsTail.push(function styleThemeVariants(props) {
-          const theme2 = props.theme;
-          const themeVariants = theme2?.components?.[componentName]?.variants;
+          const theme = props.theme;
+          const themeVariants = theme?.components?.[componentName]?.variants;
           if (!themeVariants) {
             return null;
           }
@@ -15998,14 +15998,14 @@ function resolveProps(defaultProps2, props, mergeClassNameAndStyle = false) {
 }
 function getThemeProps$1(params) {
   const {
-    theme: theme2,
+    theme,
     name,
     props
   } = params;
-  if (!theme2 || !theme2.components || !theme2.components[name] || !theme2.components[name].defaultProps) {
+  if (!theme || !theme.components || !theme.components[name] || !theme.components[name].defaultProps) {
     return props;
   }
-  return resolveProps(theme2.components[name].defaultProps, props);
+  return resolveProps(theme.components[name].defaultProps, props);
 }
 function useThemeProps({
   props,
@@ -16013,12 +16013,12 @@ function useThemeProps({
   defaultTheme: defaultTheme2,
   themeId
 }) {
-  let theme2 = useTheme$2(defaultTheme2);
+  let theme = useTheme$2(defaultTheme2);
   if (themeId) {
-    theme2 = theme2[themeId] || theme2;
+    theme = theme[themeId] || theme;
   }
   return getThemeProps$1({
-    theme: theme2,
+    theme,
     name,
     props
   });
@@ -16217,8 +16217,8 @@ function private_safeEmphasize(color2, coefficient, warning) {
 }
 const ThemeContext = /* @__PURE__ */ reactExports.createContext(null);
 function useTheme$1() {
-  const theme2 = reactExports.useContext(ThemeContext);
-  return theme2;
+  const theme = reactExports.useContext(ThemeContext);
+  return theme;
 }
 const hasSymbol = typeof Symbol === "function" && Symbol.for;
 const nested = hasSymbol ? /* @__PURE__ */ Symbol.for("mui.nested") : "__THEME_NESTED__";
@@ -16238,7 +16238,7 @@ function ThemeProvider$2(props) {
     theme: localTheme
   } = props;
   const outerTheme = useTheme$1();
-  const theme2 = reactExports.useMemo(() => {
+  const theme = reactExports.useMemo(() => {
     const output = outerTheme === null ? {
       ...localTheme
     } : mergeOuterLocalTheme(outerTheme, localTheme);
@@ -16248,7 +16248,7 @@ function ThemeProvider$2(props) {
     return output;
   }, [localTheme, outerTheme]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeContext.Provider, {
-    value: theme2,
+    value: theme,
     children
   });
 }
@@ -16278,19 +16278,19 @@ function DefaultPropsProvider({
 }
 function getThemeProps(params) {
   const {
-    theme: theme2,
+    theme,
     name,
     props
   } = params;
-  if (!theme2 || !theme2.components || !theme2.components[name]) {
+  if (!theme || !theme.components || !theme.components[name]) {
     return props;
   }
-  const config2 = theme2.components[name];
+  const config2 = theme.components[name];
   if (config2.defaultProps) {
-    return resolveProps(config2.defaultProps, props, theme2.components.mergeClassNameAndStyle);
+    return resolveProps(config2.defaultProps, props, theme.components.mergeClassNameAndStyle);
   }
   if (!config2.styleOverrides && !config2.variants) {
-    return resolveProps(config2, props, theme2.components.mergeClassNameAndStyle);
+    return resolveProps(config2, props, theme.components.mergeClassNameAndStyle);
   }
   return props;
 }
@@ -16330,12 +16330,12 @@ function useId(idOverride) {
   }
   return useGlobalId(idOverride);
 }
-function useLayerOrder(theme2) {
+function useLayerOrder(theme) {
   const upperTheme = useTheme$3();
   const id = useId() || "";
   const {
     modularCssLayers
-  } = theme2;
+  } = theme;
   let layerOrder = "mui.global, mui.components, mui.theme, mui.custom, mui.sx";
   if (!modularCssLayers || upperTheme !== null) {
     layerOrder = "";
@@ -16872,32 +16872,32 @@ function createCssVarsProvider(options) {
     }
     const memoTheme2 = reactExports.useMemo(() => {
       const themeVars = restThemeProp.generateThemeVars?.() || restThemeProp.vars;
-      const theme2 = {
+      const theme = {
         ...restThemeProp,
         components,
         colorSchemes,
         cssVarPrefix,
         vars: themeVars
       };
-      if (typeof theme2.generateSpacing === "function") {
-        theme2.spacing = theme2.generateSpacing();
+      if (typeof theme.generateSpacing === "function") {
+        theme.spacing = theme.generateSpacing();
       }
       if (calculatedColorScheme) {
         const scheme = colorSchemes[calculatedColorScheme];
         if (scheme && typeof scheme === "object") {
           Object.keys(scheme).forEach((schemeKey) => {
             if (scheme[schemeKey] && typeof scheme[schemeKey] === "object") {
-              theme2[schemeKey] = {
-                ...theme2[schemeKey],
+              theme[schemeKey] = {
+                ...theme[schemeKey],
                 ...scheme[schemeKey]
               };
             } else {
-              theme2[schemeKey] = scheme[schemeKey];
+              theme[schemeKey] = scheme[schemeKey];
             }
           });
         }
       }
-      return resolveTheme ? resolveTheme(theme2) : theme2;
+      return resolveTheme ? resolveTheme(theme) : theme;
     }, [restThemeProp, calculatedColorScheme, components, colorSchemes, cssVarPrefix]);
     const colorSchemeSelector = restThemeProp.colorSchemeSelector;
     useEnhancedEffect(() => {
@@ -17061,7 +17061,7 @@ const getCssValue = (keys, value) => {
   }
   return value;
 };
-function cssVarsParser(theme2, options) {
+function cssVarsParser(theme, options) {
   const {
     prefix: prefix2,
     shouldSkipGeneratingVar: shouldSkipGeneratingVar2
@@ -17070,7 +17070,7 @@ function cssVarsParser(theme2, options) {
   const vars = {};
   const varsWithDefaults = {};
   walkObjectDeep(
-    theme2,
+    theme,
     (keys, value, arrayKeys) => {
       if (typeof value === "string" || typeof value === "number") {
         if (!shouldSkipGeneratingVar2 || !shouldSkipGeneratingVar2(keys, value)) {
@@ -17093,7 +17093,7 @@ function cssVarsParser(theme2, options) {
     varsWithDefaults
   };
 }
-function prepareCssVars(theme2, parserConfig = {}) {
+function prepareCssVars(theme, parserConfig = {}) {
   const {
     getSelector = defaultGetSelector2,
     disableCssColorScheme,
@@ -17105,7 +17105,7 @@ function prepareCssVars(theme2, parserConfig = {}) {
     components,
     defaultColorScheme = "light",
     ...otherTheme
-  } = theme2;
+  } = theme;
   const {
     vars: rootVars,
     css: rootCss,
@@ -17154,7 +17154,7 @@ function prepareCssVars(theme2, parserConfig = {}) {
     }
     if (colorScheme) {
       if (rule === "media") {
-        if (theme2.defaultColorScheme === colorScheme) {
+        if (theme.defaultColorScheme === colorScheme) {
           return ":root";
         }
         const mode = colorSchemes[colorScheme]?.palette?.mode || colorScheme;
@@ -17165,7 +17165,7 @@ function prepareCssVars(theme2, parserConfig = {}) {
         };
       }
       if (rule) {
-        if (theme2.defaultColorScheme === colorScheme) {
+        if (theme.defaultColorScheme === colorScheme) {
           return `:root, ${rule.replace("%s", String(colorScheme))}`;
         }
         return rule.replace("%s", String(colorScheme));
@@ -17186,7 +17186,7 @@ function prepareCssVars(theme2, parserConfig = {}) {
   };
   const generateStyleSheets = () => {
     const stylesheets = [];
-    const colorScheme = theme2.defaultColorScheme || "light";
+    const colorScheme = theme.defaultColorScheme || "light";
     function insertStyleSheet(key, css2) {
       if (Object.keys(css2).length) {
         stylesheets.push(typeof key === "string" ? {
@@ -17305,23 +17305,23 @@ const getSideFromDirection = (direction) => {
 };
 const style = ({
   ownerState,
-  theme: theme2
+  theme
 }) => {
   let styles2 = {
     display: "flex",
     flexDirection: "column",
     ...handleBreakpoints({
-      theme: theme2
+      theme
     }, resolveBreakpointValues({
       values: ownerState.direction,
-      breakpoints: theme2.breakpoints.values
+      breakpoints: theme.breakpoints.values
     }), (propValue) => ({
       flexDirection: propValue
     }))
   };
   if (ownerState.spacing) {
-    const transformer = createUnarySpacing(theme2);
-    const base = Object.keys(theme2.breakpoints.values).reduce((acc, breakpoint) => {
+    const transformer = createUnarySpacing(theme);
+    const base = Object.keys(theme.breakpoints.values).reduce((acc, breakpoint) => {
       if (typeof ownerState.spacing === "object" && ownerState.spacing[breakpoint] != null || typeof ownerState.direction === "object" && ownerState.direction[breakpoint] != null) {
         acc[breakpoint] = true;
       }
@@ -17362,10 +17362,10 @@ const style = ({
       };
     };
     styles2 = deepmerge(styles2, handleBreakpoints({
-      theme: theme2
+      theme
     }, spacingValues, styleFromPropValue));
   }
-  styles2 = mergeBreakpointsInOrder(theme2.breakpoints, styles2);
+  styles2 = mergeBreakpointsInOrder(theme.breakpoints, styles2);
   return styles2;
 };
 function createStack(options = {}) {
@@ -18011,10 +18011,10 @@ const parseAddition = (str) => {
   }
   return sum;
 };
-function attachColorManipulators(theme2) {
-  Object.assign(theme2, {
+function attachColorManipulators(theme) {
+  Object.assign(theme, {
     alpha(color2, coefficient) {
-      const obj = this || theme2;
+      const obj = this || theme;
       if (obj.colorSpace) {
         return `oklch(from ${color2} l c h / ${typeof coefficient === "string" ? `calc(${coefficient})` : coefficient})`;
       }
@@ -18024,14 +18024,14 @@ function attachColorManipulators(theme2) {
       return alpha(color2, parseAddition(coefficient));
     },
     lighten(color2, coefficient) {
-      const obj = this || theme2;
+      const obj = this || theme;
       if (obj.colorSpace) {
         return `color-mix(in ${obj.colorSpace}, ${color2}, #fff ${coefficientToPercentage(coefficient)})`;
       }
       return lighten(color2, coefficient);
     },
     darken(color2, coefficient) {
-      const obj = this || theme2;
+      const obj = this || theme;
       if (obj.colorSpace) {
         return `color-mix(in ${obj.colorSpace}, ${color2}, #000 ${coefficientToPercentage(coefficient)})`;
       }
@@ -18145,9 +18145,9 @@ function shouldSkipGeneratingVar(keys) {
   keys[0] === "palette" && !!keys[1]?.match(/(mode|contrastThreshold|tonalOffset)/);
 }
 const excludeVariablesFromRoot = (cssVarPrefix) => [...[...Array(25)].map((_, index) => `--${cssVarPrefix ? `${cssVarPrefix}-` : ""}overlays-${index}`), `--${cssVarPrefix ? `${cssVarPrefix}-` : ""}palette-AppBar-darkBg`, `--${cssVarPrefix ? `${cssVarPrefix}-` : ""}palette-AppBar-darkColor`];
-const defaultGetSelector = (theme2) => (colorScheme, css2) => {
-  const root = theme2.rootSelector || ":root";
-  const selector = theme2.colorSchemeSelector;
+const defaultGetSelector = (theme) => (colorScheme, css2) => {
+  const root = theme.rootSelector || ":root";
+  const selector = theme.colorSchemeSelector;
   let rule = selector;
   if (selector === "class") {
     rule = ".%s";
@@ -18158,10 +18158,10 @@ const defaultGetSelector = (theme2) => (colorScheme, css2) => {
   if (selector?.startsWith("data-") && !selector.includes("%s")) {
     rule = `[${selector}="%s"]`;
   }
-  if (theme2.defaultColorScheme === colorScheme) {
+  if (theme.defaultColorScheme === colorScheme) {
     if (colorScheme === "dark") {
       const excludedVariables = {};
-      excludeVariablesFromRoot(theme2.cssVarPrefix).forEach((cssVar) => {
+      excludeVariablesFromRoot(theme.cssVarPrefix).forEach((cssVar) => {
         excludedVariables[cssVar] = css2[cssVar];
         delete css2[cssVar];
       });
@@ -18326,7 +18326,7 @@ function createThemeWithVars(options = {}, ...args) {
   if (builtInDark && !colorSchemes.dark) {
     attachColorScheme$1(colorSpace, colorSchemes, builtInDark, void 0, "dark");
   }
-  let theme2 = {
+  let theme = {
     defaultColorScheme,
     ...muiTheme,
     cssVarPrefix,
@@ -18340,8 +18340,8 @@ function createThemeWithVars(options = {}, ...args) {
     },
     spacing: getSpacingVal(input.spacing)
   };
-  Object.keys(theme2.colorSchemes).forEach((key) => {
-    const palette = theme2.colorSchemes[key].palette;
+  Object.keys(theme.colorSchemes).forEach((key) => {
+    const palette = theme.colorSchemes[key].palette;
     const setCssVarColor = (cssVar) => {
       const tokens = cssVar.split("-");
       const color2 = tokens[1];
@@ -18532,50 +18532,50 @@ function createThemeWithVars(options = {}, ...args) {
       }
     });
   });
-  theme2 = args.reduce((acc, argument) => deepmerge(acc, argument), theme2);
+  theme = args.reduce((acc, argument) => deepmerge(acc, argument), theme);
   const parserConfig = {
     prefix: cssVarPrefix,
     disableCssColorScheme,
     shouldSkipGeneratingVar: shouldSkipGeneratingVar$1,
-    getSelector: defaultGetSelector(theme2),
+    getSelector: defaultGetSelector(theme),
     enableContrastVars: nativeColor
   };
   const {
     vars,
     generateThemeVars,
     generateStyleSheets
-  } = prepareCssVars(theme2, parserConfig);
-  theme2.vars = vars;
-  Object.entries(theme2.colorSchemes[theme2.defaultColorScheme]).forEach(([key, value]) => {
-    theme2[key] = value;
+  } = prepareCssVars(theme, parserConfig);
+  theme.vars = vars;
+  Object.entries(theme.colorSchemes[theme.defaultColorScheme]).forEach(([key, value]) => {
+    theme[key] = value;
   });
-  theme2.generateThemeVars = generateThemeVars;
-  theme2.generateStyleSheets = generateStyleSheets;
-  theme2.generateSpacing = function generateSpacing() {
+  theme.generateThemeVars = generateThemeVars;
+  theme.generateStyleSheets = generateStyleSheets;
+  theme.generateSpacing = function generateSpacing() {
     return createSpacing(input.spacing, createUnarySpacing(this));
   };
-  theme2.getColorSchemeSelector = createGetColorSchemeSelector(selector);
-  theme2.spacing = theme2.generateSpacing();
-  theme2.shouldSkipGeneratingVar = shouldSkipGeneratingVar$1;
-  theme2.unstable_sxConfig = {
+  theme.getColorSchemeSelector = createGetColorSchemeSelector(selector);
+  theme.spacing = theme.generateSpacing();
+  theme.shouldSkipGeneratingVar = shouldSkipGeneratingVar$1;
+  theme.unstable_sxConfig = {
     ...defaultSxConfig,
     ...input?.unstable_sxConfig
   };
-  theme2.unstable_sx = function sx(props) {
+  theme.unstable_sx = function sx(props) {
     return styleFunctionSx({
       sx: props,
       theme: this
     });
   };
-  theme2.toRuntimeSource = stringifyTheme;
-  return theme2;
+  theme.toRuntimeSource = stringifyTheme;
+  return theme;
 }
-function attachColorScheme(theme2, scheme, colorScheme) {
-  if (!theme2.colorSchemes) {
+function attachColorScheme(theme, scheme, colorScheme) {
+  if (!theme.colorSchemes) {
     return void 0;
   }
   if (colorScheme) {
-    theme2.colorSchemes[scheme] = {
+    theme.colorSchemes[scheme] = {
       ...colorScheme !== true && colorScheme,
       palette: createPalette({
         ...colorScheme === true ? {} : colorScheme.palette,
@@ -18622,27 +18622,27 @@ function createTheme(options = {}, ...args) {
         }
       }
     }
-    const theme2 = createThemeNoVars({
+    const theme = createThemeNoVars({
       ...options,
       palette: paletteOptions
     }, ...args);
-    theme2.defaultColorScheme = defaultColorSchemeInput;
-    theme2.colorSchemes = colorSchemesInput;
-    if (theme2.palette.mode === "light") {
-      theme2.colorSchemes.light = {
+    theme.defaultColorScheme = defaultColorSchemeInput;
+    theme.colorSchemes = colorSchemesInput;
+    if (theme.palette.mode === "light") {
+      theme.colorSchemes.light = {
         ...colorSchemesInput.light !== true && colorSchemesInput.light,
-        palette: theme2.palette
+        palette: theme.palette
       };
-      attachColorScheme(theme2, "dark", colorSchemesInput.dark);
+      attachColorScheme(theme, "dark", colorSchemesInput.dark);
     }
-    if (theme2.palette.mode === "dark") {
-      theme2.colorSchemes.dark = {
+    if (theme.palette.mode === "dark") {
+      theme.colorSchemes.dark = {
         ...colorSchemesInput.dark !== true && colorSchemesInput.dark,
-        palette: theme2.palette
+        palette: theme.palette
       };
-      attachColorScheme(theme2, "light", colorSchemesInput.light);
+      attachColorScheme(theme, "light", colorSchemesInput.light);
     }
-    return theme2;
+    return theme;
   }
   if (!palette && !("light" in colorSchemesInput) && defaultColorSchemeInput === "light") {
     colorSchemesInput.light = true;
@@ -18657,8 +18657,8 @@ function createTheme(options = {}, ...args) {
 const defaultTheme = createTheme();
 const THEME_ID = "$$material";
 function useTheme() {
-  const theme2 = useTheme$2(defaultTheme);
-  return theme2[THEME_ID] || theme2;
+  const theme = useTheme$2(defaultTheme);
+  return theme[THEME_ID] || theme;
 }
 function GlobalStyles(props) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(GlobalStyles$1, {
@@ -18681,8 +18681,8 @@ function globalCss(styles2) {
     return (
       // Pigment CSS `globalCss` support callback with theme inside an object but `GlobalStyles` support theme as a callback value.
       /* @__PURE__ */ jsxRuntimeExports.jsx(GlobalStyles, {
-        styles: typeof styles2 === "function" ? (theme2) => styles2({
-          theme: theme2,
+        styles: typeof styles2 === "function" ? (theme) => styles2({
+          theme,
           ...props
         }) : styles2
       })
@@ -18718,15 +18718,15 @@ const SvgIconRoot = styled("svg", {
     return [styles2.root, ownerState.color !== "inherit" && styles2[`color${capitalize(ownerState.color)}`], styles2[`fontSize${capitalize(ownerState.fontSize)}`]];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   userSelect: "none",
   width: "1em",
   height: "1em",
   display: "inline-block",
   flexShrink: 0,
-  transition: theme2.transitions?.create?.("fill", {
-    duration: (theme2.vars ?? theme2).transitions?.duration?.shorter
+  transition: theme.transitions?.create?.("fill", {
+    duration: (theme.vars ?? theme).transitions?.duration?.shorter
   }),
   variants: [
     {
@@ -18750,7 +18750,7 @@ const SvgIconRoot = styled("svg", {
         fontSize: "small"
       },
       style: {
-        fontSize: theme2.typography?.pxToRem?.(20) || "1.25rem"
+        fontSize: theme.typography?.pxToRem?.(20) || "1.25rem"
       }
     },
     {
@@ -18758,7 +18758,7 @@ const SvgIconRoot = styled("svg", {
         fontSize: "medium"
       },
       style: {
-        fontSize: theme2.typography?.pxToRem?.(24) || "1.5rem"
+        fontSize: theme.typography?.pxToRem?.(24) || "1.5rem"
       }
     },
     {
@@ -18766,16 +18766,16 @@ const SvgIconRoot = styled("svg", {
         fontSize: "large"
       },
       style: {
-        fontSize: theme2.typography?.pxToRem?.(35) || "2.1875rem"
+        fontSize: theme.typography?.pxToRem?.(35) || "2.1875rem"
       }
     },
     // TODO v5 deprecate color prop, v6 remove for sx
-    ...Object.entries((theme2.vars ?? theme2).palette).filter(([, value]) => value && value.main).map(([color2]) => ({
+    ...Object.entries((theme.vars ?? theme).palette).filter(([, value]) => value && value.main).map(([color2]) => ({
       props: {
         color: color2
       },
       style: {
-        color: (theme2.vars ?? theme2).palette?.[color2]?.main
+        color: (theme.vars ?? theme).palette?.[color2]?.main
       }
     })),
     {
@@ -18783,7 +18783,7 @@ const SvgIconRoot = styled("svg", {
         color: "action"
       },
       style: {
-        color: (theme2.vars ?? theme2).palette?.action?.active
+        color: (theme.vars ?? theme).palette?.action?.active
       }
     },
     {
@@ -18791,7 +18791,7 @@ const SvgIconRoot = styled("svg", {
         color: "disabled"
       },
       style: {
-        color: (theme2.vars ?? theme2).palette?.action?.disabled
+        color: (theme.vars ?? theme).palette?.action?.disabled
       }
     },
     {
@@ -19080,10 +19080,10 @@ const {
     light: defaultConfig.defaultLightColorScheme,
     dark: defaultConfig.defaultDarkColorScheme
   },
-  resolveTheme: (theme2) => {
+  resolveTheme: (theme) => {
     const newTheme = {
-      ...theme2,
-      typography: createTypography(theme2.palette, theme2.typography)
+      ...theme,
+      typography: createTypography(theme.palette, theme.typography)
     };
     newTheme.unstable_sx = function sx(props) {
       return styleFunctionSx({
@@ -19096,25 +19096,25 @@ const {
 });
 const CssVarsProvider = InternalCssVarsProvider;
 function ThemeProvider({
-  theme: theme2,
+  theme,
   ...props
 }) {
   const noVarsTheme = reactExports.useMemo(() => {
-    if (typeof theme2 === "function") {
-      return theme2;
+    if (typeof theme === "function") {
+      return theme;
     }
-    const muiTheme = THEME_ID in theme2 ? theme2[THEME_ID] : theme2;
+    const muiTheme = THEME_ID in theme ? theme[THEME_ID] : theme;
     if (!("colorSchemes" in muiTheme)) {
       if (!("vars" in muiTheme)) {
         return {
-          ...theme2,
+          ...theme,
           vars: null
         };
       }
-      return theme2;
+      return theme;
     }
     return null;
-  }, [theme2]);
+  }, [theme]);
   if (noVarsTheme) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProviderNoVars, {
       theme: noVarsTheme,
@@ -19122,7 +19122,7 @@ function ThemeProvider({
     });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(CssVarsProvider, {
-    theme: theme2,
+    theme,
     ...props
   });
 }
@@ -19368,15 +19368,15 @@ function TopMenu() {
         ref: menuRef,
         className: "top-menu" + (uiState.menuOpen ? " open" : ""),
         children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "container", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "button shiny-button", onClick: takeOver, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "button qm-btn qm-btn-text", onClick: takeOver, children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(AdsClickSharpIcon, {}),
             " Take over focus"
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { className: "button shiny-button", href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { className: "button qm-btn qm-btn-text", href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(QuizSharpIcon, {}),
             " Documentation"
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "button shiny-button", onClick: () => {
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "button qm-btn qm-btn-text", onClick: () => {
             toggleMenu();
             openSplash();
           }, children: [
@@ -19568,7 +19568,7 @@ const QueueItemRow = reactExports.memo(
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
-              className: "delete red-button shiny-button",
+              className: "delete qm-btn qm-btn-danger",
               onClick: cancelQueueItem,
               title: "Delete workflow from queue",
               children: "Delete"
@@ -19577,7 +19577,7 @@ const QueueItemRow = reactExports.memo(
           mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
-              className: "load green-button shiny-button",
+              className: "load qm-btn qm-btn-primary",
               onClick: loadQueueItem,
               title: "Load workflow",
               children: "Load"
@@ -19586,7 +19586,7 @@ const QueueItemRow = reactExports.memo(
           route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
-              className: "archive yellow-button shiny-button",
+              className: "archive qm-btn",
               onClick: archiveQueueItem,
               title: "Move to the archive",
               children: "Archive"
@@ -19595,7 +19595,7 @@ const QueueItemRow = reactExports.memo(
           route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
             {
-              className: "run blue-button shiny-button",
+              className: "run qm-btn qm-btn-primary",
               onClick: playItem,
               title: "Move to queue",
               children: [
@@ -19667,7 +19667,7 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
       className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : ""),
       style: { "--job-progress": progress + "%" },
       children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "min-w-full border border-0", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "dark:bg-neutral-800 bg-neutral-200 text-xs uppercase", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "text-xs uppercase", style: { backgroundColor: "var(--qm-surface)" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "#" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left workflow-column", children: "Workflow" }),
           route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "Info" }),
@@ -19678,10 +19678,10 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
             "Loading failed: ",
             error
           ] }) }),
-          !isLoading && (!data || !running.length && !pending.length) && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, className: "italic text-center info-cell", children: "No items." }) }),
+          !isLoading && (!data || !running.length && !pending.length) && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, className: "italic text-center info-cell", style: { color: "var(--qm-fg-muted)" }, children: "No items." }) }),
           isLoading && !data && /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 serial", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, className: "italic text-center info-cell", children: "Loading..." })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, className: "italic text-center info-cell", style: { color: "var(--qm-fg-muted)" }, children: "Loading..." })
           ] }),
           data && /* @__PURE__ */ jsxRuntimeExports.jsx(QueueItems, { running, pending, info: data.info })
         ] })
@@ -20375,14 +20375,14 @@ const TouchRippleRipple = styled(Ripple, {
     animation-name: ${enterKeyframe};
     animation-duration: ${DURATION}ms;
     animation-timing-function: ${({
-  theme: theme2
-}) => theme2.transitions.easing.easeInOut};
+  theme
+}) => theme.transitions.easing.easeInOut};
   }
 
   &.${touchRippleClasses.ripplePulsate} {
     animation-duration: ${({
-  theme: theme2
-}) => theme2.transitions.duration.shorter}ms;
+  theme
+}) => theme.transitions.duration.shorter}ms;
   }
 
   & .${touchRippleClasses.child} {
@@ -20399,8 +20399,8 @@ const TouchRippleRipple = styled(Ripple, {
     animation-name: ${exitKeyframe};
     animation-duration: ${DURATION}ms;
     animation-timing-function: ${({
-  theme: theme2
-}) => theme2.transitions.easing.easeInOut};
+  theme
+}) => theme.transitions.easing.easeInOut};
   }
 
   & .${touchRippleClasses.childPulsate} {
@@ -20411,8 +20411,8 @@ const TouchRippleRipple = styled(Ripple, {
     animation-name: ${pulsateKeyframe};
     animation-duration: 2500ms;
     animation-timing-function: ${({
-  theme: theme2
-}) => theme2.transitions.easing.easeInOut};
+  theme
+}) => theme.transitions.easing.easeInOut};
     animation-iteration-count: infinite;
     animation-delay: 200ms;
   }
@@ -20921,7 +20921,7 @@ const CircularProgressRoot = styled("span", {
     return [styles2.root, styles2[ownerState.variant], styles2[`color${capitalize(ownerState.color)}`]];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   display: "inline-block",
   variants: [{
@@ -20929,7 +20929,7 @@ const CircularProgressRoot = styled("span", {
       variant: "determinate"
     },
     style: {
-      transition: theme2.transitions.create("transform")
+      transition: theme.transitions.create("transform")
     }
   }, {
     props: {
@@ -20938,12 +20938,12 @@ const CircularProgressRoot = styled("span", {
     style: rotateAnimation || {
       animation: `${circularRotateKeyframe} 1.4s linear infinite`
     }
-  }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+  }, ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
     props: {
       color: color2
     },
     style: {
-      color: (theme2.vars || theme2).palette[color2].main
+      color: (theme.vars || theme).palette[color2].main
     }
   }))]
 })));
@@ -20964,7 +20964,7 @@ const CircularProgressCircle = styled("circle", {
     return [styles2.circle, styles2[`circle${capitalize(ownerState.variant)}`], ownerState.disableShrink && styles2.circleDisableShrink];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   stroke: "currentColor",
   variants: [{
@@ -20972,7 +20972,7 @@ const CircularProgressCircle = styled("circle", {
       variant: "determinate"
     },
     style: {
-      transition: theme2.transitions.create("stroke-dashoffset")
+      transition: theme.transitions.create("stroke-dashoffset")
     }
   }, {
     props: {
@@ -20998,10 +20998,10 @@ const CircularProgressTrack = styled("circle", {
   name: "MuiCircularProgress",
   slot: "Track"
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   stroke: "currentColor",
-  opacity: (theme2.vars || theme2).palette.action.activatedOpacity
+  opacity: (theme.vars || theme).palette.action.activatedOpacity
 })));
 const CircularProgress = /* @__PURE__ */ reactExports.forwardRef(function CircularProgress2(inProps, ref) {
   const props = useDefaultProps({
@@ -21150,24 +21150,24 @@ const ButtonRoot = styled(ButtonBase, {
     return [styles2.root, styles2[ownerState.variant], styles2[`${ownerState.variant}${capitalize(ownerState.color)}`], styles2[`size${capitalize(ownerState.size)}`], styles2[`${ownerState.variant}Size${capitalize(ownerState.size)}`], ownerState.color === "inherit" && styles2.colorInherit, ownerState.disableElevation && styles2.disableElevation, ownerState.fullWidth && styles2.fullWidth, ownerState.loading && styles2.loading];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => {
-  const inheritContainedBackgroundColor = theme2.palette.mode === "light" ? theme2.palette.grey[300] : theme2.palette.grey[800];
-  const inheritContainedHoverBackgroundColor = theme2.palette.mode === "light" ? theme2.palette.grey.A100 : theme2.palette.grey[700];
+  const inheritContainedBackgroundColor = theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[800];
+  const inheritContainedHoverBackgroundColor = theme.palette.mode === "light" ? theme.palette.grey.A100 : theme.palette.grey[700];
   return {
-    ...theme2.typography.button,
+    ...theme.typography.button,
     minWidth: 64,
     padding: "6px 16px",
     border: 0,
-    borderRadius: (theme2.vars || theme2).shape.borderRadius,
-    transition: theme2.transitions.create(["background-color", "box-shadow", "border-color", "color"], {
-      duration: theme2.transitions.duration.short
+    borderRadius: (theme.vars || theme).shape.borderRadius,
+    transition: theme.transitions.create(["background-color", "box-shadow", "border-color", "color"], {
+      duration: theme.transitions.duration.short
     }),
     "&:hover": {
       textDecoration: "none"
     },
     [`&.${buttonClasses.disabled}`]: {
-      color: (theme2.vars || theme2).palette.action.disabled
+      color: (theme.vars || theme).palette.action.disabled
     },
     variants: [{
       props: {
@@ -21176,24 +21176,24 @@ const ButtonRoot = styled(ButtonBase, {
       style: {
         color: `var(--variant-containedColor)`,
         backgroundColor: `var(--variant-containedBg)`,
-        boxShadow: (theme2.vars || theme2).shadows[2],
+        boxShadow: (theme.vars || theme).shadows[2],
         "&:hover": {
-          boxShadow: (theme2.vars || theme2).shadows[4],
+          boxShadow: (theme.vars || theme).shadows[4],
           // Reset on touch devices, it doesn't add specificity
           "@media (hover: none)": {
-            boxShadow: (theme2.vars || theme2).shadows[2]
+            boxShadow: (theme.vars || theme).shadows[2]
           }
         },
         "&:active": {
-          boxShadow: (theme2.vars || theme2).shadows[8]
+          boxShadow: (theme.vars || theme).shadows[8]
         },
         [`&.${buttonClasses.focusVisible}`]: {
-          boxShadow: (theme2.vars || theme2).shadows[6]
+          boxShadow: (theme.vars || theme).shadows[6]
         },
         [`&.${buttonClasses.disabled}`]: {
-          color: (theme2.vars || theme2).palette.action.disabled,
-          boxShadow: (theme2.vars || theme2).shadows[0],
-          backgroundColor: (theme2.vars || theme2).palette.action.disabledBackground
+          color: (theme.vars || theme).palette.action.disabled,
+          boxShadow: (theme.vars || theme).shadows[0],
+          backgroundColor: (theme.vars || theme).palette.action.disabledBackground
         }
       }
     }, {
@@ -21207,7 +21207,7 @@ const ButtonRoot = styled(ButtonBase, {
         backgroundColor: `var(--variant-outlinedBg)`,
         color: `var(--variant-outlinedColor)`,
         [`&.${buttonClasses.disabled}`]: {
-          border: `1px solid ${(theme2.vars || theme2).palette.action.disabledBackground}`
+          border: `1px solid ${(theme.vars || theme).palette.action.disabledBackground}`
         }
       }
     }, {
@@ -21219,22 +21219,22 @@ const ButtonRoot = styled(ButtonBase, {
         color: `var(--variant-textColor)`,
         backgroundColor: `var(--variant-textBg)`
       }
-    }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    }, ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
       props: {
         color: color2
       },
       style: {
-        "--variant-textColor": (theme2.vars || theme2).palette[color2].main,
-        "--variant-outlinedColor": (theme2.vars || theme2).palette[color2].main,
-        "--variant-outlinedBorder": theme2.alpha((theme2.vars || theme2).palette[color2].main, 0.5),
-        "--variant-containedColor": (theme2.vars || theme2).palette[color2].contrastText,
-        "--variant-containedBg": (theme2.vars || theme2).palette[color2].main,
+        "--variant-textColor": (theme.vars || theme).palette[color2].main,
+        "--variant-outlinedColor": (theme.vars || theme).palette[color2].main,
+        "--variant-outlinedBorder": theme.alpha((theme.vars || theme).palette[color2].main, 0.5),
+        "--variant-containedColor": (theme.vars || theme).palette[color2].contrastText,
+        "--variant-containedBg": (theme.vars || theme).palette[color2].main,
         "@media (hover: hover)": {
           "&:hover": {
-            "--variant-containedBg": (theme2.vars || theme2).palette[color2].dark,
-            "--variant-textBg": theme2.alpha((theme2.vars || theme2).palette[color2].main, (theme2.vars || theme2).palette.action.hoverOpacity),
-            "--variant-outlinedBorder": (theme2.vars || theme2).palette[color2].main,
-            "--variant-outlinedBg": theme2.alpha((theme2.vars || theme2).palette[color2].main, (theme2.vars || theme2).palette.action.hoverOpacity)
+            "--variant-containedBg": (theme.vars || theme).palette[color2].dark,
+            "--variant-textBg": theme.alpha((theme.vars || theme).palette[color2].main, (theme.vars || theme).palette.action.hoverOpacity),
+            "--variant-outlinedBorder": (theme.vars || theme).palette[color2].main,
+            "--variant-outlinedBg": theme.alpha((theme.vars || theme).palette[color2].main, (theme.vars || theme).palette.action.hoverOpacity)
           }
         }
       }
@@ -21245,12 +21245,12 @@ const ButtonRoot = styled(ButtonBase, {
       style: {
         color: "inherit",
         borderColor: "currentColor",
-        "--variant-containedBg": theme2.vars ? theme2.vars.palette.Button.inheritContainedBg : inheritContainedBackgroundColor,
+        "--variant-containedBg": theme.vars ? theme.vars.palette.Button.inheritContainedBg : inheritContainedBackgroundColor,
         "@media (hover: hover)": {
           "&:hover": {
-            "--variant-containedBg": theme2.vars ? theme2.vars.palette.Button.inheritContainedHoverBg : inheritContainedHoverBackgroundColor,
-            "--variant-textBg": theme2.alpha((theme2.vars || theme2).palette.text.primary, (theme2.vars || theme2).palette.action.hoverOpacity),
-            "--variant-outlinedBg": theme2.alpha((theme2.vars || theme2).palette.text.primary, (theme2.vars || theme2).palette.action.hoverOpacity)
+            "--variant-containedBg": theme.vars ? theme.vars.palette.Button.inheritContainedHoverBg : inheritContainedHoverBackgroundColor,
+            "--variant-textBg": theme.alpha((theme.vars || theme).palette.text.primary, (theme.vars || theme).palette.action.hoverOpacity),
+            "--variant-outlinedBg": theme.alpha((theme.vars || theme).palette.text.primary, (theme.vars || theme).palette.action.hoverOpacity)
           }
         }
       }
@@ -21261,7 +21261,7 @@ const ButtonRoot = styled(ButtonBase, {
       },
       style: {
         padding: "4px 5px",
-        fontSize: theme2.typography.pxToRem(13)
+        fontSize: theme.typography.pxToRem(13)
       }
     }, {
       props: {
@@ -21270,7 +21270,7 @@ const ButtonRoot = styled(ButtonBase, {
       },
       style: {
         padding: "8px 11px",
-        fontSize: theme2.typography.pxToRem(15)
+        fontSize: theme.typography.pxToRem(15)
       }
     }, {
       props: {
@@ -21279,7 +21279,7 @@ const ButtonRoot = styled(ButtonBase, {
       },
       style: {
         padding: "3px 9px",
-        fontSize: theme2.typography.pxToRem(13)
+        fontSize: theme.typography.pxToRem(13)
       }
     }, {
       props: {
@@ -21288,7 +21288,7 @@ const ButtonRoot = styled(ButtonBase, {
       },
       style: {
         padding: "7px 21px",
-        fontSize: theme2.typography.pxToRem(15)
+        fontSize: theme.typography.pxToRem(15)
       }
     }, {
       props: {
@@ -21297,7 +21297,7 @@ const ButtonRoot = styled(ButtonBase, {
       },
       style: {
         padding: "4px 10px",
-        fontSize: theme2.typography.pxToRem(13)
+        fontSize: theme.typography.pxToRem(13)
       }
     }, {
       props: {
@@ -21306,7 +21306,7 @@ const ButtonRoot = styled(ButtonBase, {
       },
       style: {
         padding: "8px 22px",
-        fontSize: theme2.typography.pxToRem(15)
+        fontSize: theme.typography.pxToRem(15)
       }
     }, {
       props: {
@@ -21339,8 +21339,8 @@ const ButtonRoot = styled(ButtonBase, {
         loadingPosition: "center"
       },
       style: {
-        transition: theme2.transitions.create(["background-color", "box-shadow", "border-color"], {
-          duration: theme2.transitions.duration.short
+        transition: theme.transitions.create(["background-color", "box-shadow", "border-color"], {
+          duration: theme.transitions.duration.short
         }),
         [`&.${buttonClasses.loading}`]: {
           color: "transparent"
@@ -21359,7 +21359,7 @@ const ButtonStartIcon = styled("span", {
     return [styles2.startIcon, ownerState.loading && styles2.startIconLoadingStart, styles2[`iconSize${capitalize(ownerState.size)}`]];
   }
 })(({
-  theme: theme2
+  theme
 }) => ({
   display: "inherit",
   marginRight: 8,
@@ -21377,8 +21377,8 @@ const ButtonStartIcon = styled("span", {
       loading: true
     },
     style: {
-      transition: theme2.transitions.create(["opacity"], {
-        duration: theme2.transitions.duration.short
+      transition: theme.transitions.create(["opacity"], {
+        duration: theme.transitions.duration.short
       }),
       opacity: 0
     }
@@ -21403,7 +21403,7 @@ const ButtonEndIcon = styled("span", {
     return [styles2.endIcon, ownerState.loading && styles2.endIconLoadingEnd, styles2[`iconSize${capitalize(ownerState.size)}`]];
   }
 })(({
-  theme: theme2
+  theme
 }) => ({
   display: "inherit",
   marginRight: -4,
@@ -21421,8 +21421,8 @@ const ButtonEndIcon = styled("span", {
       loading: true
     },
     style: {
-      transition: theme2.transitions.create(["opacity"], {
-        duration: theme2.transitions.duration.short
+      transition: theme.transitions.create(["opacity"], {
+        duration: theme.transitions.duration.short
       }),
       opacity: 0
     }
@@ -21441,7 +21441,7 @@ const ButtonLoadingIndicator = styled("span", {
   name: "MuiButton",
   slot: "LoadingIndicator"
 })(({
-  theme: theme2
+  theme
 }) => ({
   display: "none",
   position: "absolute",
@@ -21483,7 +21483,7 @@ const ButtonLoadingIndicator = styled("span", {
     style: {
       left: "50%",
       transform: "translate(-50%)",
-      color: (theme2.vars || theme2).palette.action.disabled
+      color: (theme.vars || theme).palette.action.disabled
     }
   }, {
     props: {
@@ -21922,24 +21922,24 @@ const PaperRoot = styled("div", {
     return [styles2.root, styles2[ownerState.variant], !ownerState.square && styles2.rounded, ownerState.variant === "elevation" && styles2[`elevation${ownerState.elevation}`]];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
-  backgroundColor: (theme2.vars || theme2).palette.background.paper,
-  color: (theme2.vars || theme2).palette.text.primary,
-  transition: theme2.transitions.create("box-shadow"),
+  backgroundColor: (theme.vars || theme).palette.background.paper,
+  color: (theme.vars || theme).palette.text.primary,
+  transition: theme.transitions.create("box-shadow"),
   variants: [{
     props: ({
       ownerState
     }) => !ownerState.square,
     style: {
-      borderRadius: theme2.shape.borderRadius
+      borderRadius: theme.shape.borderRadius
     }
   }, {
     props: {
       variant: "outlined"
     },
     style: {
-      border: `1px solid ${(theme2.vars || theme2).palette.divider}`
+      border: `1px solid ${(theme.vars || theme).palette.divider}`
     }
   }, {
     props: {
@@ -21956,7 +21956,7 @@ const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, r
     props: inProps,
     name: "MuiPaper"
   });
-  const theme2 = useTheme();
+  const theme = useTheme();
   const {
     className,
     component = "div",
@@ -21981,11 +21981,11 @@ const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, r
     ...other,
     style: {
       ...variant === "elevation" && {
-        "--Paper-shadow": (theme2.vars || theme2).shadows[elevation],
-        ...theme2.vars && {
-          "--Paper-overlay": theme2.vars.overlays?.[elevation]
+        "--Paper-shadow": (theme.vars || theme).shadows[elevation],
+        ...theme.vars && {
+          "--Paper-overlay": theme.vars.overlays?.[elevation]
         },
-        ...!theme2.vars && theme2.palette.mode === "dark" && {
+        ...!theme.vars && theme.palette.mode === "dark" && {
           "--Paper-overlay": `linear-gradient(${alpha("#fff", getOverlayAlpha(elevation))}, ${alpha("#fff", getOverlayAlpha(elevation))})`
         }
       },
@@ -22306,10 +22306,10 @@ const InputBaseRoot = styled("div", {
   slot: "Root",
   overridesResolver: rootOverridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
-  ...theme2.typography.body1,
-  color: (theme2.vars || theme2).palette.text.primary,
+  ...theme.typography.body1,
+  color: (theme.vars || theme).palette.text.primary,
   lineHeight: "1.4375em",
   // 23px
   boxSizing: "border-box",
@@ -22319,7 +22319,7 @@ const InputBaseRoot = styled("div", {
   display: "inline-flex",
   alignItems: "center",
   [`&.${inputBaseClasses.disabled}`]: {
-    color: (theme2.vars || theme2).palette.text.disabled,
+    color: (theme.vars || theme).palette.text.disabled,
     cursor: "default"
   },
   variants: [{
@@ -22351,25 +22351,25 @@ const InputBaseInput = styled("input", {
   slot: "Input",
   overridesResolver: inputOverridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => {
-  const light2 = theme2.palette.mode === "light";
+  const light2 = theme.palette.mode === "light";
   const placeholder = {
     color: "currentColor",
-    ...theme2.vars ? {
-      opacity: theme2.vars.opacity.inputPlaceholder
+    ...theme.vars ? {
+      opacity: theme.vars.opacity.inputPlaceholder
     } : {
       opacity: light2 ? 0.42 : 0.5
     },
-    transition: theme2.transitions.create("opacity", {
-      duration: theme2.transitions.duration.shorter
+    transition: theme.transitions.create("opacity", {
+      duration: theme.transitions.duration.shorter
     })
   };
   const placeholderHidden = {
     opacity: "0 !important"
   };
-  const placeholderVisible = theme2.vars ? {
-    opacity: theme2.vars.opacity.inputPlaceholder
+  const placeholderVisible = theme.vars ? {
+    opacity: theme.vars.opacity.inputPlaceholder
   } : {
     opacity: light2 ? 0.42 : 0.5
   };
@@ -22422,7 +22422,7 @@ const InputBaseInput = styled("input", {
     [`&.${inputBaseClasses.disabled}`]: {
       opacity: 1,
       // Reset iOS opacity
-      WebkitTextFillColor: (theme2.vars || theme2).palette.text.disabled
+      WebkitTextFillColor: (theme.vars || theme).palette.text.disabled
       // Fix opacity Safari bug
     },
     variants: [{
@@ -22761,10 +22761,10 @@ const styles$1 = {
   }
 };
 const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) {
-  const theme2 = useTheme();
+  const theme = useTheme();
   const defaultTimeout = {
-    enter: theme2.transitions.duration.enteringScreen,
-    exit: theme2.transitions.duration.leavingScreen
+    enter: theme.transitions.duration.enteringScreen,
+    exit: theme.transitions.duration.leavingScreen
   };
   const {
     addEndListener,
@@ -22806,8 +22806,8 @@ const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) 
     }, {
       mode: "enter"
     });
-    node2.style.webkitTransition = theme2.transitions.create("opacity", transitionProps);
-    node2.style.transition = theme2.transitions.create("opacity", transitionProps);
+    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
+    node2.style.transition = theme.transitions.create("opacity", transitionProps);
     if (onEnter) {
       onEnter(node2, isAppearing);
     }
@@ -22822,8 +22822,8 @@ const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) 
     }, {
       mode: "exit"
     });
-    node2.style.webkitTransition = theme2.transitions.create("opacity", transitionProps);
-    node2.style.transition = theme2.transitions.create("opacity", transitionProps);
+    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
+    node2.style.transition = theme.transitions.create("opacity", transitionProps);
     if (onExit) {
       onExit(node2);
     }
@@ -23565,10 +23565,10 @@ const ModalRoot = styled("div", {
     return [styles2.root, !ownerState.open && ownerState.exited && styles2.hidden];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   position: "fixed",
-  zIndex: (theme2.vars || theme2).zIndex.modal,
+  zIndex: (theme.vars || theme).zIndex.modal,
   right: 0,
   bottom: 0,
   top: 0,
@@ -23619,7 +23619,7 @@ const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, r
     slotProps = {},
     slots = {},
     // eslint-disable-next-line react/prop-types
-    theme: theme2,
+    theme,
     ...other
   } = props;
   const propsWithDefaults = {
@@ -23760,34 +23760,34 @@ const FilledInputRoot = styled(InputBaseRoot, {
     return [...rootOverridesResolver(props, styles2), !ownerState.disableUnderline && styles2.underline];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => {
-  const light2 = theme2.palette.mode === "light";
+  const light2 = theme.palette.mode === "light";
   const bottomLineColor = light2 ? "rgba(0, 0, 0, 0.42)" : "rgba(255, 255, 255, 0.7)";
   const backgroundColor2 = light2 ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.09)";
   const hoverBackground = light2 ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.13)";
   const disabledBackground = light2 ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.12)";
   return {
     position: "relative",
-    backgroundColor: theme2.vars ? theme2.vars.palette.FilledInput.bg : backgroundColor2,
-    borderTopLeftRadius: (theme2.vars || theme2).shape.borderRadius,
-    borderTopRightRadius: (theme2.vars || theme2).shape.borderRadius,
-    transition: theme2.transitions.create("background-color", {
-      duration: theme2.transitions.duration.shorter,
-      easing: theme2.transitions.easing.easeOut
+    backgroundColor: theme.vars ? theme.vars.palette.FilledInput.bg : backgroundColor2,
+    borderTopLeftRadius: (theme.vars || theme).shape.borderRadius,
+    borderTopRightRadius: (theme.vars || theme).shape.borderRadius,
+    transition: theme.transitions.create("background-color", {
+      duration: theme.transitions.duration.shorter,
+      easing: theme.transitions.easing.easeOut
     }),
     "&:hover": {
-      backgroundColor: theme2.vars ? theme2.vars.palette.FilledInput.hoverBg : hoverBackground,
+      backgroundColor: theme.vars ? theme.vars.palette.FilledInput.hoverBg : hoverBackground,
       // Reset on touch devices, it doesn't add specificity
       "@media (hover: none)": {
-        backgroundColor: theme2.vars ? theme2.vars.palette.FilledInput.bg : backgroundColor2
+        backgroundColor: theme.vars ? theme.vars.palette.FilledInput.bg : backgroundColor2
       }
     },
     [`&.${filledInputClasses.focused}`]: {
-      backgroundColor: theme2.vars ? theme2.vars.palette.FilledInput.bg : backgroundColor2
+      backgroundColor: theme.vars ? theme.vars.palette.FilledInput.bg : backgroundColor2
     },
     [`&.${filledInputClasses.disabled}`]: {
-      backgroundColor: theme2.vars ? theme2.vars.palette.FilledInput.disabledBg : disabledBackground
+      backgroundColor: theme.vars ? theme.vars.palette.FilledInput.disabledBg : disabledBackground
     },
     variants: [{
       props: ({
@@ -23801,9 +23801,9 @@ const FilledInputRoot = styled(InputBaseRoot, {
           position: "absolute",
           right: 0,
           transform: "scaleX(0)",
-          transition: theme2.transitions.create("transform", {
-            duration: theme2.transitions.duration.shorter,
-            easing: theme2.transitions.easing.easeOut
+          transition: theme.transitions.create("transform", {
+            duration: theme.transitions.duration.shorter,
+            easing: theme.transitions.easing.easeOut
           }),
           pointerEvents: "none"
           // Transparent to the hover style.
@@ -23815,37 +23815,37 @@ const FilledInputRoot = styled(InputBaseRoot, {
         },
         [`&.${filledInputClasses.error}`]: {
           "&::before, &::after": {
-            borderBottomColor: (theme2.vars || theme2).palette.error.main
+            borderBottomColor: (theme.vars || theme).palette.error.main
           }
         },
         "&::before": {
-          borderBottom: `1px solid ${theme2.vars ? theme2.alpha(theme2.vars.palette.common.onBackground, theme2.vars.opacity.inputUnderline) : bottomLineColor}`,
+          borderBottom: `1px solid ${theme.vars ? theme.alpha(theme.vars.palette.common.onBackground, theme.vars.opacity.inputUnderline) : bottomLineColor}`,
           left: 0,
           bottom: 0,
           content: '"\\00a0"',
           position: "absolute",
           right: 0,
-          transition: theme2.transitions.create("border-bottom-color", {
-            duration: theme2.transitions.duration.shorter
+          transition: theme.transitions.create("border-bottom-color", {
+            duration: theme.transitions.duration.shorter
           }),
           pointerEvents: "none"
           // Transparent to the hover style.
         },
         [`&:hover:not(.${filledInputClasses.disabled}, .${filledInputClasses.error}):before`]: {
-          borderBottom: `1px solid ${(theme2.vars || theme2).palette.text.primary}`
+          borderBottom: `1px solid ${(theme.vars || theme).palette.text.primary}`
         },
         [`&.${filledInputClasses.disabled}:before`]: {
           borderBottomStyle: "dotted"
         }
       }
-    }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    }, ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
       props: {
         disableUnderline: false,
         color: color2
       },
       style: {
         "&::after": {
-          borderBottom: `2px solid ${(theme2.vars || theme2).palette[color2]?.main}`
+          borderBottom: `2px solid ${(theme.vars || theme).palette[color2]?.main}`
         }
       }
     })), {
@@ -23902,27 +23902,27 @@ const FilledInputInput = styled(InputBaseInput, {
   slot: "Input",
   overridesResolver: inputOverridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   paddingTop: 25,
   paddingRight: 12,
   paddingBottom: 8,
   paddingLeft: 12,
-  ...!theme2.vars && {
+  ...!theme.vars && {
     "&:-webkit-autofill": {
-      WebkitBoxShadow: theme2.palette.mode === "light" ? null : "0 0 0 100px #266798 inset",
-      WebkitTextFillColor: theme2.palette.mode === "light" ? null : "#fff",
-      caretColor: theme2.palette.mode === "light" ? null : "#fff",
+      WebkitBoxShadow: theme.palette.mode === "light" ? null : "0 0 0 100px #266798 inset",
+      WebkitTextFillColor: theme.palette.mode === "light" ? null : "#fff",
+      caretColor: theme.palette.mode === "light" ? null : "#fff",
       borderTopLeftRadius: "inherit",
       borderTopRightRadius: "inherit"
     }
   },
-  ...theme2.vars && {
+  ...theme.vars && {
     "&:-webkit-autofill": {
       borderTopLeftRadius: "inherit",
       borderTopRightRadius: "inherit"
     },
-    [theme2.getColorSchemeSelector("dark")]: {
+    [theme.getColorSchemeSelector("dark")]: {
       "&:-webkit-autofill": {
         WebkitBoxShadow: "0 0 0 100px #266798 inset",
         WebkitTextFillColor: "#fff",
@@ -24070,7 +24070,7 @@ const Grow = /* @__PURE__ */ reactExports.forwardRef(function Grow2(props, ref) 
   } = props;
   const timer = useTimeout();
   const autoTimeout = reactExports.useRef();
-  const theme2 = useTheme();
+  const theme = useTheme();
   const nodeRef = reactExports.useRef(null);
   const handleRef = useForkRef(nodeRef, getReactElementRef(children), ref);
   const normalizedTransitionCallback = (callback) => (maybeIsAppearing) => {
@@ -24099,15 +24099,15 @@ const Grow = /* @__PURE__ */ reactExports.forwardRef(function Grow2(props, ref) 
     });
     let duration2;
     if (timeout === "auto") {
-      duration2 = theme2.transitions.getAutoHeightDuration(node2.clientHeight);
+      duration2 = theme.transitions.getAutoHeightDuration(node2.clientHeight);
       autoTimeout.current = duration2;
     } else {
       duration2 = transitionDuration;
     }
-    node2.style.transition = [theme2.transitions.create("opacity", {
+    node2.style.transition = [theme.transitions.create("opacity", {
       duration: duration2,
       delay
-    }), theme2.transitions.create("transform", {
+    }), theme.transitions.create("transform", {
       duration: isWebKit154 ? duration2 : duration2 * 0.666,
       delay,
       easing: transitionTimingFunction
@@ -24132,15 +24132,15 @@ const Grow = /* @__PURE__ */ reactExports.forwardRef(function Grow2(props, ref) 
     });
     let duration2;
     if (timeout === "auto") {
-      duration2 = theme2.transitions.getAutoHeightDuration(node2.clientHeight);
+      duration2 = theme.transitions.getAutoHeightDuration(node2.clientHeight);
       autoTimeout.current = duration2;
     } else {
       duration2 = transitionDuration;
     }
-    node2.style.transition = [theme2.transitions.create("opacity", {
+    node2.style.transition = [theme.transitions.create("opacity", {
       duration: duration2,
       delay
-    }), theme2.transitions.create("transform", {
+    }), theme.transitions.create("transform", {
       duration: isWebKit154 ? duration2 : duration2 * 0.666,
       delay: isWebKit154 ? delay : delay || duration2 * 0.333,
       easing: transitionTimingFunction
@@ -24222,12 +24222,12 @@ const InputRoot = styled(InputBaseRoot, {
     return [...rootOverridesResolver(props, styles2), !ownerState.disableUnderline && styles2.underline];
   }
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => {
-  const light2 = theme2.palette.mode === "light";
+  const light2 = theme.palette.mode === "light";
   let bottomLineColor = light2 ? "rgba(0, 0, 0, 0.42)" : "rgba(255, 255, 255, 0.7)";
-  if (theme2.vars) {
-    bottomLineColor = theme2.alpha(theme2.vars.palette.common.onBackground, theme2.vars.opacity.inputUnderline);
+  if (theme.vars) {
+    bottomLineColor = theme.alpha(theme.vars.palette.common.onBackground, theme.vars.opacity.inputUnderline);
   }
   return {
     position: "relative",
@@ -24252,9 +24252,9 @@ const InputRoot = styled(InputBaseRoot, {
           position: "absolute",
           right: 0,
           transform: "scaleX(0)",
-          transition: theme2.transitions.create("transform", {
-            duration: theme2.transitions.duration.shorter,
-            easing: theme2.transitions.easing.easeOut
+          transition: theme.transitions.create("transform", {
+            duration: theme.transitions.duration.shorter,
+            easing: theme.transitions.easing.easeOut
           }),
           pointerEvents: "none"
           // Transparent to the hover style.
@@ -24266,7 +24266,7 @@ const InputRoot = styled(InputBaseRoot, {
         },
         [`&.${inputClasses.error}`]: {
           "&::before, &::after": {
-            borderBottomColor: (theme2.vars || theme2).palette.error.main
+            borderBottomColor: (theme.vars || theme).palette.error.main
           }
         },
         "&::before": {
@@ -24276,14 +24276,14 @@ const InputRoot = styled(InputBaseRoot, {
           content: '"\\00a0"',
           position: "absolute",
           right: 0,
-          transition: theme2.transitions.create("border-bottom-color", {
-            duration: theme2.transitions.duration.shorter
+          transition: theme.transitions.create("border-bottom-color", {
+            duration: theme.transitions.duration.shorter
           }),
           pointerEvents: "none"
           // Transparent to the hover style.
         },
         [`&:hover:not(.${inputClasses.disabled}, .${inputClasses.error}):before`]: {
-          borderBottom: `2px solid ${(theme2.vars || theme2).palette.text.primary}`,
+          borderBottom: `2px solid ${(theme.vars || theme).palette.text.primary}`,
           // Reset on touch devices, it doesn't add specificity
           "@media (hover: none)": {
             borderBottom: `1px solid ${bottomLineColor}`
@@ -24293,14 +24293,14 @@ const InputRoot = styled(InputBaseRoot, {
           borderBottomStyle: "dotted"
         }
       }
-    }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    }, ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
       props: {
         color: color2,
         disableUnderline: false
       },
       style: {
         "&::after": {
-          borderBottom: `2px solid ${(theme2.vars || theme2).palette[color2].main}`
+          borderBottom: `2px solid ${(theme.vars || theme).palette[color2].main}`
         }
       }
     }))]
@@ -25187,9 +25187,9 @@ const MenuItemRoot = styled(ButtonBase, {
   slot: "Root",
   overridesResolver: overridesResolver$1
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
-  ...theme2.typography.body1,
+  ...theme.typography.body1,
   display: "flex",
   justifyContent: "flex-start",
   alignItems: "center",
@@ -25202,34 +25202,34 @@ const MenuItemRoot = styled(ButtonBase, {
   whiteSpace: "nowrap",
   "&:hover": {
     textDecoration: "none",
-    backgroundColor: (theme2.vars || theme2).palette.action.hover,
+    backgroundColor: (theme.vars || theme).palette.action.hover,
     // Reset on touch devices, it doesn't add specificity
     "@media (hover: none)": {
       backgroundColor: "transparent"
     }
   },
   [`&.${menuItemClasses.selected}`]: {
-    backgroundColor: theme2.alpha((theme2.vars || theme2).palette.primary.main, (theme2.vars || theme2).palette.action.selectedOpacity),
+    backgroundColor: theme.alpha((theme.vars || theme).palette.primary.main, (theme.vars || theme).palette.action.selectedOpacity),
     [`&.${menuItemClasses.focusVisible}`]: {
-      backgroundColor: theme2.alpha((theme2.vars || theme2).palette.primary.main, `${(theme2.vars || theme2).palette.action.selectedOpacity} + ${(theme2.vars || theme2).palette.action.focusOpacity}`)
+      backgroundColor: theme.alpha((theme.vars || theme).palette.primary.main, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.focusOpacity}`)
     }
   },
   [`&.${menuItemClasses.selected}:hover`]: {
-    backgroundColor: theme2.alpha((theme2.vars || theme2).palette.primary.main, `${(theme2.vars || theme2).palette.action.selectedOpacity} + ${(theme2.vars || theme2).palette.action.hoverOpacity}`),
+    backgroundColor: theme.alpha((theme.vars || theme).palette.primary.main, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.hoverOpacity}`),
     // Reset on touch devices, it doesn't add specificity
     "@media (hover: none)": {
-      backgroundColor: theme2.alpha((theme2.vars || theme2).palette.primary.main, (theme2.vars || theme2).palette.action.selectedOpacity)
+      backgroundColor: theme.alpha((theme.vars || theme).palette.primary.main, (theme.vars || theme).palette.action.selectedOpacity)
     }
   },
   [`&.${menuItemClasses.focusVisible}`]: {
-    backgroundColor: (theme2.vars || theme2).palette.action.focus
+    backgroundColor: (theme.vars || theme).palette.action.focus
   },
   [`&.${menuItemClasses.disabled}`]: {
-    opacity: (theme2.vars || theme2).palette.action.disabledOpacity
+    opacity: (theme.vars || theme).palette.action.disabledOpacity
   },
   [`& + .${dividerClasses.root}`]: {
-    marginTop: theme2.spacing(1),
-    marginBottom: theme2.spacing(1)
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1)
   },
   [`& + .${dividerClasses.inset}`]: {
     marginLeft: 52
@@ -25257,7 +25257,7 @@ const MenuItemRoot = styled(ButtonBase, {
       ownerState
     }) => ownerState.divider,
     style: {
-      borderBottom: `1px solid ${(theme2.vars || theme2).palette.divider}`,
+      borderBottom: `1px solid ${(theme.vars || theme).palette.divider}`,
       backgroundClip: "padding-box"
     }
   }, {
@@ -25265,7 +25265,7 @@ const MenuItemRoot = styled(ButtonBase, {
       ownerState
     }) => !ownerState.dense,
     style: {
-      [theme2.breakpoints.up("sm")]: {
+      [theme.breakpoints.up("sm")]: {
         minHeight: "auto"
       }
     }
@@ -25278,7 +25278,7 @@ const MenuItemRoot = styled(ButtonBase, {
       // https://m2.material.io/components/menus#specs > Dense
       paddingTop: 4,
       paddingBottom: 4,
-      ...theme2.typography.body2,
+      ...theme.typography.body2,
       [`& .${listItemIconClasses.root} svg`]: {
         fontSize: "1.25rem"
       }
@@ -25364,7 +25364,7 @@ const useUtilityClasses$5 = (ownerState) => {
 const StyledSelectSelect = styled("select", {
   name: "MuiNativeSelect"
 })(({
-  theme: theme2
+  theme
 }) => ({
   // Reset
   MozAppearance: "none",
@@ -25387,7 +25387,7 @@ const StyledSelectSelect = styled("select", {
     height: "auto"
   },
   "&:not([multiple]) option, &:not([multiple]) optgroup": {
-    backgroundColor: (theme2.vars || theme2).palette.background.paper
+    backgroundColor: (theme.vars || theme).palette.background.paper
   },
   variants: [{
     props: ({
@@ -25415,9 +25415,9 @@ const StyledSelectSelect = styled("select", {
       variant: "outlined"
     },
     style: {
-      borderRadius: (theme2.vars || theme2).shape.borderRadius,
+      borderRadius: (theme.vars || theme).shape.borderRadius,
       "&:focus": {
-        borderRadius: (theme2.vars || theme2).shape.borderRadius
+        borderRadius: (theme.vars || theme).shape.borderRadius
         // Reset the reset for Chrome style
       },
       "&&&": {
@@ -25442,7 +25442,7 @@ const NativeSelectSelect = styled(StyledSelectSelect, {
 const StyledSelectIcon = styled("svg", {
   name: "MuiNativeSelect"
 })(({
-  theme: theme2
+  theme
 }) => ({
   // We use a position absolute over a flexbox in order to forward the pointer events
   // to the input and to support wrapping tags..
@@ -25452,9 +25452,9 @@ const StyledSelectIcon = styled("svg", {
   top: "calc(50% - .5em)",
   // Don't block pointer events on the select under the icon.
   pointerEvents: "none",
-  color: (theme2.vars || theme2).palette.action.active,
+  color: (theme.vars || theme).palette.action.active,
   [`&.${nativeSelectClasses.disabled}`]: {
-    color: (theme2.vars || theme2).palette.action.disabled
+    color: (theme.vars || theme).palette.action.disabled
   },
   variants: [{
     props: ({
@@ -25544,7 +25544,7 @@ const NotchedOutlineLegend = styled("legend", {
   name: "MuiNotchedOutlined",
   shouldForwardProp: rootShouldForwardProp
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   float: "unset",
   // Fix conflict with bootstrap
@@ -25560,9 +25560,9 @@ const NotchedOutlineLegend = styled("legend", {
       padding: 0,
       lineHeight: "11px",
       // sync with `height` in `legend` styles
-      transition: theme2.transitions.create("width", {
+      transition: theme.transitions.create("width", {
         duration: 150,
-        easing: theme2.transitions.easing.easeOut
+        easing: theme.transitions.easing.easeOut
       })
     }
   }, {
@@ -25578,9 +25578,9 @@ const NotchedOutlineLegend = styled("legend", {
       fontSize: "0.75em",
       visibility: "hidden",
       maxWidth: 0.01,
-      transition: theme2.transitions.create("max-width", {
+      transition: theme.transitions.create("max-width", {
         duration: 50,
-        easing: theme2.transitions.easing.easeOut
+        easing: theme.transitions.easing.easeOut
       }),
       whiteSpace: "nowrap",
       "& > span": {
@@ -25597,9 +25597,9 @@ const NotchedOutlineLegend = styled("legend", {
     }) => ownerState.withLabel && ownerState.notched,
     style: {
       maxWidth: "100%",
-      transition: theme2.transitions.create("max-width", {
+      transition: theme.transitions.create("max-width", {
         duration: 100,
-        easing: theme2.transitions.easing.easeOut,
+        easing: theme.transitions.easing.easeOut,
         delay: 50
       })
     }
@@ -25662,31 +25662,31 @@ const OutlinedInputRoot = styled(InputBaseRoot, {
   slot: "Root",
   overridesResolver: rootOverridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => {
-  const borderColor2 = theme2.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)";
+  const borderColor2 = theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)";
   return {
     position: "relative",
-    borderRadius: (theme2.vars || theme2).shape.borderRadius,
+    borderRadius: (theme.vars || theme).shape.borderRadius,
     [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-      borderColor: (theme2.vars || theme2).palette.text.primary
+      borderColor: (theme.vars || theme).palette.text.primary
     },
     // Reset on touch devices, it doesn't add specificity
     "@media (hover: none)": {
       [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-        borderColor: theme2.vars ? theme2.alpha(theme2.vars.palette.common.onBackground, 0.23) : borderColor2
+        borderColor: theme.vars ? theme.alpha(theme.vars.palette.common.onBackground, 0.23) : borderColor2
       }
     },
     [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]: {
       borderWidth: 2
     },
-    variants: [...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    variants: [...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
       props: {
         color: color2
       },
       style: {
         [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]: {
-          borderColor: (theme2.vars || theme2).palette[color2].main
+          borderColor: (theme.vars || theme).palette[color2].main
         }
       }
     })), {
@@ -25694,10 +25694,10 @@ const OutlinedInputRoot = styled(InputBaseRoot, {
       // to override the above style
       style: {
         [`&.${outlinedInputClasses.error} .${outlinedInputClasses.notchedOutline}`]: {
-          borderColor: (theme2.vars || theme2).palette.error.main
+          borderColor: (theme.vars || theme).palette.error.main
         },
         [`&.${outlinedInputClasses.disabled} .${outlinedInputClasses.notchedOutline}`]: {
-          borderColor: (theme2.vars || theme2).palette.action.disabled
+          borderColor: (theme.vars || theme).palette.action.disabled
         }
       }
     }, {
@@ -25736,11 +25736,11 @@ const NotchedOutlineRoot = styled(NotchedOutline, {
   name: "MuiOutlinedInput",
   slot: "NotchedOutline"
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => {
-  const borderColor2 = theme2.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)";
+  const borderColor2 = theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)";
   return {
-    borderColor: theme2.vars ? theme2.alpha(theme2.vars.palette.common.onBackground, 0.23) : borderColor2
+    borderColor: theme.vars ? theme.alpha(theme.vars.palette.common.onBackground, 0.23) : borderColor2
   };
 }));
 const OutlinedInputInput = styled(InputBaseInput, {
@@ -25748,22 +25748,22 @@ const OutlinedInputInput = styled(InputBaseInput, {
   slot: "Input",
   overridesResolver: inputOverridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
   padding: "16.5px 14px",
-  ...!theme2.vars && {
+  ...!theme.vars && {
     "&:-webkit-autofill": {
-      WebkitBoxShadow: theme2.palette.mode === "light" ? null : "0 0 0 100px #266798 inset",
-      WebkitTextFillColor: theme2.palette.mode === "light" ? null : "#fff",
-      caretColor: theme2.palette.mode === "light" ? null : "#fff",
+      WebkitBoxShadow: theme.palette.mode === "light" ? null : "0 0 0 100px #266798 inset",
+      WebkitTextFillColor: theme.palette.mode === "light" ? null : "#fff",
+      caretColor: theme.palette.mode === "light" ? null : "#fff",
       borderRadius: "inherit"
     }
   },
-  ...theme2.vars && {
+  ...theme.vars && {
     "&:-webkit-autofill": {
       borderRadius: "inherit"
     },
-    [theme2.getColorSchemeSelector("dark")]: {
+    [theme.getColorSchemeSelector("dark")]: {
       "&:-webkit-autofill": {
         WebkitBoxShadow: "0 0 0 100px #266798 inset",
         WebkitTextFillColor: "#fff",
@@ -26047,19 +26047,19 @@ const PaginationItemEllipsis = styled("div", {
   slot: "Root",
   overridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
-  ...theme2.typography.body2,
+  ...theme.typography.body2,
   borderRadius: 32 / 2,
   textAlign: "center",
   boxSizing: "border-box",
   minWidth: 32,
   padding: "0 6px",
   margin: "0 3px",
-  color: (theme2.vars || theme2).palette.text.primary,
+  color: (theme.vars || theme).palette.text.primary,
   height: "auto",
   [`&.${paginationItemClasses.disabled}`]: {
-    opacity: (theme2.vars || theme2).palette.action.disabledOpacity
+    opacity: (theme.vars || theme).palette.action.disabledOpacity
   },
   variants: [{
     props: {
@@ -26079,7 +26079,7 @@ const PaginationItemEllipsis = styled("div", {
       minWidth: 40,
       borderRadius: 40 / 2,
       padding: "0 10px",
-      fontSize: theme2.typography.pxToRem(15)
+      fontSize: theme.typography.pxToRem(15)
     }
   }]
 })));
@@ -26088,9 +26088,9 @@ const PaginationItemPage = styled(ButtonBase, {
   slot: "Root",
   overridesResolver
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
-  ...theme2.typography.body2,
+  ...theme.typography.body2,
   borderRadius: 32 / 2,
   textAlign: "center",
   boxSizing: "border-box",
@@ -26098,39 +26098,39 @@ const PaginationItemPage = styled(ButtonBase, {
   height: 32,
   padding: "0 6px",
   margin: "0 3px",
-  color: (theme2.vars || theme2).palette.text.primary,
+  color: (theme.vars || theme).palette.text.primary,
   [`&.${paginationItemClasses.focusVisible}`]: {
-    backgroundColor: (theme2.vars || theme2).palette.action.focus
+    backgroundColor: (theme.vars || theme).palette.action.focus
   },
   [`&.${paginationItemClasses.disabled}`]: {
-    opacity: (theme2.vars || theme2).palette.action.disabledOpacity
+    opacity: (theme.vars || theme).palette.action.disabledOpacity
   },
-  transition: theme2.transitions.create(["color", "background-color"], {
-    duration: theme2.transitions.duration.short
+  transition: theme.transitions.create(["color", "background-color"], {
+    duration: theme.transitions.duration.short
   }),
   "&:hover": {
-    backgroundColor: (theme2.vars || theme2).palette.action.hover,
+    backgroundColor: (theme.vars || theme).palette.action.hover,
     // Reset on touch devices, it doesn't add specificity
     "@media (hover: none)": {
       backgroundColor: "transparent"
     }
   },
   [`&.${paginationItemClasses.selected}`]: {
-    backgroundColor: (theme2.vars || theme2).palette.action.selected,
+    backgroundColor: (theme.vars || theme).palette.action.selected,
     "&:hover": {
-      backgroundColor: theme2.alpha((theme2.vars || theme2).palette.action.selected, `${(theme2.vars || theme2).palette.action.selectedOpacity} + ${(theme2.vars || theme2).palette.action.hoverOpacity}`),
+      backgroundColor: theme.alpha((theme.vars || theme).palette.action.selected, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.hoverOpacity}`),
       // Reset on touch devices, it doesn't add specificity
       "@media (hover: none)": {
-        backgroundColor: (theme2.vars || theme2).palette.action.selected
+        backgroundColor: (theme.vars || theme).palette.action.selected
       }
     },
     [`&.${paginationItemClasses.focusVisible}`]: {
-      backgroundColor: theme2.alpha((theme2.vars || theme2).palette.action.selected, `${(theme2.vars || theme2).palette.action.selectedOpacity} + ${(theme2.vars || theme2).palette.action.focusOpacity}`)
+      backgroundColor: theme.alpha((theme.vars || theme).palette.action.selected, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.focusOpacity}`)
     },
     [`&.${paginationItemClasses.disabled}`]: {
       opacity: 1,
-      color: (theme2.vars || theme2).palette.action.disabled,
-      backgroundColor: (theme2.vars || theme2).palette.action.selected
+      color: (theme.vars || theme).palette.action.disabled,
+      backgroundColor: (theme.vars || theme).palette.action.selected
     }
   },
   variants: [{
@@ -26153,25 +26153,25 @@ const PaginationItemPage = styled(ButtonBase, {
       height: 40,
       borderRadius: 40 / 2,
       padding: "0 10px",
-      fontSize: theme2.typography.pxToRem(15)
+      fontSize: theme.typography.pxToRem(15)
     }
   }, {
     props: {
       shape: "rounded"
     },
     style: {
-      borderRadius: (theme2.vars || theme2).shape.borderRadius
+      borderRadius: (theme.vars || theme).shape.borderRadius
     }
   }, {
     props: {
       variant: "outlined"
     },
     style: {
-      border: theme2.vars ? `1px solid ${theme2.alpha(theme2.vars.palette.common.onBackground, 0.23)}` : `1px solid ${theme2.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)"}`,
+      border: theme.vars ? `1px solid ${theme.alpha(theme.vars.palette.common.onBackground, 0.23)}` : `1px solid ${theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)"}`,
       [`&.${paginationItemClasses.selected}`]: {
         [`&.${paginationItemClasses.disabled}`]: {
-          borderColor: (theme2.vars || theme2).palette.action.disabledBackground,
-          color: (theme2.vars || theme2).palette.action.disabled
+          borderColor: (theme.vars || theme).palette.action.disabledBackground,
+          color: (theme.vars || theme).palette.action.disabled
         }
       }
     }
@@ -26182,53 +26182,53 @@ const PaginationItemPage = styled(ButtonBase, {
     style: {
       [`&.${paginationItemClasses.selected}`]: {
         [`&.${paginationItemClasses.disabled}`]: {
-          color: (theme2.vars || theme2).palette.action.disabled
+          color: (theme.vars || theme).palette.action.disabled
         }
       }
     }
-  }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter(["dark", "contrastText"])).map(([color2]) => ({
+  }, ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["dark", "contrastText"])).map(([color2]) => ({
     props: {
       variant: "text",
       color: color2
     },
     style: {
       [`&.${paginationItemClasses.selected}`]: {
-        color: (theme2.vars || theme2).palette[color2].contrastText,
-        backgroundColor: (theme2.vars || theme2).palette[color2].main,
+        color: (theme.vars || theme).palette[color2].contrastText,
+        backgroundColor: (theme.vars || theme).palette[color2].main,
         "&:hover": {
-          backgroundColor: (theme2.vars || theme2).palette[color2].dark,
+          backgroundColor: (theme.vars || theme).palette[color2].dark,
           // Reset on touch devices, it doesn't add specificity
           "@media (hover: none)": {
-            backgroundColor: (theme2.vars || theme2).palette[color2].main
+            backgroundColor: (theme.vars || theme).palette[color2].main
           }
         },
         [`&.${paginationItemClasses.focusVisible}`]: {
-          backgroundColor: (theme2.vars || theme2).palette[color2].dark
+          backgroundColor: (theme.vars || theme).palette[color2].dark
         },
         [`&.${paginationItemClasses.disabled}`]: {
-          color: (theme2.vars || theme2).palette.action.disabled
+          color: (theme.vars || theme).palette.action.disabled
         }
       }
     }
-  })), ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter(["light"])).map(([color2]) => ({
+  })), ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["light"])).map(([color2]) => ({
     props: {
       variant: "outlined",
       color: color2
     },
     style: {
       [`&.${paginationItemClasses.selected}`]: {
-        color: (theme2.vars || theme2).palette[color2].main,
-        border: `1px solid ${theme2.alpha((theme2.vars || theme2).palette[color2].main, 0.5)}`,
-        backgroundColor: theme2.alpha((theme2.vars || theme2).palette[color2].main, (theme2.vars || theme2).palette.action.activatedOpacity),
+        color: (theme.vars || theme).palette[color2].main,
+        border: `1px solid ${theme.alpha((theme.vars || theme).palette[color2].main, 0.5)}`,
+        backgroundColor: theme.alpha((theme.vars || theme).palette[color2].main, (theme.vars || theme).palette.action.activatedOpacity),
         "&:hover": {
-          backgroundColor: theme2.alpha((theme2.vars || theme2).palette[color2].main, `${(theme2.vars || theme2).palette.action.activatedOpacity} + ${(theme2.vars || theme2).palette.action.focusOpacity}`),
+          backgroundColor: theme.alpha((theme.vars || theme).palette[color2].main, `${(theme.vars || theme).palette.action.activatedOpacity} + ${(theme.vars || theme).palette.action.focusOpacity}`),
           // Reset on touch devices, it doesn't add specificity
           "@media (hover: none)": {
             backgroundColor: "transparent"
           }
         },
         [`&.${paginationItemClasses.focusVisible}`]: {
-          backgroundColor: theme2.alpha((theme2.vars || theme2).palette[color2].main, `${(theme2.vars || theme2).palette.action.activatedOpacity} + ${(theme2.vars || theme2).palette.action.focusOpacity}`)
+          backgroundColor: theme.alpha((theme.vars || theme).palette[color2].main, `${(theme.vars || theme).palette.action.activatedOpacity} + ${(theme.vars || theme).palette.action.focusOpacity}`)
         }
       }
     }
@@ -26238,23 +26238,23 @@ const PaginationItemPageIcon = styled("div", {
   name: "MuiPaginationItem",
   slot: "Icon"
 })(memoTheme(({
-  theme: theme2
+  theme
 }) => ({
-  fontSize: theme2.typography.pxToRem(20),
+  fontSize: theme.typography.pxToRem(20),
   margin: "0 -8px",
   variants: [{
     props: {
       size: "small"
     },
     style: {
-      fontSize: theme2.typography.pxToRem(18)
+      fontSize: theme.typography.pxToRem(18)
     }
   }, {
     props: {
       size: "large"
     },
     style: {
-      fontSize: theme2.typography.pxToRem(22)
+      fontSize: theme.typography.pxToRem(22)
     }
   }]
 })));
@@ -27074,6 +27074,41 @@ const Select = /* @__PURE__ */ reactExports.forwardRef(function Select2(inProps,
   });
 });
 Select.muiName = "Select";
+function applyTheme({ vars, fontFamily, fontSize, dark: dark2 }) {
+  const root = document.documentElement;
+  if (vars) {
+    for (const [name, value] of Object.entries(vars)) {
+      root.style.setProperty(name, value);
+    }
+  }
+  if (fontFamily) {
+    root.style.setProperty("--qm-font-family", fontFamily);
+    document.body.style.fontFamily = fontFamily;
+  }
+  if (fontSize) {
+    document.body.style.fontSize = fontSize;
+  }
+  root.classList.toggle("dark-theme", !!dark2);
+}
+function useComfyTheme(onDarkChange) {
+  reactExports.useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.origin !== window.location.protocol + "//" + window.location.host) {
+        return;
+      }
+      if (event.data.type === "QM_Theme") {
+        applyTheme(event.data);
+        onDarkChange?.(!!event.data.dark);
+      }
+      if (event.data.type === "QM_QueueManager_Hello" && event.data.vars) {
+        applyTheme(event.data);
+        onDarkChange?.(!!event.data.dark);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onDarkChange]);
+}
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
@@ -27085,7 +27120,7 @@ const VisuallyHiddenInput = styled("input")({
   whiteSpace: "nowrap",
   width: 1
 });
-function Home() {
+function Home({ onDarkChange }) {
   const [appStatus, setAppStatus] = reactExports.useState({
     loading: true,
     reloading: false,
@@ -27115,6 +27150,7 @@ function Home() {
     progress: 0
   });
   const [showSplash, setShowSplash] = reactExports.useState(false);
+  useComfyTheme(onDarkChange);
   const fetchIdRef = reactExports.useRef(0);
   reactExports.useMemo(() => {
     const f = filters ? JSON.stringify(filters) : "";
@@ -27519,7 +27555,8 @@ function Home() {
             /* @__PURE__ */ jsxRuntimeExports.jsxs(
               "span",
               {
-                className: "inline-flex text-neutral-800 dark:text-neutral-200 close label",
+                className: "inline-flex close label",
+                style: { color: "var(--qm-fg-muted)" },
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs(
                     "span",
@@ -27538,7 +27575,7 @@ function Home() {
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "button",
               {
-                className: "shiny-button close ",
+                className: "qm-btn qm-btn-text qm-icon-btn close",
                 onClick: () => {
                   const prev2 = useAppStore.getState().filters;
                   const newFilters = (({ [filter.type]: _, ...f }) => f)(prev2);
@@ -27558,7 +27595,7 @@ function Home() {
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "button",
           {
-            className: "close close-all ml-auto shiny-button",
+            className: "close close-all ml-auto qm-btn qm-btn-text",
             onClick: () => {
               fetchQueueItems({ filters: {} });
             },
@@ -27624,7 +27661,7 @@ function Home() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 flex actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Stack, { direction: "row", spacing: 1, className: "min-w-full buttons", children: [
           appStatus.queue && (appStatus.queue.running.length > 0 || appStatus.queue.pending.length > 0) && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
             route === "queue" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: archiveAll, className: "shiny-button yellow-button", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: archiveAll, className: "qm-btn", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Inventory2SharpIcon, {}),
                 "  Archive All ",
                 isFilterOn() ? "*" : "Pending"
@@ -27632,7 +27669,7 @@ function Home() {
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "a",
                 {
-                  className: "shiny-button",
+                  className: "qm-btn",
                   href: baseURL + "queue_manager/export" + appendRoute(appendFilters("")),
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
@@ -27646,7 +27683,7 @@ function Home() {
                 {
                   color: "error",
                   onClick: isFilterOn() ? deleteFromQueue : clearPending,
-                  className: "order-last delete red-button shiny-button",
+                  className: "order-last delete qm-btn qm-btn-danger",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
                     "  Delete All ",
@@ -27660,7 +27697,7 @@ function Home() {
                 "button",
                 {
                   onClick: playAllArchive,
-                  className: "shiny-button blue-button",
+                  className: "qm-btn qm-btn-primary",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, {}),
                     "  Run All ",
@@ -27671,7 +27708,7 @@ function Home() {
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "a",
                 {
-                  className: "shiny-button",
+                  className: "qm-btn",
                   href: baseURL + "queue_manager/export" + appendFilters("?route=archive"),
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
@@ -27684,7 +27721,7 @@ function Home() {
                 "button",
                 {
                   onClick: deleteFromQueue,
-                  className: "shiny-button delete red-button order-last",
+                  className: "delete order-last qm-btn qm-btn-danger",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
                     "  Delete ",
@@ -27697,7 +27734,7 @@ function Home() {
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "a",
                 {
-                  className: "shiny-button",
+                  className: "qm-btn",
                   href: baseURL + "queue_manager/export" + appendFilters("?route=completed"),
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
@@ -27710,7 +27747,7 @@ function Home() {
                 "button",
                 {
                   onClick: deleteFromQueue,
-                  className: "order-last delete red-button shiny-button",
+                  className: "order-last delete qm-btn qm-btn-danger",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
                     "  Delete ",
@@ -27726,7 +27763,7 @@ function Home() {
               method: "post",
               encType: "multipart/form-data",
               className: "import-form",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { variant: "contained", color: "inherit", size: "small", component: "label", className: "shiny-button", children: [
+              children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { variant: "contained", color: "inherit", size: "small", component: "label", className: "qm-btn", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(DriveFolderUploadOutlinedIcon, {}),
                 "  Import ",
                 route === "queue" ? "Queue" : "Archive",
@@ -27750,49 +27787,38 @@ function Home() {
     ] })
   ] });
 }
-const theme = createTheme({
-  typography: {
-    fontFamily: "var(--font-roboto)",
-    cssVariables: true
-  },
-  colorSchemes: {
-    light: {
-      palette: {
-        secondary: {
-          main: "#F5EBFF"
-        }
-      }
+function buildTheme(dark2) {
+  return createTheme({
+    palette: {
+      mode: dark2 ? "dark" : "light",
+      background: {
+        default: "var(--qm-bg)",
+        paper: "var(--qm-surface)"
+      },
+      text: {
+        primary: "var(--qm-fg)",
+        secondary: "var(--qm-fg-muted)"
+      },
+      primary: {
+        main: "var(--qm-primary)",
+        contrastText: "var(--qm-primary-fg)"
+      },
+      error: {
+        main: "var(--qm-danger)"
+      },
+      divider: "var(--qm-border)"
     },
-    dark: {
-      palette: {
-        secondary: {
-          main: "#353535"
-        }
-      }
+    typography: {
+      fontFamily: "var(--qm-font)"
     }
-  }
-});
+  });
+}
+function AppRoot() {
+  const [dark2, setDark] = reactExports.useState(() => document.documentElement.classList.contains("dark-theme"));
+  const theme = reactExports.useMemo(() => buildTheme(dark2), [dark2]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider, { theme, disableTransitionOnChange: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, { onDarkChange: setDark }) });
+}
 ReactDOM$1.createRoot(document.getElementById("root")).render(
-  /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(ThemeProvider, { theme, disableTransitionOnChange: true, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      GlobalStyles,
-      {
-        styles: (theme2) => ({
-          ":root": {
-            "--color-neutral-900": theme2.palette.grey[900],
-            "--color-neutral-800": theme2.palette.grey[800],
-            "--color-neutral-700": theme2.palette.grey[700],
-            "--color-neutral-600": theme2.palette.grey[600],
-            "--color-neutral-500": theme2.palette.grey[500],
-            "--color-neutral-400": theme2.palette.grey[400],
-            "--color-neutral-300": theme2.palette.grey[300],
-            "--color-neutral-200": theme2.palette.grey[200],
-            "--color-neutral-100": theme2.palette.grey[100]
-          }
-        })
-      }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {})
-  ] }) })
+  /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppRoot, {}) })
 );
 //# sourceMappingURL=index.js.map

@@ -1,27 +1,30 @@
 'use client';
 import { createTheme } from '@mui/material/styles';
 
-const theme = createTheme({
-  typography: {
-    fontFamily: 'var(--font-roboto)',
-    cssVariables: true,
-  },
-  colorSchemes: {
-    light: {
-      palette: {
-        secondary: {
-          main: '#F5EBFF'
-        },
+export function buildTheme(dark) {
+  return createTheme({
+    cssVariables: { nativeColor: true },
+    palette: {
+      mode: dark ? 'dark' : 'light',
+      background: {
+        default: 'var(--qm-bg)',
+        paper: 'var(--qm-surface)',
       },
+      text: {
+        primary: 'var(--qm-fg)',
+        secondary: 'var(--qm-fg-muted)',
+      },
+      primary: {
+        main: 'var(--qm-primary)',
+        contrastText: 'var(--qm-primary-fg)',
+      },
+      error: {
+        main: 'var(--qm-danger)',
+      },
+      divider: 'var(--qm-border)',
     },
-    dark: {
-      palette: {
-        secondary: {
-          main: '#353535',
-        },
-      },
-    }
-  },
-});
-
-export default theme;
+    typography: {
+      fontFamily: 'var(--qm-font)',
+    },
+  });
+}

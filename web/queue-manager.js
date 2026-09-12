@@ -5,7 +5,8 @@ import {
   handleIframeMessages,
   registerSidebar,
   injectWorkflowName,
-  extensionSettings
+  extensionSettings,
+  setupThemeObserver
 } from './js/functions.js';
 
 import { app } from '../../scripts/app.js';
@@ -24,6 +25,8 @@ app.registerExtension({
     handleKeyboardEvents();
 
     handleIframeMessages();
+
+    setupThemeObserver();
 
     registerSidebar();
 

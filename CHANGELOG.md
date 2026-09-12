@@ -1,5 +1,12 @@
 # Release Notes
 
+## v0.3.0
+_Sep 12, 2026_
+### New features and enhancements
+- Panel now follows the ComfyUI color palette and font, with theme switching synchronized to the ComfyUI interface.
+
+---
+
 ## v0.2.0
 _Sep 12, 2026_
 ### Removed

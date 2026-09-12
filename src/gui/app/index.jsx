@@ -11,7 +11,6 @@ import { styled } from '@mui/material/styles';
 import TopMenu from "./components/TopMenu";
 import {Queue} from "./components/Queue";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
 import {baseURL} from "./internals/config";
 import { useEffect, useState, useCallback, useMemo, useRef} from "react";
 import {apiCall} from "./internals/functions";
@@ -24,6 +23,7 @@ import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
 import {MenuItem, Pagination, Select} from "@mui/material";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
+import {useComfyTheme} from "./hooks/useComfyTheme";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -37,7 +37,7 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function Home() {
+export default function Home({ onDarkChange }) {
   const [appStatus, setAppStatus] = useState({
     loading: true,
     reloading: false,
@@ -71,6 +71,8 @@ export default function Home() {
   });
 
   const [showSplash, setShowSplash] = useState(false);
+
+  useComfyTheme(onDarkChange);
 
   const fetchIdRef = useRef(0);
 
@@ -591,10 +593,10 @@ export default function Home() {
             {Object.values(filters).map(filter =>
               <div className="filter flex items-center" key={filter.type}>
                 <span
-                  className="inline-flex text-neutral-800 dark:text-neutral-200 close label"><span
+                  className="inline-flex close label" style={{ color: "var(--qm-fg-muted)" }}><span
                   className={'type'}>{filter.type + ": "}&nbsp;</span>{filter.valueLabel}</span>
                 <button
-                  className="shiny-button close "
+                  className="qm-btn qm-btn-text qm-icon-btn close"
                   onClick={() => {
                     // remove the filter from the filters object
                     const prev = useAppStore.getState().filters;
@@ -612,7 +614,7 @@ export default function Home() {
 
             {/*  Clear all  */}
             <button
-              className="close close-all ml-auto shiny-button"
+              className="close close-all ml-auto qm-btn qm-btn-text"
               onClick={() => {
                 fetchQueueItems({filters: {}});
               }}
@@ -700,16 +702,16 @@ export default function Home() {
                   {/* Queue Actions  */}
                   {route === 'queue' &&
                     <>
-                      <button onClick={archiveAll} className={"shiny-button yellow-button"}>
+                      <button onClick={archiveAll} className={"qm-btn"}>
                         <Inventory2SharpIcon/>&nbsp;
                         Archive All {isFilterOn() ? "*" : "Pending"}
                       </button>
-                      <a className={"shiny-button"}
+                      <a className={"qm-btn"}
                               href={baseURL + "queue_manager/export" + appendRoute(appendFilters(""))}>
                         <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Queue"}
                       </a>
                       <button color="error" onClick={isFilterOn() ? deleteFromQueue : clearPending}
-                              className={"order-last delete red-button shiny-button"} >
+                              className={"order-last delete qm-btn qm-btn-danger"} >
                         <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete All {isFilterOn() ? "*" : "Pending"}
                       </button>
                     </>
@@ -719,15 +721,15 @@ export default function Home() {
                   {route === 'archive' &&
                     <>
                       <button onClick={playAllArchive}
-                              className="shiny-button blue-button">
+                              className="qm-btn qm-btn-primary">
                         <PlayArrowOutlinedIcon/>&nbsp;&nbsp;Run All {isFilterOn() ? "*" : ""}
                       </button>
-                      <a className={"shiny-button"}
+                      <a className={"qm-btn"}
                               href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>
                         <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Archive"}
                       </a>
                       <button onClick={deleteFromQueue}
-                              className={"shiny-button delete red-button order-last"}>
+                              className={"delete order-last qm-btn qm-btn-danger"}>
                         <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Archive"}
                       </button>
                     </>
@@ -736,12 +738,12 @@ export default function Home() {
                   {/* Completed Actions */}
                   {route === 'completed' &&
                     <>
-                      <a className={"shiny-button"}
+                      <a className={"qm-btn"}
                               href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>
                         <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Completed Jobs"}
                       </a>
                       <button onClick={deleteFromQueue}
-                              className={"order-last delete red-button shiny-button"}>
+                              className={"order-last delete qm-btn qm-btn-danger"}>
                         <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Completed Jobs"}
                       </button>
                     </>
@@ -755,7 +757,7 @@ export default function Home() {
                   encType="multipart/form-data"
                   className={"import-form"}
                 >
-                  <Button variant="contained" color="inherit" size="small" component="label" className={"shiny-button"}>
+                  <label className="qm-btn">
                     <DriveFolderUploadOutlinedIcon/>&nbsp;&nbsp;Import {route === 'queue' ? 'Queue' : 'Archive'}
                     <VisuallyHiddenInput
                       type="file"
@@ -765,7 +767,7 @@ export default function Home() {
                       accept=".json"
                       required
                     />
-                  </Button>
+                  </label>
                 </form>
               }
 
