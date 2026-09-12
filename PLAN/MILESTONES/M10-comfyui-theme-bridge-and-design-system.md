@@ -85,7 +85,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
 
 ## Phase 10.2: Restyle the existing surfaces
 
-- [ ] M10.P2.T1 — Buttons, inputs and typography
+- [x] M10.P2.T1 — Buttons, inputs and typography
   - files: `src/gui/styles/_common.scss`, `src/gui/styles/_mixins.scss`, `src/gui/styles/_footer.scss`, `src/gui/app/index.jsx`, `src/gui/app/components/QueueItemRow.jsx`, `src/gui/app/components/TopMenu.jsx`
   - approach: `shiny-button`/`green-button`/`red-button`/`yellow-button`/`blue-button` usage was
     confirmed at task start (freshness check, corrects the original file list): the mixin/class
@@ -111,7 +111,10 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
 
 - [ ] M10.P2.T2 — Tabs, list and footer layout
   - files: `src/gui/styles/_queue.scss`, `src/gui/styles/_footer.scss`, `src/gui/styles/_layout.scss`, `src/gui/app/index.jsx`, `src/gui/app/components/Queue.jsx`
-  - approach: Tabs (Queue / Archive / Completed) become a segmented control styled like the
+  - approach: M10.P2.T1 left `_queue.scss`'s `button.run { background-color: rgb(96, 165, 250); }`
+    in place — its specificity currently overrides the new `.qm-btn-primary` background on the
+    per-row Run button. Remove that hardcoded override as part of this task's `_queue.scss` pass
+    so Run renders with the token-driven `.qm-btn-primary` styling. Tabs (Queue / Archive / Completed) become a segmented control styled like the
     ComfyUI sidebar's tab header (`--qm-surface` track, active tab `--qm-bg` with
     `--qm-primary` underline, `--qm-fg-muted` inactive text). Rows (still rows — cards come in
     M2) get `--qm-space` padding, a 1px `--qm-border` separator, no zebra striping, hover
