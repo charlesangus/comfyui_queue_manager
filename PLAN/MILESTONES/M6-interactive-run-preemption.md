@@ -17,8 +17,9 @@ partial-execution path), that prompt should not wait behind background queue wor
 The frontend marks an interactive prompt by stamping `qm_interactive: "<mode>"` on the workflow
 object it already stamps `workflow_name` onto; the backend reads and **strips** the stamp in
 `queue_put` before the prompt is stored or executed (so it never reaches saved PNG metadata).
-The backend interrupts by calling `nodes.interrupt_processing()` directly — not via
-`POST /api/interrupt`, whose middleware deletes the running row (`delete_running`).
+The backend interrupts by calling `nodes.interrupt_processing()` directly (the same call M9's
+`delete_running_job` uses) so the requeue is decided in `task_done` before M9's error/interrupted
+handling sees the job.
 
 ## Phase 6.1: Frontend hook and setting
 
@@ -65,14 +66,14 @@ The backend interrupts by calling `nodes.interrupt_processing()` directly — no
     if its row's priority is `>= PRIORITY_PREEMPTED` (an interactive/preempted job is running —
     never interrupt those), return. Otherwise `PromptServer.instance.number += 1`, set
     `self.preempted = {"prompt_id": item[1], "number": -PromptServer.instance.number}`, log,
-    and call `nodes.interrupt_processing()` (`import nodes` at module top next to the other
-    ComfyUI imports; add a recording stub `nodes` module to `tests/fake_comfy.py`). In
-    `task_done`, right after resolving `prompt_id`: if `self.preempted` matches, `UPDATE queue
+    and call `nodes.interrupt_processing()` (the import and the recording stub in
+    `tests/fake_comfy.py` exist since M9). In `task_done`, right after resolving `prompt_id` and
+    **before** M9's pending-delete and error handling: if `self.preempted` matches, `UPDATE queue
     SET status = 0, number = ?, priority = ? WHERE prompt_id = ?` with the reserved number and
     `PRIORITY_PREEMPTED`, skip the outputs/execution-time persistence, clear `self.preempted`,
     `send_sync("queue-manager-queue-updated", {"requeued": prompt_id})` and `queue_updated()`,
     then call `original_task_done` (respecting the `process_item` signature branch) and return.
-    If the row was deleted meanwhile (user pressed Stop), fall through to the existing path.
+    If the job is also in M9's `pending_delete` (user deleted it meanwhile), the delete wins.
     Also make `play_items`/`play_archive` reset reserved priorities (`priority > PRIORITY_MAX`)
     to 0 so a re-run of an old interactive job is ordinary. Test the full sequence with the
     fixture: running job → interactive put with `mode="interrupt"` → `interrupt_processing`
@@ -130,6 +131,6 @@ end-to-end scenarios in M6.P3.T2 pass.
   `workflow_name` uses) and is stripped server-side in `queue_put`, instead of a separate
   "expect an interactive prompt" endpoint: it is deterministic per prompt and has no race with
   other prompts arriving in between.
-- 2026-09-11 — Interrupt goes through `nodes.interrupt_processing()` rather than the
-  `/api/interrupt` route because the extension's own middleware treats that route as "delete the
-  running job".
+- 2026-09-11 — Interrupt goes through `nodes.interrupt_processing()` directly rather than an
+  HTTP round-trip to `/api/interrupt`, keeping the preempt bookkeeping and the interrupt under one
+  mutex acquisition.

@@ -1,1 +1,2 @@
 - 2026-09-11 — fake-comfy-test-harness: backend tests stub `server`/`execution`/`folder_paths`/`nodes` instead of needing ComfyUI → DECISIONS/2026-09-11-fake-comfy-test-harness.md
+- 2026-09-11 — drop-gallery: the Gallery lightbox, thumbnail modes and their settings are removed; completed jobs keep a plain thumbnail strip → DECISIONS/2026-09-11-drop-gallery.md

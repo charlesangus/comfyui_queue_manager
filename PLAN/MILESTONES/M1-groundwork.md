@@ -68,5 +68,20 @@ backend can be unit-tested without a ComfyUI install.
     listed in `## Decisions`); the two READMEs describe the steps.
   - size: S
 
+## Phase 1.3: Small backend fixes
+
+- [ ] M1.P3.T1 — Replace `INSERT OR REPLACE` in `queue_put` with an upsert that keeps the row id
+  - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
+  - approach: `INSERT OR REPLACE INTO queue …` deletes and re-inserts the row when a
+    `prompt_id` is submitted twice, which changes `queue.id` and cascade-deletes the row's
+    `meta` entries (execution time, outputs — and the card data M3 adds). Change it to
+    `INSERT INTO queue (…) VALUES (…) ON CONFLICT(prompt_id) DO UPDATE SET number =
+    excluded.number, name = excluded.name, workflow_id = excluded.workflow_id, prompt =
+    excluded.prompt, status = 0` (sqlite ≥ 3.24, available on every supported Python). Test:
+    put the same prompt twice with a `meta` row attached after the first; the id and the meta
+    row survive.
+  - verify: `pytest tests/test_qm_queue.py` passes; `ruff check .` passes.
+  - size: S
+
 **Verification gate:** `pytest tests/` green, `ruff check .` green, `npm run build` from
 `src/gui/` succeeds, rebuilt `web/.gui/` committed.

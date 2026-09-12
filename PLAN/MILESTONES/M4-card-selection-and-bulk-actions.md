@@ -3,14 +3,15 @@
 Cards become selectable (click, Ctrl/Cmd-click to toggle, Shift-click for a range, Ctrl/Cmd-A for
 the page, Escape to clear) and a selection action bar replaces the per-card Delete/Load/Archive/Run
 buttons. The bar shows only the actions valid for the current selection and route, and calls the
-existing bulk endpoints (`api/queue {delete}`, `api/interrupt`, `queue_manager/archive`,
-`queue_manager/play`). The "View" affordance stays on the card (clicking an output thumbnail
-already opens the gallery). M5 adds a "Priority" action to this bar.
+existing bulk endpoints (`api/queue {delete}`, `queue_manager/archive`,
+`queue_manager/play`, and M9's `DELETE queue_manager/running` for running jobs). Output
+thumbnails stay clickable on the card (they open in a new tab). M5 adds a "Priority" action to
+this bar.
 
 ## Phase 4.1: Selection state
 
 - [ ] M4.P1.T1 — Selection store
-  - files: `src/gui/app/stores/selectionStore.js` (new), `src/gui/app/index.jsx`
+  - files: `src/gui/app/stores/selectionStore.js` (new), `src/gui/app/stores/selectionStore.test.js` (new), `src/gui/app/index.jsx`
   - approach: Zustand store `useSelectionStore` with `selected` (a `Set` of `db_id`; use
     `item[1]` prompt_id as the key for items without `db_id`, i.e. external jobs), `anchor`
     (last clicked key), and actions `select(key)`, `toggle(key)`, `selectRange(orderedKeys,
@@ -18,8 +19,8 @@ already opens the gallery). M5 adds a "Priority" action to this bar.
     `clear()`, `retain(keys)` (drop keys no longer present). In `index.jsx`, call `clear()`
     whenever `route` changes or a filter is applied, and `retain(currentKeys)` after every
     successful `fetchQueueItems` so deleted/moved items fall out of the selection.
-  - verify: `npm run lint` passes; a small vitest-free sanity check is acceptable (the project
-    has no JS test runner) — exercise the store from the browser console in `npm run dev`.
+  - verify: `src/gui/app/stores/selectionStore.test.js` (Vitest, from M8) covers select /
+    toggle / range / retain; `npm test` and `npm run lint` pass.
   - size: S
 
 - [ ] M4.P1.T2 — Make cards selectable and remove per-card action buttons
@@ -28,21 +29,21 @@ already opens the gallery). M5 adds a "Priority" action to this bar.
     `isSelected` boolean and an `onSelect(event)` handler that maps modifier keys to the store
     actions (Shift → `selectRange`, Ctrl/Meta → `toggle`, plain → `select`). `QueueCard`
     renders `aria-selected` and a `.selected` class, and stops propagation on the
-    workflow-name filter button and on output thumbnails so those keep their existing click
-    behaviour. Remove the Delete/Load/Archive/Run/View buttons and the `.card-actions` region
+    workflow-name filter button, on output thumbnails and on the M9 error-details toggle so
+    those keep their existing click behaviour. Remove the Delete/Load/Archive/Run buttons and the `.card-actions` region
     (keep the `cancelQueueItem`/`loadQueueItem`/... logic out of the card — it moves to T3).
     Include `isSelected` in the memo comparator. Style `.selected` with an accent outline in
     both light and dark themes (see `_variables.scss`/`_mixins.scss`).
   - verify: In `npm run dev`, click/ctrl-click/shift-click select as described across running and
-    pending cards; thumbnails still open the gallery; lint passes.
+    pending cards; thumbnails still open in a new tab; lint passes.
   - size: M
 
 - [ ] M4.P1.T3 — Selection action bar
   - files: `src/gui/app/components/SelectionBar.jsx` (new), `src/gui/app/index.jsx`, `src/gui/styles/_footer.scss`
   - approach: `SelectionBar` renders above the existing footer only when the selection is
     non-empty: "N selected", **Clear**, and the actions valid for the route and composition:
-    **Delete** (always; running/external keys go to `POST api/interrupt {prompt_id}` one by
-    one, the rest in a single `POST api/queue {delete: [prompt_ids]}` — the bar needs the
+    **Delete** (always; running/external keys go through M9's `deleteRunningJob(promptId)`
+    helper one by one, the rest in a single `POST api/queue {delete: [prompt_ids]}` — the bar needs the
     items, so pass `data.running`/`data.pending` from `index.jsx` and resolve keys → items),
     **Load** (exactly one non-external item selected; reuse `msgLoadWorkflow(workflow,
     item[0])`), **Archive** (queue route, only pending items selected; `POST
