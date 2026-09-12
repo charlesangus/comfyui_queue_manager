@@ -40,7 +40,7 @@ baseURL>" }` for images the extension serves itself; `kind: "text"` values are s
     (queue/archive/completed) with the same buttons as before.
   - size: M
 
-- [ ] M2.P1.T2 — Switch `Queue.jsx` from table markup to a card list and restyle
+- [x] M2.P1.T2 — Switch `Queue.jsx` from table markup to a card list and restyle
   - files: `src/gui/app/components/Queue.jsx`, `src/gui/styles/_queue.scss`, `src/gui/app/components/QueueItemRow.jsx` (delete)
   - approach: In `Queue.jsx` replace `<table>/<thead>/<tbody>` with `<div className="qm-cards">`
     and render `QueueCard` instead of `QueueItemRow` for `running` and `pending`; keep the
