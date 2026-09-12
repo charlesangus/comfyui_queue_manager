@@ -107,3 +107,6 @@ cookiecutter-pypackage-env/
 /queue.json
 /data/
 /node.zip
+
+# local scratch (e.g. ComfyUI test instance) - does not persist across containers, not for repo history
+/.local/
