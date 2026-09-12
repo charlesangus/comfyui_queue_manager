@@ -72,7 +72,7 @@ baseURL>" }` for images the extension serves itself; `kind: "text"` values are s
 
 ## Phase 2.2: Release
 
-- [ ] M2.P2.T1 — Rebuild the GUI, update README screenshots text and changelog
+- [x] M2.P2.T1 — Rebuild the GUI, update README screenshots text and changelog
   - files: `web/.gui/**`, `README.md`, `CHANGELOG.md`
   - approach: `npm run build` in `src/gui/`; commit `web/.gui/`. In the README "Running and main
     Queue Manager window" section, replace the "actions column"/"table" wording with card
@@ -86,3 +86,26 @@ baseURL>" }` for images the extension serves itself; `kind: "text"` values are s
 `ruff check .` pass; rebuilt `web/.gui/` committed; manual check in a ComfyUI instance that
 queue, archive and completed tabs render as cards with the previous actions working (delete,
 load, archive, run, run-at-front with Shift, thumbnails opening in a new tab).
+
+## Decisions
+
+- 2026-09-12 — Verification gate passed: `npm run build`/`npm run lint` clean (only pre-existing
+  warnings/errors, none new), `pytest tests/` (13 passed) and `ruff check .` clean, rebuilt
+  `web/.gui/` committed in M2.P2.T1. Manual check done against the local ComfyUI v0.35.1 test
+  instance (`.local/ComfyUI`) using a headless Chromium (playwright, installed ad hoc for this
+  check) driving the real iframe: submitted tiny `EmptyImage → PreviewImage` prompts through the
+  native `/prompt` API with proper `extra_pnginfo`, and screenshotted the Queue (pending card,
+  dimmed styling, Delete/Load/Archive buttons), Completed (4 cards with workflow name, `0.01s`
+  execution-time badge, an output-count `.qm-badge`, and real thumbnail images rendering in
+  `.card-outputs`), and Archive ("No items." empty state) tabs — all rendered correctly with the
+  `.qm-card`/`.qm-btn`/`--qm-*` styling. Did not click Run/Shift-run or a thumbnail's new-tab open
+  live (no archived item left after cleanup to click Run on); confirmed instead via diff review
+  that `playItem`/Shift-detection/`handleThumbnailClick` are byte-for-byte unchanged from the old
+  `QueueItemRow.jsx`, only the surrounding markup moved to `QueueCard.jsx`. Test queue/history
+  data cleaned up afterward (`DELETE /queue_manager/queue`, unpaused).
+- 2026-09-12 — While driving the manual check, a raw `/prompt` submission without
+  `extra_data.extra_pnginfo` crashed the ComfyUI `prompt_worker` thread (`qm_queue.py`'s
+  `queue_get` assumes `extra_pnginfo` is always present, unlike `queue_put` which already
+  guards for it) and required a full server restart to recover. Pre-existing, unrelated to M2's
+  frontend-only scope — logged as an open question on the board for a follow-up decision rather
+  than fixed here.

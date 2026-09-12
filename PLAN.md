@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: M2.P2.T1
-pm_heartbeat: 2026-09-12T12:29:38-04:00
+current: null
+pm_heartbeat: 2026-09-12T12:49:35-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -82,7 +82,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 | M1 | Groundwork: green test suite and build | done | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
 | M7 | Remove the gallery | done | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
 | M10 | ComfyUI theme bridge and design system | done | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
-| M2 | Rich queue cards | doing | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
+| M2 | Rich queue cards | done | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
 | M3 | Queue Card Info node | todo | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
 | M8 | Frontend refactor and a JS test runner | todo | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
 | M9 | Failed and interrupted jobs are kept | todo | [M9-failed-and-interrupted-jobs.md](PLAN/MILESTONES/M9-failed-and-interrupted-jobs.md) |
@@ -98,3 +98,11 @@ Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 w
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the
   fork will be published to the Comfy registry under its own name; left untouched until answered.
+- Found during M2's manual verification (not caused by M2, pre-existing): `qm_queue.py`'s
+  `queue_get` (~line 472) crashes the `prompt_worker` thread with `KeyError: 'extra_pnginfo'`
+  when a prompt is submitted straight to the native `/prompt` endpoint without
+  `extra_data.extra_pnginfo.workflow` (e.g. a raw API call, bypassing the ComfyUI graph UI) —
+  `queue_put` already handles that case for `original_put` external jobs (qm_queue.py ~line
+  349), but `queue_get`'s logging/status-update path assumes every native-heap item has it. Once
+  the worker thread dies the whole prompt queue stops processing until ComfyUI is restarted. Fix
+  now as a quick patch, or track as a follow-up milestone/task?
