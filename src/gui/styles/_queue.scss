@@ -308,7 +308,7 @@ header.header {
         }
       }
 
-      & + tr.gallery {
+      & + tr.outputs-row {
         td {
           background: var(--background-faded);
 
@@ -319,13 +319,13 @@ header.header {
       }
     }
 
-    &:has(+ tr.gallery) {
+    &:has(+ tr.outputs-row) {
       td {
         border-bottom: #00000044 solid 1px;
       }
     }
 
-    &:has(+ tr.gallery:hover) {
+    &:has(+ tr.outputs-row:hover) {
       background: var(--background-faded);
       color: var(--foreground);
 

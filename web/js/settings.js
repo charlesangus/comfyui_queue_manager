@@ -27,7 +27,6 @@ export const settings =  [
     defaultValue: 'Last state',
   },
 
-  // Gallery settings
   {
     id: 'QueueManager.Completed.ListOrder',
     name: 'Completed jobs list order',
