@@ -25,9 +25,9 @@ export function SplashScreen({onClick}) {
         <h3>Bugfixes</h3>
         <p>A couple of minor unreported issues discovered throughout. Check Release Notes for more details.</p>
         <p><br/>
-          <i>For more details check the updated manual on Github: <a href={"https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual"} target={"_blank"}>Queue Manager Manual</a>.</i><br/>
-          <i>For full Release Notes view <a href={"https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md"} target={"_blank"}>Changelog</a>.</i><br />
-          <i>Leave a feedback or report an issue here <a href={"https://github.com/QuietNoise/comfyui_queue_manager/issues"} target={"_blank"}>Issues</a>. </i>
+          <i>For more details check the updated manual on Github: <a href={"https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual"} target={"_blank"} rel="noreferrer">Queue Manager Manual</a>.</i><br/>
+          <i>For full Release Notes view <a href={"https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md"} target={"_blank"} rel="noreferrer">Changelog</a>.</i><br />
+          <i>Leave a feedback or report an issue here <a href={"https://github.com/QuietNoise/comfyui_queue_manager/issues"} target={"_blank"} rel="noreferrer">Issues</a>. </i>
         </p>
 
       </div>

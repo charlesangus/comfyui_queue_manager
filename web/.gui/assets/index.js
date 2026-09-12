@@ -19372,7 +19372,7 @@ function TopMenu() {
             /* @__PURE__ */ jsxRuntimeExports.jsx(AdsClickSharpIcon, {}),
             " Take over focus"
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { className: "button shiny-button", href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { className: "button shiny-button", href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(QuizSharpIcon, {}),
             " Documentation"
           ] }),
@@ -19408,6 +19408,80 @@ function LoaderSpinner() {
       )
     }
   ) });
+}
+function viewURL(file) {
+  const { filename, subfolder } = file;
+  return `${baseURL}api/view?filename=${filename}&type=output&subfolder=${subfolder}`;
+}
+const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autoplay, className = "", controls = true, toggleable = false, title = "" }) {
+  const { filename } = file;
+  const videoRef = reactExports.useRef(null);
+  const ext = filename.split(".").pop().toLowerCase();
+  const isVideo = ext === "mp4" || ext === "webm";
+  const src = viewURL(file);
+  function toggle() {
+    if (!toggleable || !isVideo) return;
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      el.play().catch(() => {
+      });
+    } else {
+      el.pause();
+    }
+  }
+  reactExports.useEffect(() => {
+    if (!isVideo) return;
+    const el = videoRef.current;
+    if (!el) return;
+    el.load();
+    if (autoplay) {
+      const p = el.play();
+      if (p && typeof p.catch === "function") p.catch(() => {
+      });
+    }
+  }, [src, isVideo, autoplay]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: className + " media-item " + (isVideo ? "video" : "image"), title, onClick, children: ext === "mp4" || ext === "webm" ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "video",
+    {
+      ref: videoRef,
+      className: "comfy-video-main galleria-image",
+      controls,
+      autoPlay: autoplay,
+      muted: autoplay,
+      loop: autoplay,
+      onClick: toggle,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("source", { src, type: `video/${ext}` })
+    }
+  ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "img",
+    {
+      src,
+      className: "comfy-image-main galleria-image",
+      alt: filename
+    }
+  ) }) });
+});
+class MediaOutputs {
+  files = [];
+  constructor(item) {
+    const nodes = item?.outputs;
+    if (!nodes) return;
+    for (const nodeID of Object.keys(nodes)) {
+      const outputs = nodes[nodeID];
+      const entries = outputs.images || outputs.gifs || outputs.files || [];
+      for (const entry of entries) {
+        this.files.push({
+          filename: entry.filename,
+          subfolder: entry.subfolder,
+          type: entry.type
+        });
+      }
+    }
+  }
+  get total() {
+    return this.files.length;
+  }
 }
 const QueueItemRow = reactExports.memo(
   function QueueItemRow2({
@@ -19473,55 +19547,72 @@ const QueueItemRow = reactExports.memo(
       return ` ${rawSeconds.toFixed(2)}s`;
     }, [item?.[3]?.execution_time]);
     const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: className ? ` ${className}` : "", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { className: "px-3 py-1 serial", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: rowIndex }),
-        loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null
+    const mediaOutputs = reactExports.useMemo(() => new MediaOutputs(item?.[3]), [item]);
+    const handleThumbnailClick = reactExports.useCallback((file) => {
+      window.open(viewURL(file), "_blank");
+    }, []);
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: className ? ` ${className}` : "", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { className: "px-3 py-1 serial", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: rowIndex }),
+          loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-left name", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }) }),
+        route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "meta-info", children: executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-right actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              className: "delete red-button shiny-button",
+              onClick: cancelQueueItem,
+              title: "Delete workflow from queue",
+              children: "Delete"
+            }
+          ),
+          mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              className: "load green-button shiny-button",
+              onClick: loadQueueItem,
+              title: "Load workflow",
+              children: "Load"
+            }
+          ) : null,
+          route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              className: "archive yellow-button shiny-button",
+              onClick: archiveQueueItem,
+              title: "Move to the archive",
+              children: "Archive"
+            }
+          ) : null,
+          route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              className: "run blue-button shiny-button",
+              onClick: playItem,
+              title: "Move to queue",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
+                "Run"
+              ]
+            }
+          ) : null
+        ] }) })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-left name", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }) }),
-      route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "meta-info", children: executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-right actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "delete red-button shiny-button",
-            onClick: cancelQueueItem,
-            title: "Delete workflow from queue",
-            children: "Delete"
-          }
-        ),
-        mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "load green-button shiny-button",
-            onClick: loadQueueItem,
-            title: "Load workflow",
-            children: "Load"
-          }
-        ) : null,
-        route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "archive yellow-button shiny-button",
-            onClick: archiveQueueItem,
-            title: "Move to the archive",
-            children: "Archive"
-          }
-        ) : null,
-        route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            className: "run blue-button shiny-button",
-            onClick: playItem,
-            title: "Move to queue",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
-              "Run"
-            ]
-          }
-        ) : null
-      ] }) })
-    ] }) });
+      route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { className: "outputs-row", children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 100, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        MediaItem,
+        {
+          file,
+          onClick: () => handleThumbnailClick(file),
+          controls: false,
+          autoplay: false,
+          className: "thumbnail"
+        },
+        idx
+      )) }) }) })
+    ] });
   },
   (prev2, next2) => {
     const prevId = prev2.item?.[3]?.db_id;
@@ -19574,7 +19665,7 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
         /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "dark:bg-neutral-800 bg-neutral-200 text-xs uppercase", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "#" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left workflow-column", children: "Workflow" }),
-          route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("th", {}),
+          route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "Info" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2", align: "right", children: "Actions" })
         ] }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("tbody", { children: [
@@ -21599,19 +21690,19 @@ function SplashScreen({ onClick }) {
         /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
           "For more details check the updated manual on Github: ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", children: "Queue Manager Manual" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: "Queue Manager Manual" }),
           "."
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
           "For full Release Notes view ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md", target: "_blank", children: "Changelog" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md", target: "_blank", rel: "noreferrer", children: "Changelog" }),
           "."
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
           "Leave a feedback or report an issue here ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/issues", target: "_blank", children: "Issues" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/issues", target: "_blank", rel: "noreferrer", children: "Issues" }),
           ". "
         ] })
       ] })

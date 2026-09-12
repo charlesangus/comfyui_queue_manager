@@ -7,6 +7,8 @@ import { AppContext } from "../internals/app-context";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import {useAppStore} from "@/app/stores/appStore";
+import { MediaItem, viewURL } from "./MediaItem";
+import { MediaOutputs } from "../models/MediaOutputs";
 
 export const QueueItemRow = memo(
   function QueueItemRow({
@@ -89,6 +91,12 @@ const executionTimeLabel = useMemo(() => {
 
     const rowIndex =
       index === undefined || !info ? "" : index + 1 + info.page * info.page_size;
+
+    const mediaOutputs = useMemo(() => new MediaOutputs(item?.[3]), [item]);
+
+    const handleThumbnailClick = useCallback((file) => {
+      window.open(viewURL(file), "_blank");
+    }, []);
 
     return (
       <>
@@ -173,6 +181,25 @@ const executionTimeLabel = useMemo(() => {
             </div>
           </td>
         </tr>
+
+        {route === "completed" && mediaOutputs.total > 0 && (
+          <tr className="outputs-row">
+            <td colSpan={100}>
+              <div className="outputs">
+                {mediaOutputs.files.map((file, idx) => (
+                  <MediaItem
+                    key={idx}
+                    file={file}
+                    onClick={() => handleThumbnailClick(file)}
+                    controls={false}
+                    autoplay={false}
+                    className="thumbnail"
+                  />
+                ))}
+              </div>
+            </td>
+          </tr>
+        )}
       </>
     );
   },

@@ -64,7 +64,9 @@ export const Queue = memo(function Queue({ data, isLoading, error, progress }) {
                   Workflow
                 </th>
                 {route === "completed" &&
-                  <th></th>
+                  <th className="px-3 py-2 text-left">
+                    Info
+                  </th>
                 }
                 <th className="px-3 py-2" align="right">
                   Actions

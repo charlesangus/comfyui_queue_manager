@@ -1,15 +1,19 @@
 import {memo, useEffect, useRef} from "react";
 import {baseURL} from "../internals/config";
 
+// eslint-disable-next-line react-refresh/only-export-components
+export function viewURL(file) {
+  const {filename, subfolder} = file;
+  return `${baseURL}api/view?filename=${filename}&type=output&subfolder=${subfolder}`;
+}
 
 export const MediaItem = memo(function MediaItem({file, onClick, autoplay, className="", controls=true, toggleable=false, title=""}) {
-  const {filename, subfolder} = file;
+  const {filename} = file;
   const videoRef = useRef(null);
   const ext = filename.split('.').pop().toLowerCase();
   const isVideo = ext === "mp4" || ext === "webm";
 
-  const src = `${baseURL}api/view?filename=${filename}` +
-              `&type=output&subfolder=${subfolder}`;
+  const src = viewURL(file);
 
   function toggle() {
     if (!toggleable || !isVideo) return;
