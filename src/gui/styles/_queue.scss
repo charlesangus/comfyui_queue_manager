@@ -41,67 +41,89 @@ header.header {
     border-top: 1px solid var(--qm-border);
   }
 
-  table {
-    width: 100%;
-    max-width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-
-    th {
-      background-color: var(--qm-surface);
-      position: sticky;
-      top: 0;
-      z-index:3;
-      border-bottom: 1px solid var(--qm-border);
-
-      &:not(:last-child) {
-        &:after {
-          content: '';
-          position: absolute;
-          top: 25%;
-          right: 0px;
-          width: 1px;
-          height: 50%;
-          background-color: var(--qm-border);
-        }
-      }
-    }
-  }
-
   .MuiPaper-root {
     overflow: hidden;
     height: 100%;
   }
 
-  tr {
-    transition: all 0.1s ease-in-out;
+  .qm-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--qm-space);
+    padding: var(--qm-space);
+  }
+
+  .qm-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--qm-border);
+    border-radius: var(--qm-radius);
+    overflow: hidden;
+    transition: background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
 
     &:hover {
-      background: var(--qm-surface-hover);
+      background-color: var(--qm-surface-hover);
       color: var(--qm-fg);
     }
   }
 
-  thead {
-    tr {
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--qm-space);
+    padding: 0.5rem 0.75rem;
+    background-color: var(--qm-surface);
+    border-bottom: 1px solid var(--qm-border);
+
+    .serial {
+      color: var(--qm-fg-muted);
+      font-size: 0.8rem;
     }
 
-    .workflow-column {
-      width: 100%;
+    .name-cell {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
 
-      &:after {
-        .route-completed & {
-          content: none !important;
-        }
+      button {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
+
+    .execution-time {
+      font-size: 0.8rem;
+      border: 1px solid var(--qm-border);
+      border-radius: var(--qm-radius-sm);
+      padding: 2px 8px;
+      background-color: var(--qm-bg);
+      white-space: nowrap;
+    }
   }
 
-  td {
-    border-bottom: 1px solid var(--qm-border);
+  .card-body {
+    .card-outputs:empty {
+      display: none;
+    }
   }
 
-  td.actions {
+  .card-outputs {
+    .outputs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0.5rem 0.75rem;
+    }
+  }
+
+  .card-actions {
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--qm-border);
+
     .buttons {
       display: flex;
 
@@ -123,9 +145,7 @@ header.header {
     }
   }
 
-  .running {
-    position: relative;
-
+  .qm-card.running {
     &:before {
       content: '';
       position: absolute;
@@ -140,153 +160,46 @@ header.header {
       pointer-events: none;
     }
 
-    td.serial {
-      span {
-        position: relative;
-      }
-    }
-
-    td.name {
+    .card-header,
+    .card-body,
+    .card-actions {
       position: relative;
-    }
-
-    td.actions {
-      position: relative;
-      vertical-align: middle;
     }
   }
 
-  .pending {
-    td {
-      &:not(.actions) {
-        > * {
-          opacity: 0.6;
-          transition: opacity 0.3s ease;
-        }
-      }
-
-      &:not(:last-child) {
-        position: relative;
-
-        &:after {
-          content: '';
-          position: absolute;
-          top: 15%;
-          right: 0px;
-          width: 1px;
-          height: 70%;
-          background-color: var(--qm-border);
-        }
-      }
-
-      &.name {
-        .name-cell {
-          display: flex;
-          align-items: center;
-        }
-
-        .total {
-          display: inline-block;
-          outline: 1px solid var(--qm-border);
-          padding: 0 5px;
-          margin-right: 0.5em;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          min-width: 1.5rem;
-          text-align: center;
-
-          &:hover {
-            background-color: var(--qm-primary);
-            color: var(--qm-primary-fg);
-          }
-        }
-
-        button {
-          transition: all 0.3s ease;
-          &:hover {
-            opacity: 1 !important;
-            color: var(--qm-primary);
-          }
-        }
-
-        &:after {
-          .route-completed & {
-            content: none !important;
-          }
-        }
-      }
-
-      &.meta-info {
-        width: 1%;
-        padding-right: 12px;
-      }
-
-      .execution-time {
-        margin-left: auto;
-        font-size: 0.8rem;
-        border: 1px solid var(--qm-border);
-        padding: 2px 8px;
-        background-color: var(--qm-surface);
-        white-space: nowrap;
-        width: 100%;
-        text-align: right;
+  .qm-card.pending {
+    .card-header,
+    .card-body {
+      > * {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
       }
     }
 
+    .name-cell button {
+      transition: all 0.3s ease;
 
+      &:hover {
+        opacity: 1 !important;
+        color: var(--qm-primary);
+      }
+    }
 
     &:hover {
-      td {
+      .card-header,
+      .card-body {
         > * {
-          opacity: 1 !important;
-        }
-      }
-
-      & + tr.outputs-row {
-        td {
-          background: var(--qm-surface-hover);
-        }
-      }
-    }
-
-    &:has(+ tr.outputs-row) {
-      td {
-        border-bottom: #00000044 solid 1px;
-      }
-    }
-
-    &:has(+ tr.outputs-row:hover) {
-      background: var(--qm-surface-hover);
-      color: var(--qm-fg);
-
-      td {
-        opacity: 1 !important;
-
-        > * {
-          opacity: 1 !important;
+          opacity: 1;
         }
       }
     }
   }
 
-
-  td.info-cell {
+  .info-cell {
     padding: 20px;
   }
 
-  .outputs-row {
-    td {
-      padding: 8px 12px;
-      background-color: var(--qm-surface);
-    }
-  }
-
   .outputs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-
     .thumbnail {
       flex: 0 0 var(--qm-thumb, 96px);
       width: var(--qm-thumb, 96px);
