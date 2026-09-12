@@ -1,5 +1,5 @@
 ---
-title: Queue Manager upgrades — rich cards, card-info node, selection, priority, interactive preemption
+title: Queue Manager upgrades — gallery removal, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: draft
 current: null
 ship: pr-per-milestone
@@ -8,12 +8,17 @@ publish_decisions: docs/decisions/
 
 # Goal
 
-The Queue Manager sidebar shows each job as a rich card instead of a table row: the card carries
-the workflow name, status, a priority badge, and any images/text the workflow "pushed" onto it
-through a new **Queue Card Info** node. Cards can be multi-selected and acted on in bulk (delete,
+The extension is focused purely on queue management: the Gallery lightbox and its thumbnail
+modes/settings are gone (completed jobs keep a plain strip of output thumbnails). The Queue
+Manager sidebar shows each job as a rich card instead of a table row: the card carries the
+workflow name, status, a priority badge, any images/text the workflow "pushed" onto it through a
+new **Queue Card Info** node, and — for finished jobs — output thumbnails or the error that
+stopped them. Cards can be multi-selected and acted on in bulk (delete,
 archive, run, set priority). Jobs have an integer priority the scheduler honours. Running a single
 node / partial workflow interactively takes precedence over background queue work — either by
 jumping to the front of the queue or (opt-in) by interrupting the running job and re-queuing it.
+Failed and interrupted jobs stay visible in Completed instead of vanishing. The frontend is split
+into hooks/components with a Vitest suite, and CI runs both the Python and the GUI checks.
 Done when every milestone below is merged into `main` on the fork with a release build of the GUI,
 `pytest tests/` and `ruff check .` pass, and the README manual documents the new features.
 
@@ -27,7 +32,7 @@ Done when every milestone below is merged into `main` on the fork with a release
   tables `queue`/`meta`/`options`, helpers `write_query/read_query/read_single/write_many`),
   `qm_server.py` (aiohttp routes under `/queue_manager/*` plus a middleware intercepting native
   `POST /api/queue` and `POST /api/interrupt`), `nodes.py` (custom nodes; `Workflow Name` exists),
-  `qm_options.py`, `qm_gallery.py`, `queue_manager.py` (wires the singletons; instance is
+  `qm_options.py`, `queue_manager.py` (`qm_gallery.py` until M7 removes it) (wires the singletons; instance is
   `queueManager` in the package `__init__.py`).
 - Queue ordering: column `queue.number` ascending; negative numbers = "front of queue" (native
   ComfyUI convention, `PromptServer.instance.number * -1`). Status: 0 pending, 1 running,
@@ -64,11 +69,16 @@ Done when every milestone below is merged into `main` on the fork with a release
 | ID | Milestone | Status | File |
 |----|-----------|--------|------|
 | M1 | Groundwork: green test suite and build | todo | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
+| M7 | Remove the gallery | todo | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
 | M2 | Rich queue cards | todo | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
 | M3 | Queue Card Info node | todo | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
+| M8 | Frontend refactor and a JS test runner | todo | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
+| M9 | Failed and interrupted jobs are kept | todo | [M9-failed-and-interrupted-jobs.md](PLAN/MILESTONES/M9-failed-and-interrupted-jobs.md) |
 | M4 | Card selection and bulk actions | todo | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
 | M5 | Job priority levels | todo | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
 | M6 | Interactive runs preempt the queue | todo | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
+
+Rows are in execution order (IDs are stable; M7–M9 were added after M1–M6 were planned).
 
 # Open questions
 
