@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
-status: running
+status: paused
 current: null
-pm_heartbeat: 2026-09-12T08:30:00+00:00
+pm_heartbeat: 2026-09-12T11:50:00+00:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
