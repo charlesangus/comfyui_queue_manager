@@ -93,6 +93,15 @@ Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 w
 
 # Open questions
 
+- **GUI builds are blocked in this workspace:** `registry.npmjs.org` and the mirrors
+  (npmmirror, yarnpkg, jsdelivr, unpkg) are unreachable from the sandbox (only PyPI and GitHub
+  are), and `~/.npm/_cacache` holds 30 of the 560 lockfile packages, so `npm ci` cannot
+  complete and `npm run build` cannot run. Every milestone that touches `src/gui/` (M7, M10,
+  M2, M3, M8, M9, M4, M5, M6, M11) needs one of: network access to the npm registry from this
+  sandbox, a pre-populated `src/gui/node_modules/` (e.g. copied in from a machine that ran
+  `npm ci` on the same lockfile), or a fully warmed `~/.npm/_cacache`. Until resolved the PM
+  should run the backend milestones (M1 minus M1.P2.T1) and stop before M7.
+
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the
   fork will be published to the Comfy registry under its own name; left untouched until answered.
