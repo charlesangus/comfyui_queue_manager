@@ -4,9 +4,6 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
-import ImageNotSupportedSharpIcon from '@mui/icons-material/ImageNotSupportedSharp';
-import WallpaperSharpIcon from '@mui/icons-material/WallpaperSharp';
-import ViewModuleSharpIcon from '@mui/icons-material/ViewModuleSharp';
 import UploadSharpIcon from '@mui/icons-material/UploadSharp';
 import Inventory2SharpIcon from '@mui/icons-material/Inventory2Sharp';
 import { styled } from '@mui/material/styles';
@@ -23,8 +20,6 @@ import {AppContext} from "./internals/app-context";
 import {SplashScreen} from "./components/SplashScreen";
 
 import {compareVersions} from "./internals/functions";
-import {MediaOutputs} from "./models/MediaOutputs";
-import {OrderedMap} from "./models/OrderedMap"
 import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
 import {MenuItem, Pagination, Select} from "@mui/material";
@@ -57,16 +52,13 @@ export default function Home() {
   const previousListOrderRef = useRef(completedListOrder);
   const setAllOptions = useOptionsStore((state) => state.setAllOptions);
   const setOption = useOptionsStore((state) => state.setOption);
-  const setDirectOption = useOptionsStore((state) => state.setDirectOption);
 
   const filters = useAppStore((state) => state.filters);
   const route = useAppStore((state) => state.route);
-  const mode = useAppStore((state) => state.mode);
   const shiftDown = useAppStore((state) => state.shiftDown);
 
   const setFilters = useAppStore((state) => state.setFilters);
   const setRoute = useAppStore((state) => state.setRoute);
-  const setMode = useAppStore((state) => state.setMode);
   const setShiftDown = useAppStore((state) => state.setShiftDown);
 
   const [currentJob, setProgress] = useState({
@@ -78,11 +70,7 @@ export default function Home() {
     progress: 0.0,
   });
 
-  const [galleryData, setGallery] = useState(null);
-
   const [showSplash, setShowSplash] = useState(false);
-
-  const latestThumbSizePxRef = useRef(150);
 
   const fetchIdRef = useRef(0);
 
@@ -93,26 +81,6 @@ export default function Home() {
   }, [route, filters, completedListOrder]);
   const lastQueryKeyRef = useRef(null);
 
-
-  const applyGridVars = useCallback((thumbSizePx) => {
-    const root = document.documentElement;
-
-    const gapPx = 6;
-    const minCols = 1;
-
-    // Choose basis: viewport width
-    const width = window.innerWidth;
-
-    const denom = thumbSizePx + gapPx;
-    const cols =
-      Number.isFinite(denom) && denom > 0
-        ? Math.max(minCols, Math.floor((width + gapPx) / denom))
-        : minCols;
-
-    root.style.setProperty("--thumb-size", `${thumbSizePx}px`);
-    root.style.setProperty("--gap", `${gapPx}px`);
-    root.style.setProperty("--cols", String(cols));
-  }, []);
 
   const isFilterOn = useCallback(() => {
     return filters && Object.keys(filters).length > 0;
@@ -141,32 +109,10 @@ export default function Home() {
     return queryArgs;
   }, [route]);
 
-  const updateCoverSize = useCallback((event, newValue) => {
-    document.documentElement.style.setProperty('--cover-size', newValue + 'px');
-  }, []);
-
-  const onCoverSizeCommited = useCallback((event, newValue) => {
-    // update options on the server
-    setTimeout(() => {
-      setDirectOption("cover_size", newValue);
-      apiCall('queue_manager/options', { key: "cover_size", value: newValue }, 'POST');
-    });
-  }, [setDirectOption]);
-
-  const updateThumbnailSize = useCallback((event, newValue) => {
-    const n = Number(newValue);
-    const thumbSizePx = Number.isFinite(n) && n > 0 ? n : 150;
-
-    latestThumbSizePxRef.current = thumbSizePx;
-    applyGridVars(thumbSizePx);
-  }, [applyGridVars]);
-
   const fetchOptions = useCallback(async () => {
     const newOptions = await apiCall(`queue_manager/options`, null, "GET");
     if (newOptions) {
       setAllOptions({ ...newOptions });
-      updateThumbnailSize(null, newOptions.thumb_size ? newOptions.thumb_size : 150);
-      updateCoverSize(null, newOptions.cover_size ? newOptions.cover_size : 50);
 
       // show splash screen if needed
       if (compareVersions(newOptions.splash_screen, newOptions.__version__) < 0) {
@@ -175,7 +121,7 @@ export default function Home() {
     } else {
       console.error("Failed to fetch options");
     }
-  }, [setAllOptions, updateCoverSize, updateThumbnailSize]);
+  }, [setAllOptions]);
 
   const fetchQueueItems = useCallback(async ({page, route: requestedRoute, filters, reload = false} = {}) => {
 
@@ -432,7 +378,7 @@ export default function Home() {
         setAllOptions({...event.data.settings});
         break;
       case "QM_Setting_Changed": {
-          // check if path like "Gallery.ShowImages" in event.data.message.setting represent an existing object path in options
+          // check if path like "Basic.PageSize" in event.data.message.setting represent an existing object path in options
           const settingPath = event.data.message.setting.split('.');
           let current = options;
           let exists = true;
@@ -498,85 +444,13 @@ export default function Home() {
     }
   });
 
-  const openGallery = useCallback((galleryData = null) => {
-    if (galleryData) {
-      window.parent.postMessage({
-        type: "QM_Gallery_Show",
-      }, "*");
-      setMode("gallery");
-
-      // add class to body
-      document.body.classList.add('gallery-open');
-    }
-  }, [setMode]);
-
-  /**
-   * Pack outputs and sent to gallery iframe
-   */
-  const onMediaItemClick = useCallback((mediaItem) => {
-    let items = new OrderedMap();
-
-    appStatus.queue.pending.map((item, index) => {
-      // are there outputs for this item?
-      if (item[3] && item[3].outputs) {
-        const outputs = new MediaOutputs(item[3], options.Gallery);
-
-        // if there are outputs, add to items
-        if (outputs.files.length > 0) {
-          items.set(item[3].db_id, {
-            dbID: item[3].db_id,
-            promptID: item[1],
-            number: item[0],
-            workflow: item[3].extra_pnginfo.workflow,
-            outputs: outputs
-          })
-        }
-      }
-    });
-
-    if (items.length === 0) {
-      setGallery((prev) => ({
-        ...prev, items: null
-      }));
-      return;
-    }
-
-    // in items find one that has dbID equal to data.dbID
-    if (!items || items.length === 0) {
-      console.error('No items found in gallery data:', galleryData);
-      return;
-    }
-
-    setGallery({
-      items: items,
-      activeItem: mediaItem
-    })
-
-    openGallery(mediaItem);
-  }, [appStatus.queue, galleryData, openGallery, options.Gallery]);
-
-  function onThumbSizeCommited(event, newValue) {
-    // update options on the server
-    setTimeout(() =>{
-      setDirectOption("thumb_size", newValue);
-      apiCall('queue_manager/options', {key:"thumb_size", value: newValue}, 'POST')
-    })
-  }
-
-
-  const setThumbMode = useEvent((mode) => {
-    // update options on the server
-    setDirectOption("thumb_mode", mode);
-    apiCall('queue_manager/options', {key:"thumb_mode", value: mode}, 'POST');
-  });
-
   const openSplash = useEvent(() => {
     setShowSplash(true);
   });
 
   const appContextValue = useMemo(() => {
-    return { onMediaItemClick, openSplash, fetchQueueItems };
-  }, [onMediaItemClick, openSplash, fetchQueueItems]);
+    return { openSplash, fetchQueueItems };
+  }, [openSplash, fetchQueueItems]);
 
   const closeSplash = useEvent(event => {
     setShowSplash(false);
@@ -631,20 +505,6 @@ export default function Home() {
     }
   }, [appStatus.queue, currentJob.id, currentJob.integrity, currentJob.nodes]);
 
-  useEffect(() => {
-    const onResize = () => applyGridVars(latestThumbSizePxRef.current);
-
-    window.addEventListener("resize", onResize, { passive: true });
-
-    const ro = new ResizeObserver(() => onResize());
-    ro.observe(document.documentElement);
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-      ro.disconnect();
-    };
-  }, [applyGridVars]);
-
   // on mount get the queue items from the server
   useEffect(() => {
     fetchQueueItems({route: "queue"});
@@ -672,7 +532,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className={`route-${route} qm-container mode-${mode}` + (appStatus.loading ? ' loading' : '') + (appStatus.reloading ? ' reloading' : '')}>
+    <div className={`route-${route} qm-container` + (appStatus.loading ? ' loading' : '') + (appStatus.reloading ? ' reloading' : '')}>
       <header className="px-2 py-1 text-sm header font-bold">
         Queue Manager
         {appStatus.loading &&
@@ -787,40 +647,6 @@ export default function Home() {
         *
         */}
         <footer className={"footer"}>
-          {/* On Complete route show thumbnail mode and size controls */}
-          {route === 'completed' && (options.Gallery.ShowImages || options.Gallery.ShowVideos) &&
-            <Stack spacing={1} direction="row" sx={{alignItems: 'center'}}>
-              <Stack spacing={1} className={"thumb-mode"} direction="row"
-                     sx={{alignItems: 'center', justifyContent: 'start', flex: 1}} p={1}>
-                <div title="No thumbnails">
-                  <ImageNotSupportedSharpIcon className={options.thumb_mode === "none" ? 'active' : ''}
-                                              onClick={() => setThumbMode("none")}/>
-                </div>
-                <div title="Cover image only">
-                  <WallpaperSharpIcon className={options.thumb_mode === "cover" ? 'active' : ''}
-                                      onClick={() => setThumbMode("cover")}/>
-                </div>
-                <div title="Show all outputs">
-                  <ViewModuleSharpIcon className={options.thumb_mode === "grid" ? 'active' : ''}
-                                       onClick={() => setThumbMode("grid")}/>
-                </div>
-              </Stack>
-              {options.thumb_mode === "grid" &&
-                <ThumbSlider min={50} max={500} value={options.thumb_size ? options.thumb_size : 150}
-                             onChange={updateThumbnailSize}
-                             onChangeCommitted={onThumbSizeCommited}
-                />
-              }
-              {options.thumb_mode === "cover" &&
-                <ThumbSlider min={25} max={200} value={options.cover_size ? options.cover_size : 50}
-                             onChange={updateCoverSize}
-                             onChangeCommitted={onCoverSizeCommited}
-                />
-              }
-            </Stack>
-
-          }
-
           {/* Paging */}
           {appStatus.queue && appStatus.queue.info && (appStatus.queue.info.last_page > 0) &&
             <>
@@ -947,9 +773,6 @@ export default function Home() {
             </Stack>
           </div>
         </footer>
-        {mode === 'gallery' && galleryData &&
-          <Gallery items={galleryData.items} activeItem={galleryData.activeItem}/>
-        }
         {showSplash &&
           <SplashScreen onClick={closeSplash}/>
         }

@@ -18697,7 +18697,7 @@ function getSvgIconUtilityClass(slot) {
   return generateUtilityClass("MuiSvgIcon", slot);
 }
 generateUtilityClasses("MuiSvgIcon", ["root", "colorPrimary", "colorSecondary", "colorAction", "colorError", "colorDisabled", "fontSizeInherit", "fontSizeSmall", "fontSizeMedium", "fontSizeLarge"]);
-const useUtilityClasses$l = (ownerState) => {
+const useUtilityClasses$j = (ownerState) => {
   const {
     color: color2,
     fontSize,
@@ -18836,7 +18836,7 @@ const SvgIcon = /* @__PURE__ */ reactExports.forwardRef(function SvgIcon2(inProp
   if (!inheritViewBox) {
     more.viewBox = viewBox;
   }
-  const classes = useUtilityClasses$l(ownerState);
+  const classes = useUtilityClasses$j(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(SvgIconRoot, {
     as: component,
     className: clsx(classes.root, className),
@@ -19043,15 +19043,6 @@ const DeleteOutlineSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.j
 const DriveFolderUploadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2m0 12H4V6h5.17l2 2H20zM9.41 14.42 11 12.84V17h2v-4.16l1.59 1.59L16 13.01 12.01 9 8 13.01z"
 }));
-const ImageNotSupportedSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "m21.9 21.9-8.49-8.49L3 3l-.9-.9L.69 3.51 3 5.83V21h15.17l2.31 2.31zM5 18l3.5-4.5 2.5 3.01L12.17 15l3 3zm16 .17L5.83 3H21z"
-}));
-const WallpaperSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M4 4h7V2H2v9h2zm6 9-4 5h12l-3-4-2.03 2.71zm7-4.5c0-.83-.67-1.5-1.5-1.5S14 7.67 14 8.5s.67 1.5 1.5 1.5S17 9.33 17 8.5M22 2h-9v2h7v7h2zm-2 18h-7v2h9v-9h-2zM4 13H2v9h9v-2H4z"
-}));
-const ViewModuleSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M14.67 5v6.5H9.33V5zm1 6.5H21V5h-5.33zm-1 7.5v-6.5H9.33V19zm1-6.5V19H21v-6.5zm-7.34 0H3V19h5.33zm0-1V5H3v6.5z"
-}));
 const UploadSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"
 }));
@@ -19254,22 +19245,6 @@ const msgLoadWorkflow = (workflow, number) => {
     "*"
   );
 };
-function mediaType(outputs) {
-  return {
-    isImage: !outputs.animated || outputs.animated[0] !== true,
-    isVideo: outputs.animated && outputs.animated[0] === true || outputs.gifs && outputs.gifs.length > 0
-  };
-}
-function hasVideos(outputs) {
-  for (const nodeID in outputs) {
-    const nodeOutputs = outputs[nodeID];
-    const { isVideo } = mediaType(nodeOutputs);
-    if (isVideo) {
-      return true;
-    }
-  }
-  return false;
-}
 function compareVersions(a, b) {
   const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
   const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
@@ -19340,12 +19315,10 @@ const create = ((createState) => createState ? createImpl(createState) : createI
 const useAppStore = create((set) => ({
   filters: null,
   route: "queue",
-  mode: "queue",
   clientId: null,
   shiftDown: false,
   setFilters: (filters) => set((state) => ({ ...state, filters })),
   setRoute: (route) => set((state) => ({ ...state, route })),
-  setMode: (mode) => set((state) => ({ ...state, mode })),
   setClientId: (clientId) => set((state) => ({ ...state, clientId })),
   setShiftDown: (shiftDown) => set((state) => ({ ...state, shiftDown }))
 }));
@@ -19436,99 +19409,6 @@ function LoaderSpinner() {
     }
   ) });
 }
-const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autoplay, className = "", controls = true, toggleable = false, title = "" }) {
-  const { filename, subfolder } = file;
-  const videoRef = reactExports.useRef(null);
-  const ext = filename.split(".").pop().toLowerCase();
-  const isVideo = ext === "mp4" || ext === "webm";
-  const src = `${baseURL}api/view?filename=${filename}&type=output&subfolder=${subfolder}`;
-  function toggle() {
-    if (!toggleable || !isVideo) return;
-    const el = videoRef.current;
-    if (!el) return;
-    if (el.paused) {
-      el.play().catch(() => {
-      });
-    } else {
-      el.pause();
-    }
-  }
-  reactExports.useEffect(() => {
-    if (!isVideo) return;
-    const el = videoRef.current;
-    if (!el) return;
-    el.load();
-    if (autoplay) {
-      const p = el.play();
-      if (p && typeof p.catch === "function") p.catch(() => {
-      });
-    }
-  }, [src, isVideo, autoplay]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: className + " media-item " + (isVideo ? "video" : "image"), title, onClick, children: ext === "mp4" || ext === "webm" ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "video",
-    {
-      ref: videoRef,
-      className: "comfy-video-main galleria-image",
-      controls,
-      autoPlay: autoplay,
-      muted: autoplay,
-      loop: autoplay,
-      onClick: toggle,
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx("source", { src, type: `video/${ext}` })
-    }
-  ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "img",
-    {
-      src,
-      className: "comfy-image-main galleria-image",
-      alt: filename
-    }
-  ) }) });
-});
-class MediaOutputs {
-  files = null;
-  cover = null;
-  total = 0;
-  hasVideos = false;
-  ShowImages = false;
-  ShowVideos = false;
-  constructor(item, settings) {
-    const nodes = item?.outputs;
-    this.hasVideos = hasVideos(nodes);
-    const showImages = Boolean(settings?.ShowImages);
-    const showVideos = Boolean(settings?.ShowVideos);
-    const hideImagesWhenVideoExists = Boolean(settings?.HideImagesWhenVideoExists);
-    this.ShowImages = showImages && (!this.hasVideos || !hideImagesWhenVideoExists);
-    this.ShowVideos = showVideos;
-    if (!nodes) return;
-    let images = null;
-    let videos = null;
-    Object.keys(nodes).forEach((nodeID) => {
-      const outputs = nodes[nodeID];
-      const files = outputs.images || outputs.gifs || outputs.files || [];
-      if (!files.length) return;
-      const { isImage, isVideo } = mediaType(outputs);
-      if (isImage && this.ShowImages) {
-        if (images === null) images = [];
-        images.push(...files);
-      } else if (isVideo && this.ShowVideos) {
-        if (videos === null) videos = [];
-        videos.push(...files);
-      }
-    });
-    this.files = [];
-    if (images?.length) {
-      this.files.push(...images);
-    }
-    if (videos?.length) {
-      this.files.push(...videos);
-    }
-    if (this.files?.length) {
-      this.cover = this.files[0];
-      this.total = this.files.length;
-    }
-  }
-}
 const QueueItemRow = reactExports.memo(
   function QueueItemRow2({
     item,
@@ -19538,19 +19418,11 @@ const QueueItemRow = reactExports.memo(
     mode,
     info,
     route,
-    thumbMode,
-    galleryOptions,
     filters
   }) {
-    const { onMediaItemClick, fetchQueueItems } = reactExports.useContext(AppContext);
+    const { fetchQueueItems } = reactExports.useContext(AppContext);
     const dbId = item?.[3]?.db_id;
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
-    const mediaOutputs = reactExports.useMemo(() => {
-      if (item?.[3]?.outputs && route === "completed") {
-        return new MediaOutputs(item[3], galleryOptions);
-      }
-      return null;
-    }, [item, route, galleryOptions]);
     const cancelQueueItem = reactExports.useCallback(async () => {
       const cancelRoute = mode === "running" || mode === "external" ? "interrupt" : "queue";
       await apiCall(`api/${cancelRoute}`, { delete: [item[1]] });
@@ -19600,158 +19472,67 @@ const QueueItemRow = reactExports.memo(
       if (minutes > 0) return ` ${minutes}m ${secondsLabel}`;
       return ` ${rawSeconds.toFixed(2)}s`;
     }, [item?.[3]?.execution_time]);
-    const showCover = route === "completed" && thumbMode === "cover" && (galleryOptions.ShowImages || galleryOptions.ShowVideos);
-    const showGrid = item?.[3]?.total_files > 0 && route === "completed" && thumbMode === "grid" && (galleryOptions.ShowImages || galleryOptions.ShowVideos);
     const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: className ? ` ${className}` : "", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { className: "px-3 py-1 serial", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: rowIndex }),
-          loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null
-        ] }),
-        showCover ? /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 cover", children: mediaOutputs?.cover ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          MediaItem,
-          {
-            file: mediaOutputs.cover,
-            controls: false,
-            autoplay: false,
-            onClick: () => onMediaItemClick({ dbID: dbId, fileIndex: 0 }),
-            className: "play-button",
-            title: "Open gallery"
-          }
-        ) : null }) : null,
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-left name", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "name-cell", children: [
-          mediaOutputs && item[3].total_files > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "span",
-            {
-              className: "total shiny-button",
-              title: `Total file outputs: ${mediaOutputs.total}`,
-              onClick: () => onMediaItemClick({ dbID: dbId, fileIndex: 0 }),
-              children: mediaOutputs.total
-            }
-          ) : null,
-          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" })
-        ] }) }),
-        route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "meta-info", children: executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-right actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "delete red-button shiny-button",
-              onClick: cancelQueueItem,
-              title: "Delete workflow from queue",
-              children: "Delete"
-            }
-          ),
-          mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "load green-button shiny-button",
-              onClick: loadQueueItem,
-              title: "Load workflow",
-              children: "Load"
-            }
-          ) : null,
-          route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "archive yellow-button shiny-button",
-              onClick: archiveQueueItem,
-              title: "Move to the archive",
-              children: "Archive"
-            }
-          ) : null,
-          route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              className: "run blue-button shiny-button",
-              onClick: playItem,
-              title: "Move to queue",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
-                "Run"
-              ]
-            }
-          ) : null,
-          route === "completed" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: "view violet-button shiny-button",
-              onClick: () => onMediaItemClick({ dbID: dbId, fileIndex: 0 }),
-              title: "View outputs in gallery",
-              children: "View"
-            }
-          ) : null
-        ] }) })
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { className: className ? ` ${className}` : "", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { className: "px-3 py-1 serial", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: rowIndex }),
+        loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null
       ] }),
-      showGrid ? /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { className: "dark:odd:bg-neutral-900 odd:bg-neutral-100 gallery", children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: 4, className: "px-3 py-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-2 items", children: mediaOutputs?.files?.length ? mediaOutputs.files.map((file, fileIndex) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-        MediaItem,
-        {
-          file,
-          autoplay: false,
-          onClick: () => onMediaItemClick({ dbID: dbId, fileIndex }),
-          title: "Open gallery"
-        },
-        `${file.filename}-${file.subfolder}`
-      )) : null }) }) }) : null
-    ] });
+      /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-left name", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }) }),
+      route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "meta-info", children: executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("td", { className: "px-3 py-1 text-right actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            className: "delete red-button shiny-button",
+            onClick: cancelQueueItem,
+            title: "Delete workflow from queue",
+            children: "Delete"
+          }
+        ),
+        mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            className: "load green-button shiny-button",
+            onClick: loadQueueItem,
+            title: "Load workflow",
+            children: "Load"
+          }
+        ) : null,
+        route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            className: "archive yellow-button shiny-button",
+            onClick: archiveQueueItem,
+            title: "Move to the archive",
+            children: "Archive"
+          }
+        ) : null,
+        route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            className: "run blue-button shiny-button",
+            onClick: playItem,
+            title: "Move to queue",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
+              "Run"
+            ]
+          }
+        ) : null
+      ] }) })
+    ] }) });
   },
   (prev2, next2) => {
     const prevId = prev2.item?.[3]?.db_id;
     const nextId = next2.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.thumbMode === next2.thumbMode && prev2.galleryOptions === next2.galleryOptions && prev2.filters === next2.filters && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size;
   }
 );
-const useOptionsStore = create((set) => ({
-  Basic: {},
-  Completed: {
-    CoverThumbMode: "Cropped",
-    GridThumbMode: "Square Fit",
-    ListOrder: "Newest first"
-  },
-  Gallery: {},
-  thumb_mode: "cover",
-  thumb_size: 150,
-  cover_size: 50,
-  show_gallery_ui: true,
-  /**
-   * Set a single option within a category
-   */
-  setOption: (category, key, value) => set((state) => ({
-    ...state,
-    [category]: {
-      ...state[category],
-      [key]: value
-    }
-  })),
-  /**
-   * Set all options within a category
-   */
-  setOptionsCategory: (category, options) => set((state) => ({
-    ...state,
-    [category]: options
-  })),
-  /**
-   * Set all options
-   */
-  setAllOptions: (allOptions) => set(() => ({
-    ...allOptions
-  })),
-  /**
-   * Set a single option directly on the root state
-   */
-  setDirectOption: (key, value) => set((state) => ({
-    ...state,
-    [key]: value
-  }))
-}));
 const QueueItems = reactExports.memo(function QueueItems2({ running, pending, info }) {
   const route = useAppStore((state) => state.route);
   const filters = useAppStore((state) => state.filters);
-  const thumbMode = useOptionsStore((state) => state.thumb_mode);
-  const galleryOptions = useOptionsStore((state) => state.Gallery);
-  const stableGalleryOptions = reactExports.useMemo(() => galleryOptions, [galleryOptions]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     running.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
       QueueItemRow,
@@ -19762,8 +19543,6 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
         mode: item?.[3]?.extra_pnginfo ? "running" : "external",
         info,
         route,
-        thumbMode,
-        galleryOptions: stableGalleryOptions,
         filters
       },
       item?.[3]?.db_id ?? item?.[1]
@@ -19776,8 +19555,6 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
         index,
         info,
         route,
-        thumbMode,
-        galleryOptions: stableGalleryOptions,
         filters
       },
       item?.[3]?.db_id ?? `${item?.[1]}-${index}`
@@ -19786,22 +19563,16 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
 });
 const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {
   const route = useAppStore((state) => state.route);
-  const thumbMode = useOptionsStore((state) => state.thumb_mode);
-  const options = useOptionsStore((state) => state.Completed);
-  const galleryOptions = useOptionsStore((state) => state.Gallery);
-  const coverMode = String(options.CoverThumbMode ?? "Cropped").toLowerCase().replace(/\s+/g, "_");
-  const gridMode = String(options.GridThumbMode ?? "Square Fit").toLowerCase().replace(/\s+/g, "_");
   const running = data?.running ?? [];
   const pending = data?.pending ?? [];
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
     {
-      className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : "") + " cover-" + coverMode + " grid-" + gridMode + " mode-",
+      className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : ""),
       style: { "--job-progress": progress + "%" },
       children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { className: "min-w-full border border-0", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { className: "dark:bg-neutral-800 bg-neutral-200 text-xs uppercase", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left", children: "#" }),
-          route === "completed" && thumbMode === "cover" && (galleryOptions.ShowImages || galleryOptions.ShowVideos) && /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 cover", children: "Thumbnail" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2 text-left workflow-column", children: "Workflow" }),
           route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsx("th", {}),
           /* @__PURE__ */ jsxRuntimeExports.jsx("th", { className: "px-3 py-2", align: "right", children: "Actions" })
@@ -20718,7 +20489,7 @@ function getButtonBaseUtilityClass(slot) {
   return generateUtilityClass("MuiButtonBase", slot);
 }
 const buttonBaseClasses = generateUtilityClasses("MuiButtonBase", ["root", "disabled", "focusVisible"]);
-const useUtilityClasses$k = (ownerState) => {
+const useUtilityClasses$i = (ownerState) => {
   const {
     disabled,
     focusVisible,
@@ -20935,7 +20706,7 @@ const ButtonBase = /* @__PURE__ */ reactExports.forwardRef(function ButtonBase2(
     tabIndex,
     focusVisible
   };
-  const classes = useUtilityClasses$k(ownerState);
+  const classes = useUtilityClasses$i(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(ButtonBaseRoot, {
     as: ComponentProp,
     className: clsx(classes.root, className),
@@ -21029,7 +20800,7 @@ const rotateAnimation = typeof circularRotateKeyframe !== "string" ? css`
 const dashAnimation = typeof circularDashKeyframe !== "string" ? css`
         animation: ${circularDashKeyframe} 1.4s ease-in-out infinite;
       ` : null;
-const useUtilityClasses$j = (ownerState) => {
+const useUtilityClasses$h = (ownerState) => {
   const {
     classes,
     variant,
@@ -21163,7 +20934,7 @@ const CircularProgress = /* @__PURE__ */ reactExports.forwardRef(function Circul
     variant,
     enableTrackSlot
   };
-  const classes = useUtilityClasses$j(ownerState);
+  const classes = useUtilityClasses$h(ownerState);
   const circleStyle = {};
   const rootStyle = {};
   const rootProps = {};
@@ -21219,7 +20990,7 @@ function getButtonUtilityClass(slot) {
 const buttonClasses = generateUtilityClasses("MuiButton", ["root", "text", "textInherit", "textPrimary", "textSecondary", "textSuccess", "textError", "textInfo", "textWarning", "outlined", "outlinedInherit", "outlinedPrimary", "outlinedSecondary", "outlinedSuccess", "outlinedError", "outlinedInfo", "outlinedWarning", "contained", "containedInherit", "containedPrimary", "containedSecondary", "containedSuccess", "containedError", "containedInfo", "containedWarning", "disableElevation", "focusVisible", "disabled", "colorInherit", "colorPrimary", "colorSecondary", "colorSuccess", "colorError", "colorInfo", "colorWarning", "textSizeSmall", "textSizeMedium", "textSizeLarge", "outlinedSizeSmall", "outlinedSizeMedium", "outlinedSizeLarge", "containedSizeSmall", "containedSizeMedium", "containedSizeLarge", "sizeMedium", "sizeSmall", "sizeLarge", "fullWidth", "startIcon", "endIcon", "icon", "iconSizeSmall", "iconSizeMedium", "iconSizeLarge", "loading", "loadingWrapper", "loadingIconPlaceholder", "loadingIndicator", "loadingPositionCenter", "loadingPositionStart", "loadingPositionEnd"]);
 const ButtonGroupContext = /* @__PURE__ */ reactExports.createContext({});
 const ButtonGroupButtonContext = /* @__PURE__ */ reactExports.createContext(void 0);
-const useUtilityClasses$i = (ownerState) => {
+const useUtilityClasses$g = (ownerState) => {
   const {
     color: color2,
     disableElevation,
@@ -21719,7 +21490,7 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     type,
     variant
   };
-  const classes = useUtilityClasses$i(ownerState);
+  const classes = useUtilityClasses$g(ownerState);
   const startIcon = (startIconProp || loading && loadingPosition === "start") && /* @__PURE__ */ jsxRuntimeExports.jsx(ButtonStartIcon, {
     className: classes.startIcon,
     ownerState,
@@ -21787,8 +21558,101 @@ function useEvent(callback) {
 function useEvent_shouldNotBeInvokedBeforeMount() {
   throw new Error("INVALID_USEEVENT_INVOCATION: the callback from useEvent cannot be invoked before the component has mounted.");
 }
-const PhotoOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M19 5v14H5V5zm0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-4.86 8.86-3 3.87L9 13.14 6 17h12z"
+const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+}));
+function SplashScreen({ onClick }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-screen", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { className: "close", onClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(CloseSharpIcon, {}) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-content", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { children: "ComfyUI Queue Manager" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "sub", children: "Version: v0.1.0" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("h4", { className: "sub", children: [
+        "Released: 25",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("sup", { children: "th" }),
+        " January 2026"
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "What's new?" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Previews and gallery" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Release v0.1.0 introduces a big new feature: outputs previews and gallery." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+        "Head over to the ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: "Completed" }),
+        " tab to see previews from generated outputs (only new jobs completed after this release was introduced). Click on media item to see it in ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: "Gallery" }),
+        " mode. Keyboard shortcuts available. "
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Settings" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+        "A new settings panel is available in ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: "ComfyUI Menu -> Settings -> Queue Manager" }),
+        " where you can influence certain features of the extension."
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "New style and UI improvements" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "An attempt to make the UI look less motley. " }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "More functional pagination experience, especially if you hoard tens of pages." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Completion Time" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "From now on completed jobs will show total execution time." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Bugfixes" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "A couple of minor unreported issues discovered throughout. Check Release Notes for more details." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
+          "For more details check the updated manual on Github: ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", children: "Queue Manager Manual" }),
+          "."
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
+          "For full Release Notes view ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md", target: "_blank", children: "Changelog" }),
+          "."
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
+          "Leave a feedback or report an issue here ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/issues", target: "_blank", children: "Issues" }),
+          ". "
+        ] })
+      ] })
+    ] })
+  ] });
+}
+const useOptionsStore = create((set) => ({
+  Basic: {},
+  Completed: {
+    ListOrder: "Newest first"
+  },
+  /**
+   * Set a single option within a category
+   */
+  setOption: (category, key, value) => set((state) => ({
+    ...state,
+    [category]: {
+      ...state[category],
+      [key]: value
+    }
+  })),
+  /**
+   * Set all options within a category
+   */
+  setOptionsCategory: (category, options) => set((state) => ({
+    ...state,
+    [category]: options
+  })),
+  /**
+   * Set all options
+   */
+  setAllOptions: (allOptions) => set(() => ({
+    ...allOptions
+  })),
+  /**
+   * Set a single option directly on the root state
+   */
+  setDirectOption: (key, value) => set((state) => ({
+    ...state,
+    [key]: value
+  }))
 }));
 const reflow = (node2) => node2.scrollTop;
 function getTransitionProps(props, options) {
@@ -21960,7 +21824,7 @@ function getPaperUtilityClass(slot) {
   return generateUtilityClass("MuiPaper", slot);
 }
 generateUtilityClasses("MuiPaper", ["root", "rounded", "outlined", "elevation", "elevation0", "elevation1", "elevation2", "elevation3", "elevation4", "elevation5", "elevation6", "elevation7", "elevation8", "elevation9", "elevation10", "elevation11", "elevation12", "elevation13", "elevation14", "elevation15", "elevation16", "elevation17", "elevation18", "elevation19", "elevation20", "elevation21", "elevation22", "elevation23", "elevation24"]);
-const useUtilityClasses$h = (ownerState) => {
+const useUtilityClasses$f = (ownerState) => {
   const {
     square,
     elevation,
@@ -22032,7 +21896,7 @@ const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, r
     square,
     variant
   };
-  const classes = useUtilityClasses$h(ownerState);
+  const classes = useUtilityClasses$f(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(PaperRoot, {
     as: component,
     ownerState,
@@ -22051,219 +21915,6 @@ const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, r
       },
       ...other.style
     }
-  });
-});
-function getIconButtonUtilityClass(slot) {
-  return generateUtilityClass("MuiIconButton", slot);
-}
-const iconButtonClasses = generateUtilityClasses("MuiIconButton", ["root", "disabled", "colorInherit", "colorPrimary", "colorSecondary", "colorError", "colorInfo", "colorSuccess", "colorWarning", "edgeStart", "edgeEnd", "sizeSmall", "sizeMedium", "sizeLarge", "loading", "loadingIndicator", "loadingWrapper"]);
-const useUtilityClasses$g = (ownerState) => {
-  const {
-    classes,
-    disabled,
-    color: color2,
-    edge,
-    size,
-    loading
-  } = ownerState;
-  const slots = {
-    root: ["root", loading && "loading", disabled && "disabled", color2 !== "default" && `color${capitalize(color2)}`, edge && `edge${capitalize(edge)}`, `size${capitalize(size)}`],
-    loadingIndicator: ["loadingIndicator"],
-    loadingWrapper: ["loadingWrapper"]
-  };
-  return composeClasses(slots, getIconButtonUtilityClass, classes);
-};
-const IconButtonRoot = styled(ButtonBase, {
-  name: "MuiIconButton",
-  slot: "Root",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.root, ownerState.loading && styles2.loading, ownerState.color !== "default" && styles2[`color${capitalize(ownerState.color)}`], ownerState.edge && styles2[`edge${capitalize(ownerState.edge)}`], styles2[`size${capitalize(ownerState.size)}`]];
-  }
-})(memoTheme(({
-  theme: theme2
-}) => ({
-  textAlign: "center",
-  flex: "0 0 auto",
-  fontSize: theme2.typography.pxToRem(24),
-  padding: 8,
-  borderRadius: "50%",
-  color: (theme2.vars || theme2).palette.action.active,
-  transition: theme2.transitions.create("background-color", {
-    duration: theme2.transitions.duration.shortest
-  }),
-  variants: [{
-    props: (props) => !props.disableRipple,
-    style: {
-      "--IconButton-hoverBg": theme2.alpha((theme2.vars || theme2).palette.action.active, (theme2.vars || theme2).palette.action.hoverOpacity),
-      "&:hover": {
-        backgroundColor: "var(--IconButton-hoverBg)",
-        // Reset on touch devices, it doesn't add specificity
-        "@media (hover: none)": {
-          backgroundColor: "transparent"
-        }
-      }
-    }
-  }, {
-    props: {
-      edge: "start"
-    },
-    style: {
-      marginLeft: -12
-    }
-  }, {
-    props: {
-      edge: "start",
-      size: "small"
-    },
-    style: {
-      marginLeft: -3
-    }
-  }, {
-    props: {
-      edge: "end"
-    },
-    style: {
-      marginRight: -12
-    }
-  }, {
-    props: {
-      edge: "end",
-      size: "small"
-    },
-    style: {
-      marginRight: -3
-    }
-  }]
-})), memoTheme(({
-  theme: theme2
-}) => ({
-  variants: [{
-    props: {
-      color: "inherit"
-    },
-    style: {
-      color: "inherit"
-    }
-  }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
-    props: {
-      color: color2
-    },
-    style: {
-      color: (theme2.vars || theme2).palette[color2].main
-    }
-  })), ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
-    props: {
-      color: color2
-    },
-    style: {
-      "--IconButton-hoverBg": theme2.alpha((theme2.vars || theme2).palette[color2].main, (theme2.vars || theme2).palette.action.hoverOpacity)
-    }
-  })), {
-    props: {
-      size: "small"
-    },
-    style: {
-      padding: 5,
-      fontSize: theme2.typography.pxToRem(18)
-    }
-  }, {
-    props: {
-      size: "large"
-    },
-    style: {
-      padding: 12,
-      fontSize: theme2.typography.pxToRem(28)
-    }
-  }],
-  [`&.${iconButtonClasses.disabled}`]: {
-    backgroundColor: "transparent",
-    color: (theme2.vars || theme2).palette.action.disabled
-  },
-  [`&.${iconButtonClasses.loading}`]: {
-    color: "transparent"
-  }
-})));
-const IconButtonLoadingIndicator = styled("span", {
-  name: "MuiIconButton",
-  slot: "LoadingIndicator"
-})(({
-  theme: theme2
-}) => ({
-  display: "none",
-  position: "absolute",
-  visibility: "visible",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  color: (theme2.vars || theme2).palette.action.disabled,
-  variants: [{
-    props: {
-      loading: true
-    },
-    style: {
-      display: "flex"
-    }
-  }]
-}));
-const IconButton = /* @__PURE__ */ reactExports.forwardRef(function IconButton2(inProps, ref) {
-  const props = useDefaultProps({
-    props: inProps,
-    name: "MuiIconButton"
-  });
-  const {
-    edge = false,
-    children,
-    className,
-    color: color2 = "default",
-    disabled = false,
-    disableFocusRipple = false,
-    size = "medium",
-    id: idProp,
-    loading = null,
-    loadingIndicator: loadingIndicatorProp,
-    ...other
-  } = props;
-  const loadingId = useId(idProp);
-  const loadingIndicator = loadingIndicatorProp ?? /* @__PURE__ */ jsxRuntimeExports.jsx(CircularProgress, {
-    "aria-labelledby": loadingId,
-    color: "inherit",
-    size: 16
-  });
-  const ownerState = {
-    ...props,
-    edge,
-    color: color2,
-    disabled,
-    disableFocusRipple,
-    loading,
-    loadingIndicator,
-    size
-  };
-  const classes = useUtilityClasses$g(ownerState);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(IconButtonRoot, {
-    id: loading ? loadingId : idProp,
-    className: clsx(classes.root, className),
-    centerRipple: true,
-    focusRipple: !disableFocusRipple,
-    disabled: disabled || loading,
-    ref,
-    ...other,
-    ownerState,
-    children: [typeof loading === "boolean" && // use plain HTML span to minimize the runtime overhead
-    /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
-      className: classes.loadingWrapper,
-      style: {
-        display: "contents"
-      },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx(IconButtonLoadingIndicator, {
-        className: classes.loadingIndicator,
-        ownerState,
-        children: loading && loadingIndicator
-      })
-    }), children]
   });
 });
 function useSlotProps(parameters) {
@@ -22551,7 +22202,7 @@ const inputOverridesResolver = (props, styles2) => {
   } = props;
   return [styles2.input, ownerState.size === "small" && styles2.inputSizeSmall, ownerState.multiline && styles2.inputMultiline, ownerState.type === "search" && styles2.inputTypeSearch, ownerState.startAdornment && styles2.inputAdornedStart, ownerState.endAdornment && styles2.inputAdornedEnd, ownerState.hiddenLabel && styles2.inputHiddenLabel];
 };
-const useUtilityClasses$f = (ownerState) => {
+const useUtilityClasses$e = (ownerState) => {
   const {
     classes,
     color: color2,
@@ -22937,7 +22588,7 @@ const InputBase = /* @__PURE__ */ reactExports.forwardRef(function InputBase2(in
     startAdornment,
     type
   };
-  const classes = useUtilityClasses$f(ownerState);
+  const classes = useUtilityClasses$e(ownerState);
   const Root = slots.root || components.Root || InputBaseRoot;
   const rootProps = slotProps.root || componentsProps.root || {};
   const Input3 = slots.input || components.Input || InputBaseInput;
@@ -23142,7 +22793,7 @@ function getBackdropUtilityClass(slot) {
   return generateUtilityClass("MuiBackdrop", slot);
 }
 generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
-const useUtilityClasses$e = (ownerState) => {
+const useUtilityClasses$d = (ownerState) => {
   const {
     classes,
     invisible
@@ -23205,7 +22856,7 @@ const Backdrop = /* @__PURE__ */ reactExports.forwardRef(function Backdrop2(inPr
     component,
     invisible
   };
-  const classes = useUtilityClasses$e(ownerState);
+  const classes = useUtilityClasses$d(ownerState);
   const backwardCompatibleSlots = {
     transition: TransitionComponentProp,
     root: components.Root,
@@ -23816,7 +23467,7 @@ function getModalUtilityClass(slot) {
   return generateUtilityClass("MuiModal", slot);
 }
 generateUtilityClasses("MuiModal", ["root", "hidden", "backdrop"]);
-const useUtilityClasses$d = (ownerState) => {
+const useUtilityClasses$c = (ownerState) => {
   const {
     open,
     exited,
@@ -23923,7 +23574,7 @@ const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, r
     ...propsWithDefaults,
     exited
   };
-  const classes = useUtilityClasses$d(ownerState);
+  const classes = useUtilityClasses$c(ownerState);
   const childProps = {};
   if (children.props.tabIndex === void 0) {
     childProps.tabIndex = "-1";
@@ -24001,7 +23652,7 @@ const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, r
   });
 });
 const dividerClasses = generateUtilityClasses("MuiDivider", ["root", "absolute", "fullWidth", "inset", "middle", "flexItem", "light", "vertical", "withChildren", "withChildrenVertical", "textAlignRight", "textAlignLeft", "wrapper", "wrapperVertical"]);
-const useUtilityClasses$c = (ownerState) => {
+const useUtilityClasses$b = (ownerState) => {
   const {
     classes,
     disableUnderline,
@@ -24280,7 +23931,7 @@ const FilledInput = /* @__PURE__ */ reactExports.forwardRef(function FilledInput
     multiline,
     type
   };
-  const classes = useUtilityClasses$c(props);
+  const classes = useUtilityClasses$b(props);
   const filledInputComponentsProps = {
     root: {
       ownerState
@@ -24468,7 +24119,7 @@ const Grow = /* @__PURE__ */ reactExports.forwardRef(function Grow2(props, ref) 
 if (Grow) {
   Grow.muiSupportAuto = true;
 }
-const useUtilityClasses$b = (ownerState) => {
+const useUtilityClasses$a = (ownerState) => {
   const {
     classes,
     disableUnderline
@@ -24601,7 +24252,7 @@ const Input = /* @__PURE__ */ reactExports.forwardRef(function Input2(inProps, r
     type = "text",
     ...other
   } = props;
-  const classes = useUtilityClasses$b(props);
+  const classes = useUtilityClasses$a(props);
   const ownerState = {
     disableUnderline
   };
@@ -24634,7 +24285,7 @@ function getListUtilityClass(slot) {
   return generateUtilityClass("MuiList", slot);
 }
 generateUtilityClasses("MuiList", ["root", "padding", "dense", "subheader"]);
-const useUtilityClasses$a = (ownerState) => {
+const useUtilityClasses$9 = (ownerState) => {
   const {
     classes,
     disablePadding,
@@ -24700,7 +24351,7 @@ const List = /* @__PURE__ */ reactExports.forwardRef(function List2(inProps, ref
     dense,
     disablePadding
   };
-  const classes = useUtilityClasses$a(ownerState);
+  const classes = useUtilityClasses$9(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(ListContext.Provider, {
     value: context,
     children: /* @__PURE__ */ jsxRuntimeExports.jsxs(ListRoot, {
@@ -24940,7 +24591,7 @@ function getTransformOriginValue(transformOrigin) {
 function resolveAnchorEl(anchorEl) {
   return typeof anchorEl === "function" ? anchorEl() : anchorEl;
 }
-const useUtilityClasses$9 = (ownerState) => {
+const useUtilityClasses$8 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -25018,7 +24669,7 @@ const Popover = /* @__PURE__ */ reactExports.forwardRef(function Popover2(inProp
     transitionDuration: transitionDurationProp,
     TransitionProps
   };
-  const classes = useUtilityClasses$9(ownerState);
+  const classes = useUtilityClasses$8(ownerState);
   const getAnchorOffset = reactExports.useCallback(() => {
     if (anchorReference === "anchorPosition") {
       return anchorPosition;
@@ -25240,7 +24891,7 @@ const LTR_ORIGIN = {
   vertical: "top",
   horizontal: "left"
 };
-const useUtilityClasses$8 = (ownerState) => {
+const useUtilityClasses$7 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -25311,7 +24962,7 @@ const Menu = /* @__PURE__ */ reactExports.forwardRef(function Menu2(inProps, ref
     TransitionProps,
     variant
   };
-  const classes = useUtilityClasses$8(ownerState);
+  const classes = useUtilityClasses$7(ownerState);
   const autoFocusItem = autoFocus && !disableAutoFocusItem && open;
   const menuListActionsRef = reactExports.useRef(null);
   const handleEntering = (element, isAppearing) => {
@@ -25436,7 +25087,7 @@ const overridesResolver$1 = (props, styles2) => {
   } = props;
   return [styles2.root, ownerState.dense && styles2.dense, ownerState.divider && styles2.divider, !ownerState.disableGutters && styles2.gutters];
 };
-const useUtilityClasses$7 = (ownerState) => {
+const useUtilityClasses$6 = (ownerState) => {
   const {
     disabled,
     dense,
@@ -25594,7 +25245,7 @@ const MenuItem = /* @__PURE__ */ reactExports.forwardRef(function MenuItem2(inPr
     divider,
     disableGutters
   };
-  const classes = useUtilityClasses$7(props);
+  const classes = useUtilityClasses$6(props);
   const handleRef = useForkRef(menuItemRef, ref);
   let tabIndex;
   if (!props.disabled) {
@@ -25619,7 +25270,7 @@ function getNativeSelectUtilityClasses(slot) {
   return generateUtilityClass("MuiNativeSelect", slot);
 }
 const nativeSelectClasses = generateUtilityClasses("MuiNativeSelect", ["root", "select", "multiple", "filled", "outlined", "standard", "disabled", "icon", "iconOpen", "iconFilled", "iconOutlined", "iconStandard", "nativeInput", "error"]);
-const useUtilityClasses$6 = (ownerState) => {
+const useUtilityClasses$5 = (ownerState) => {
   const {
     classes,
     variant,
@@ -25778,7 +25429,7 @@ const NativeSelectInput = /* @__PURE__ */ reactExports.forwardRef(function Nativ
     variant,
     error
   };
-  const classes = useUtilityClasses$6(ownerState);
+  const classes = useUtilityClasses$5(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
     children: [/* @__PURE__ */ jsxRuntimeExports.jsx(NativeSelectSelect, {
       ownerState,
@@ -25913,7 +25564,7 @@ function NotchedOutline(props) {
     })
   });
 }
-const useUtilityClasses$5 = (ownerState) => {
+const useUtilityClasses$4 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -26091,7 +25742,7 @@ const OutlinedInput = /* @__PURE__ */ reactExports.forwardRef(function OutlinedI
     type = "text",
     ...other
   } = props;
-  const classes = useUtilityClasses$5(props);
+  const classes = useUtilityClasses$4(props);
   const muiFormControl = useFormControl();
   const fcs = formControlState({
     props,
@@ -26290,7 +25941,7 @@ const overridesResolver = (props, styles2) => {
   } = props;
   return [styles2.root, styles2[ownerState.variant], styles2[`size${capitalize(ownerState.size)}`], ownerState.variant === "text" && styles2[`text${capitalize(ownerState.color)}`], ownerState.variant === "outlined" && styles2[`outlined${capitalize(ownerState.color)}`], ownerState.shape === "rounded" && styles2.rounded, ownerState.type === "page" && styles2.page, (ownerState.type === "start-ellipsis" || ownerState.type === "end-ellipsis") && styles2.ellipsis, (ownerState.type === "previous" || ownerState.type === "next") && styles2.previousNext, (ownerState.type === "first" || ownerState.type === "last") && styles2.firstLast];
 };
-const useUtilityClasses$4 = (ownerState) => {
+const useUtilityClasses$3 = (ownerState) => {
   const {
     classes,
     color: color2,
@@ -26563,7 +26214,7 @@ const PaginationItem = /* @__PURE__ */ reactExports.forwardRef(function Paginati
     variant
   };
   const isRtl = useRtl();
-  const classes = useUtilityClasses$4(ownerState);
+  const classes = useUtilityClasses$3(ownerState);
   const externalForwardedProps = {
     slots: {
       previous: slots.previous ?? components.previous,
@@ -26630,7 +26281,7 @@ const PaginationItem = /* @__PURE__ */ reactExports.forwardRef(function Paginati
     }) : null]
   });
 });
-const useUtilityClasses$3 = (ownerState) => {
+const useUtilityClasses$2 = (ownerState) => {
   const {
     classes,
     variant
@@ -26720,7 +26371,7 @@ const Pagination = /* @__PURE__ */ reactExports.forwardRef(function Pagination2(
     size,
     variant
   };
-  const classes = useUtilityClasses$3(ownerState);
+  const classes = useUtilityClasses$2(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(PaginationRoot, {
     "aria-label": "pagination navigation",
     className: clsx(classes.root, className),
@@ -26743,17 +26394,6 @@ const Pagination = /* @__PURE__ */ reactExports.forwardRef(function Pagination2(
     })
   });
 });
-const visuallyHidden = {
-  border: 0,
-  clip: "rect(0 0 0 0)",
-  height: "1px",
-  margin: "-1px",
-  overflow: "hidden",
-  padding: 0,
-  position: "absolute",
-  whiteSpace: "nowrap",
-  width: "1px"
-};
 function getSelectUtilityClasses(slot) {
   return generateUtilityClass("MuiSelect", slot);
 }
@@ -26826,7 +26466,7 @@ function areEqualValues(a, b) {
 function isEmpty(display) {
   return display == null || typeof display === "string" && !display.trim();
 }
-const useUtilityClasses$2 = (ownerState) => {
+const useUtilityClasses$1 = (ownerState) => {
   const {
     classes,
     variant,
@@ -27134,7 +26774,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     open,
     error
   };
-  const classes = useUtilityClasses$2(ownerState);
+  const classes = useUtilityClasses$1(ownerState);
   const paperProps = {
     ...MenuProps.PaperProps,
     ...typeof MenuProps.slotProps?.paper === "function" ? MenuProps.slotProps.paper(ownerState) : MenuProps.slotProps?.paper
@@ -27229,7 +26869,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     })]
   });
 });
-const useUtilityClasses$1 = (ownerState) => {
+const useUtilityClasses = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -27292,7 +26932,7 @@ const Select = /* @__PURE__ */ reactExports.forwardRef(function Select2(inProps,
     variant,
     classes: classesProp
   };
-  const classes = useUtilityClasses$1(ownerState);
+  const classes = useUtilityClasses(ownerState);
   const {
     root,
     ...restOfClasses
@@ -27358,2114 +26998,6 @@ const Select = /* @__PURE__ */ reactExports.forwardRef(function Select2(inProps,
   });
 });
 Select.muiName = "Select";
-function areArraysEqual(array1, array2, itemComparer = (a, b) => a === b) {
-  return array1.length === array2.length && array1.every((value, index) => itemComparer(value, array2[index]));
-}
-const INTENTIONAL_DRAG_COUNT_THRESHOLD = 2;
-function getNewValue(currentValue, step, direction, min, max) {
-  return direction === 1 ? Math.min(currentValue + step, max) : Math.max(currentValue - step, min);
-}
-function asc(a, b) {
-  return a - b;
-}
-function findClosest(values2, currentValue) {
-  const {
-    index: closestIndex
-  } = values2.reduce((acc, value, index) => {
-    const distance = Math.abs(currentValue - value);
-    if (acc === null || distance < acc.distance || distance === acc.distance) {
-      return {
-        distance,
-        index
-      };
-    }
-    return acc;
-  }, null) ?? {};
-  return closestIndex;
-}
-function trackFinger(event, touchId) {
-  if (touchId.current !== void 0 && event.changedTouches) {
-    const touchEvent = event;
-    for (let i = 0; i < touchEvent.changedTouches.length; i += 1) {
-      const touch = touchEvent.changedTouches[i];
-      if (touch.identifier === touchId.current) {
-        return {
-          x: touch.clientX,
-          y: touch.clientY
-        };
-      }
-    }
-    return false;
-  }
-  return {
-    x: event.clientX,
-    y: event.clientY
-  };
-}
-function valueToPercent(value, min, max) {
-  return (value - min) * 100 / (max - min);
-}
-function percentToValue(percent, min, max) {
-  return (max - min) * percent + min;
-}
-function getDecimalPrecision(num) {
-  if (Math.abs(num) < 1) {
-    const parts = num.toExponential().split("e-");
-    const matissaDecimalPart = parts[0].split(".")[1];
-    return (matissaDecimalPart ? matissaDecimalPart.length : 0) + parseInt(parts[1], 10);
-  }
-  const decimalPart = num.toString().split(".")[1];
-  return decimalPart ? decimalPart.length : 0;
-}
-function roundValueToStep(value, step, min) {
-  const nearest = Math.round((value - min) / step) * step + min;
-  return Number(nearest.toFixed(getDecimalPrecision(step)));
-}
-function setValueIndex({
-  values: values2,
-  newValue,
-  index
-}) {
-  const output = values2.slice();
-  output[index] = newValue;
-  return output.sort(asc);
-}
-function focusThumb({
-  sliderRef,
-  activeIndex,
-  setActive
-}) {
-  const doc = ownerDocument(sliderRef.current);
-  if (!sliderRef.current?.contains(doc.activeElement) || Number(doc?.activeElement?.getAttribute("data-index")) !== activeIndex) {
-    sliderRef.current?.querySelector(`[type="range"][data-index="${activeIndex}"]`).focus();
-  }
-  if (setActive) {
-    setActive(activeIndex);
-  }
-}
-function areValuesEqual(newValue, oldValue) {
-  if (typeof newValue === "number" && typeof oldValue === "number") {
-    return newValue === oldValue;
-  }
-  if (typeof newValue === "object" && typeof oldValue === "object") {
-    return areArraysEqual(newValue, oldValue);
-  }
-  return false;
-}
-const axisProps = {
-  horizontal: {
-    offset: (percent) => ({
-      left: `${percent}%`
-    }),
-    leap: (percent) => ({
-      width: `${percent}%`
-    })
-  },
-  "horizontal-reverse": {
-    offset: (percent) => ({
-      right: `${percent}%`
-    }),
-    leap: (percent) => ({
-      width: `${percent}%`
-    })
-  },
-  vertical: {
-    offset: (percent) => ({
-      bottom: `${percent}%`
-    }),
-    leap: (percent) => ({
-      height: `${percent}%`
-    })
-  }
-};
-const Identity$1 = (x) => x;
-let cachedSupportsTouchActionNone;
-function doesSupportTouchActionNone() {
-  if (cachedSupportsTouchActionNone === void 0) {
-    if (typeof CSS !== "undefined" && typeof CSS.supports === "function") {
-      cachedSupportsTouchActionNone = CSS.supports("touch-action", "none");
-    } else {
-      cachedSupportsTouchActionNone = true;
-    }
-  }
-  return cachedSupportsTouchActionNone;
-}
-function useSlider(parameters) {
-  const {
-    "aria-labelledby": ariaLabelledby,
-    defaultValue,
-    disabled = false,
-    disableSwap = false,
-    isRtl = false,
-    marks: marksProp = false,
-    max = 100,
-    min = 0,
-    name,
-    onChange,
-    onChangeCommitted,
-    orientation = "horizontal",
-    rootRef: ref,
-    scale = Identity$1,
-    step = 1,
-    shiftStep = 10,
-    tabIndex,
-    value: valueProp
-  } = parameters;
-  const touchId = reactExports.useRef(void 0);
-  const [active, setActive] = reactExports.useState(-1);
-  const [open, setOpen] = reactExports.useState(-1);
-  const [dragging, setDragging] = reactExports.useState(false);
-  const moveCount = reactExports.useRef(0);
-  const lastChangedValue = reactExports.useRef(null);
-  const [valueDerived, setValueState] = useControlled({
-    controlled: valueProp,
-    default: defaultValue ?? min,
-    name: "Slider"
-  });
-  const handleChange = onChange && ((event, value, thumbIndex) => {
-    const nativeEvent = event.nativeEvent || event;
-    const clonedEvent = new nativeEvent.constructor(nativeEvent.type, nativeEvent);
-    Object.defineProperty(clonedEvent, "target", {
-      writable: true,
-      value: {
-        value,
-        name
-      }
-    });
-    lastChangedValue.current = value;
-    onChange(clonedEvent, value, thumbIndex);
-  });
-  const range = Array.isArray(valueDerived);
-  let values2 = range ? valueDerived.slice().sort(asc) : [valueDerived];
-  values2 = values2.map((value) => value == null ? min : clamp(value, min, max));
-  const marks = marksProp === true && step !== null ? [...Array(Math.floor((max - min) / step) + 1)].map((_, index) => ({
-    value: min + step * index
-  })) : marksProp || [];
-  const marksValues = marks.map((mark) => mark.value);
-  const [focusedThumbIndex, setFocusedThumbIndex] = reactExports.useState(-1);
-  const sliderRef = reactExports.useRef(null);
-  const handleRef = useForkRef(ref, sliderRef);
-  const createHandleHiddenInputFocus = (otherHandlers) => (event) => {
-    const index = Number(event.currentTarget.getAttribute("data-index"));
-    if (isFocusVisible(event.target)) {
-      setFocusedThumbIndex(index);
-    }
-    setOpen(index);
-    otherHandlers?.onFocus?.(event);
-  };
-  const createHandleHiddenInputBlur = (otherHandlers) => (event) => {
-    if (!isFocusVisible(event.target)) {
-      setFocusedThumbIndex(-1);
-    }
-    setOpen(-1);
-    otherHandlers?.onBlur?.(event);
-  };
-  const changeValue = (event, valueInput) => {
-    const index = Number(event.currentTarget.getAttribute("data-index"));
-    const value = values2[index];
-    const marksIndex = marksValues.indexOf(value);
-    let newValue = valueInput;
-    if (marks && step == null) {
-      const maxMarksValue = marksValues[marksValues.length - 1];
-      if (newValue >= maxMarksValue) {
-        newValue = maxMarksValue;
-      } else if (newValue <= marksValues[0]) {
-        newValue = marksValues[0];
-      } else {
-        newValue = newValue < value ? marksValues[marksIndex - 1] : marksValues[marksIndex + 1];
-      }
-    }
-    newValue = clamp(newValue, min, max);
-    if (range) {
-      if (disableSwap) {
-        newValue = clamp(newValue, values2[index - 1] || -Infinity, values2[index + 1] || Infinity);
-      }
-      const previousValue = newValue;
-      newValue = setValueIndex({
-        values: values2,
-        newValue,
-        index
-      });
-      let activeIndex = index;
-      if (!disableSwap) {
-        activeIndex = newValue.indexOf(previousValue);
-      }
-      focusThumb({
-        sliderRef,
-        activeIndex
-      });
-    }
-    setValueState(newValue);
-    setFocusedThumbIndex(index);
-    if (handleChange && !areValuesEqual(newValue, valueDerived)) {
-      handleChange(event, newValue, index);
-    }
-    if (onChangeCommitted) {
-      onChangeCommitted(event, lastChangedValue.current ?? newValue);
-    }
-  };
-  const createHandleHiddenInputKeyDown = (otherHandlers) => (event) => {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "PageUp", "PageDown", "Home", "End"].includes(event.key)) {
-      event.preventDefault();
-      const index = Number(event.currentTarget.getAttribute("data-index"));
-      const value = values2[index];
-      let newValue = null;
-      if (step != null) {
-        const stepSize = event.shiftKey ? shiftStep : step;
-        switch (event.key) {
-          case "ArrowUp":
-            newValue = getNewValue(value, stepSize, 1, min, max);
-            break;
-          case "ArrowRight":
-            newValue = getNewValue(value, stepSize, isRtl ? -1 : 1, min, max);
-            break;
-          case "ArrowDown":
-            newValue = getNewValue(value, stepSize, -1, min, max);
-            break;
-          case "ArrowLeft":
-            newValue = getNewValue(value, stepSize, isRtl ? 1 : -1, min, max);
-            break;
-          case "PageUp":
-            newValue = getNewValue(value, shiftStep, 1, min, max);
-            break;
-          case "PageDown":
-            newValue = getNewValue(value, shiftStep, -1, min, max);
-            break;
-          case "Home":
-            newValue = min;
-            break;
-          case "End":
-            newValue = max;
-            break;
-        }
-      } else if (marks) {
-        const maxMarksValue = marksValues[marksValues.length - 1];
-        const currentMarkIndex = marksValues.indexOf(value);
-        const decrementKeys = [isRtl ? "ArrowRight" : "ArrowLeft", "ArrowDown", "PageDown", "Home"];
-        const incrementKeys = [isRtl ? "ArrowLeft" : "ArrowRight", "ArrowUp", "PageUp", "End"];
-        if (decrementKeys.includes(event.key)) {
-          if (currentMarkIndex === 0) {
-            newValue = marksValues[0];
-          } else {
-            newValue = marksValues[currentMarkIndex - 1];
-          }
-        } else if (incrementKeys.includes(event.key)) {
-          if (currentMarkIndex === marksValues.length - 1) {
-            newValue = maxMarksValue;
-          } else {
-            newValue = marksValues[currentMarkIndex + 1];
-          }
-        }
-      }
-      if (newValue != null) {
-        changeValue(event, newValue);
-      }
-    }
-    otherHandlers?.onKeyDown?.(event);
-  };
-  useEnhancedEffect(() => {
-    if (disabled && sliderRef.current.contains(document.activeElement)) {
-      document.activeElement?.blur();
-    }
-  }, [disabled]);
-  if (disabled && active !== -1) {
-    setActive(-1);
-  }
-  if (disabled && focusedThumbIndex !== -1) {
-    setFocusedThumbIndex(-1);
-  }
-  const createHandleHiddenInputChange = (otherHandlers) => (event) => {
-    otherHandlers.onChange?.(event);
-    changeValue(event, event.target.valueAsNumber);
-  };
-  const previousIndex = reactExports.useRef(void 0);
-  let axis = orientation;
-  if (isRtl && orientation === "horizontal") {
-    axis += "-reverse";
-  }
-  const getFingerNewValue = ({
-    finger,
-    move = false
-  }) => {
-    const {
-      current: slider
-    } = sliderRef;
-    const {
-      width: width2,
-      height: height2,
-      bottom,
-      left
-    } = slider.getBoundingClientRect();
-    let percent;
-    if (axis.startsWith("vertical")) {
-      percent = (bottom - finger.y) / height2;
-    } else {
-      percent = (finger.x - left) / width2;
-    }
-    if (axis.includes("-reverse")) {
-      percent = 1 - percent;
-    }
-    let newValue;
-    newValue = percentToValue(percent, min, max);
-    if (step) {
-      newValue = roundValueToStep(newValue, step, min);
-    } else {
-      const closestIndex = findClosest(marksValues, newValue);
-      newValue = marksValues[closestIndex];
-    }
-    newValue = clamp(newValue, min, max);
-    let activeIndex = 0;
-    if (range) {
-      if (!move) {
-        activeIndex = findClosest(values2, newValue);
-      } else {
-        activeIndex = previousIndex.current;
-      }
-      if (disableSwap) {
-        newValue = clamp(newValue, values2[activeIndex - 1] || -Infinity, values2[activeIndex + 1] || Infinity);
-      }
-      const previousValue = newValue;
-      newValue = setValueIndex({
-        values: values2,
-        newValue,
-        index: activeIndex
-      });
-      if (!(disableSwap && move)) {
-        activeIndex = newValue.indexOf(previousValue);
-        previousIndex.current = activeIndex;
-      }
-    }
-    return {
-      newValue,
-      activeIndex
-    };
-  };
-  const handleTouchMove = useEventCallback((nativeEvent) => {
-    const finger = trackFinger(nativeEvent, touchId);
-    if (!finger) {
-      return;
-    }
-    moveCount.current += 1;
-    if (nativeEvent.type === "mousemove" && nativeEvent.buttons === 0) {
-      handleTouchEnd(nativeEvent);
-      return;
-    }
-    const {
-      newValue,
-      activeIndex
-    } = getFingerNewValue({
-      finger,
-      move: true
-    });
-    focusThumb({
-      sliderRef,
-      activeIndex,
-      setActive
-    });
-    setValueState(newValue);
-    if (!dragging && moveCount.current > INTENTIONAL_DRAG_COUNT_THRESHOLD) {
-      setDragging(true);
-    }
-    if (handleChange && !areValuesEqual(newValue, valueDerived)) {
-      handleChange(nativeEvent, newValue, activeIndex);
-    }
-  });
-  const handleTouchEnd = useEventCallback((nativeEvent) => {
-    const finger = trackFinger(nativeEvent, touchId);
-    setDragging(false);
-    if (!finger) {
-      return;
-    }
-    const {
-      newValue
-    } = getFingerNewValue({
-      finger,
-      move: true
-    });
-    setActive(-1);
-    if (nativeEvent.type === "touchend") {
-      setOpen(-1);
-    }
-    if (onChangeCommitted) {
-      onChangeCommitted(nativeEvent, lastChangedValue.current ?? newValue);
-    }
-    touchId.current = void 0;
-    stopListening();
-  });
-  const handleTouchStart = useEventCallback((nativeEvent) => {
-    if (disabled) {
-      return;
-    }
-    if (!doesSupportTouchActionNone()) {
-      nativeEvent.preventDefault();
-    }
-    const touch = nativeEvent.changedTouches[0];
-    if (touch != null) {
-      touchId.current = touch.identifier;
-    }
-    const finger = trackFinger(nativeEvent, touchId);
-    if (finger !== false) {
-      const {
-        newValue,
-        activeIndex
-      } = getFingerNewValue({
-        finger
-      });
-      focusThumb({
-        sliderRef,
-        activeIndex,
-        setActive
-      });
-      setValueState(newValue);
-      if (handleChange && !areValuesEqual(newValue, valueDerived)) {
-        handleChange(nativeEvent, newValue, activeIndex);
-      }
-    }
-    moveCount.current = 0;
-    const doc = ownerDocument(sliderRef.current);
-    doc.addEventListener("touchmove", handleTouchMove, {
-      passive: true
-    });
-    doc.addEventListener("touchend", handleTouchEnd, {
-      passive: true
-    });
-  });
-  const stopListening = reactExports.useCallback(() => {
-    const doc = ownerDocument(sliderRef.current);
-    doc.removeEventListener("mousemove", handleTouchMove);
-    doc.removeEventListener("mouseup", handleTouchEnd);
-    doc.removeEventListener("touchmove", handleTouchMove);
-    doc.removeEventListener("touchend", handleTouchEnd);
-  }, [handleTouchEnd, handleTouchMove]);
-  reactExports.useEffect(() => {
-    const {
-      current: slider
-    } = sliderRef;
-    slider.addEventListener("touchstart", handleTouchStart, {
-      passive: doesSupportTouchActionNone()
-    });
-    return () => {
-      slider.removeEventListener("touchstart", handleTouchStart);
-      stopListening();
-    };
-  }, [stopListening, handleTouchStart]);
-  reactExports.useEffect(() => {
-    if (disabled) {
-      stopListening();
-    }
-  }, [disabled, stopListening]);
-  const createHandleMouseDown = (otherHandlers) => (event) => {
-    otherHandlers.onMouseDown?.(event);
-    if (disabled) {
-      return;
-    }
-    if (event.defaultPrevented) {
-      return;
-    }
-    if (event.button !== 0) {
-      return;
-    }
-    event.preventDefault();
-    const finger = trackFinger(event, touchId);
-    if (finger !== false) {
-      const {
-        newValue,
-        activeIndex
-      } = getFingerNewValue({
-        finger
-      });
-      focusThumb({
-        sliderRef,
-        activeIndex,
-        setActive
-      });
-      setValueState(newValue);
-      if (handleChange && !areValuesEqual(newValue, valueDerived)) {
-        handleChange(event, newValue, activeIndex);
-      }
-    }
-    moveCount.current = 0;
-    const doc = ownerDocument(sliderRef.current);
-    doc.addEventListener("mousemove", handleTouchMove, {
-      passive: true
-    });
-    doc.addEventListener("mouseup", handleTouchEnd);
-  };
-  const trackOffset = valueToPercent(range ? values2[0] : min, min, max);
-  const trackLeap = valueToPercent(values2[values2.length - 1], min, max) - trackOffset;
-  const getRootProps = (externalProps = {}) => {
-    const externalHandlers = extractEventHandlers(externalProps);
-    const ownEventHandlers = {
-      onMouseDown: createHandleMouseDown(externalHandlers || {})
-    };
-    const mergedEventHandlers = {
-      ...externalHandlers,
-      ...ownEventHandlers
-    };
-    return {
-      ...externalProps,
-      ref: handleRef,
-      ...mergedEventHandlers
-    };
-  };
-  const createHandleMouseOver = (otherHandlers) => (event) => {
-    otherHandlers.onMouseOver?.(event);
-    const index = Number(event.currentTarget.getAttribute("data-index"));
-    setOpen(index);
-  };
-  const createHandleMouseLeave = (otherHandlers) => (event) => {
-    otherHandlers.onMouseLeave?.(event);
-    setOpen(-1);
-  };
-  const getThumbProps = (externalProps = {}) => {
-    const externalHandlers = extractEventHandlers(externalProps);
-    const ownEventHandlers = {
-      onMouseOver: createHandleMouseOver(externalHandlers || {}),
-      onMouseLeave: createHandleMouseLeave(externalHandlers || {})
-    };
-    return {
-      ...externalProps,
-      ...externalHandlers,
-      ...ownEventHandlers
-    };
-  };
-  const getThumbStyle = (index) => {
-    return {
-      // So the non active thumb doesn't show its label on hover.
-      pointerEvents: active !== -1 && active !== index ? "none" : void 0
-    };
-  };
-  let cssWritingMode;
-  if (orientation === "vertical") {
-    cssWritingMode = isRtl ? "vertical-rl" : "vertical-lr";
-  }
-  const getHiddenInputProps = (externalProps = {}) => {
-    const externalHandlers = extractEventHandlers(externalProps);
-    const ownEventHandlers = {
-      onChange: createHandleHiddenInputChange(externalHandlers || {}),
-      onFocus: createHandleHiddenInputFocus(externalHandlers || {}),
-      onBlur: createHandleHiddenInputBlur(externalHandlers || {}),
-      onKeyDown: createHandleHiddenInputKeyDown(externalHandlers || {})
-    };
-    const mergedEventHandlers = {
-      ...externalHandlers,
-      ...ownEventHandlers
-    };
-    return {
-      tabIndex,
-      "aria-labelledby": ariaLabelledby,
-      "aria-orientation": orientation,
-      "aria-valuemax": scale(max),
-      "aria-valuemin": scale(min),
-      name,
-      type: "range",
-      min: parameters.min,
-      max: parameters.max,
-      step: parameters.step === null && parameters.marks ? "any" : parameters.step ?? void 0,
-      disabled,
-      ...externalProps,
-      ...mergedEventHandlers,
-      style: {
-        ...visuallyHidden,
-        direction: isRtl ? "rtl" : "ltr",
-        // So that VoiceOver's focus indicator matches the thumb's dimensions
-        width: "100%",
-        height: "100%",
-        writingMode: cssWritingMode
-      }
-    };
-  };
-  return {
-    active,
-    axis,
-    axisProps,
-    dragging,
-    focusedThumbIndex,
-    getHiddenInputProps,
-    getRootProps,
-    getThumbProps,
-    marks,
-    open,
-    range,
-    rootRef: handleRef,
-    trackLeap,
-    trackOffset,
-    values: values2,
-    getThumbStyle
-  };
-}
-const shouldSpreadAdditionalProps = (Slot) => {
-  return !Slot || !isHostComponent(Slot);
-};
-function getSliderUtilityClass(slot) {
-  return generateUtilityClass("MuiSlider", slot);
-}
-const sliderClasses = generateUtilityClasses("MuiSlider", ["root", "active", "colorPrimary", "colorSecondary", "colorError", "colorInfo", "colorSuccess", "colorWarning", "disabled", "dragging", "focusVisible", "mark", "markActive", "marked", "markLabel", "markLabelActive", "rail", "sizeSmall", "thumb", "thumbColorPrimary", "thumbColorSecondary", "thumbColorError", "thumbColorSuccess", "thumbColorInfo", "thumbColorWarning", "track", "trackInverted", "trackFalse", "thumbSizeSmall", "valueLabel", "valueLabelOpen", "valueLabelCircle", "valueLabelLabel", "vertical"]);
-const useValueLabelClasses = (props) => {
-  const {
-    open
-  } = props;
-  const utilityClasses = {
-    offset: clsx(open && sliderClasses.valueLabelOpen),
-    circle: sliderClasses.valueLabelCircle,
-    label: sliderClasses.valueLabelLabel
-  };
-  return utilityClasses;
-};
-function SliderValueLabel$1(props) {
-  const {
-    children,
-    className,
-    value
-  } = props;
-  const classes = useValueLabelClasses(props);
-  if (!children) {
-    return null;
-  }
-  return /* @__PURE__ */ reactExports.cloneElement(children, {
-    className: children.props.className
-  }, /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
-    children: [children.props.children, /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
-      className: clsx(classes.offset, className),
-      "aria-hidden": true,
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
-        className: classes.circle,
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
-          className: classes.label,
-          children: value
-        })
-      })
-    })]
-  }));
-}
-function Identity(x) {
-  return x;
-}
-const SliderRoot = styled("span", {
-  name: "MuiSlider",
-  slot: "Root",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.root, styles2[`color${capitalize(ownerState.color)}`], ownerState.size !== "medium" && styles2[`size${capitalize(ownerState.size)}`], ownerState.marked && styles2.marked, ownerState.orientation === "vertical" && styles2.vertical, ownerState.track === "inverted" && styles2.trackInverted, ownerState.track === false && styles2.trackFalse];
-  }
-})(memoTheme(({
-  theme: theme2
-}) => ({
-  borderRadius: 12,
-  boxSizing: "content-box",
-  display: "inline-block",
-  position: "relative",
-  cursor: "pointer",
-  touchAction: "none",
-  WebkitTapHighlightColor: "transparent",
-  "@media print": {
-    colorAdjust: "exact"
-  },
-  [`&.${sliderClasses.disabled}`]: {
-    pointerEvents: "none",
-    cursor: "default",
-    color: (theme2.vars || theme2).palette.grey[400]
-  },
-  [`&.${sliderClasses.dragging}`]: {
-    [`& .${sliderClasses.thumb}, & .${sliderClasses.track}`]: {
-      transition: "none"
-    }
-  },
-  variants: [...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
-    props: {
-      color: color2
-    },
-    style: {
-      color: (theme2.vars || theme2).palette[color2].main
-    }
-  })), {
-    props: {
-      orientation: "horizontal"
-    },
-    style: {
-      height: 4,
-      width: "100%",
-      padding: "13px 0",
-      // The primary input mechanism of the device includes a pointing device of limited accuracy.
-      "@media (pointer: coarse)": {
-        // Reach 42px touch target, about ~8mm on screen.
-        padding: "20px 0"
-      }
-    }
-  }, {
-    props: {
-      orientation: "horizontal",
-      size: "small"
-    },
-    style: {
-      height: 2
-    }
-  }, {
-    props: {
-      orientation: "horizontal",
-      marked: true
-    },
-    style: {
-      marginBottom: 20
-    }
-  }, {
-    props: {
-      orientation: "vertical"
-    },
-    style: {
-      height: "100%",
-      width: 4,
-      padding: "0 13px",
-      // The primary input mechanism of the device includes a pointing device of limited accuracy.
-      "@media (pointer: coarse)": {
-        // Reach 42px touch target, about ~8mm on screen.
-        padding: "0 20px"
-      }
-    }
-  }, {
-    props: {
-      orientation: "vertical",
-      size: "small"
-    },
-    style: {
-      width: 2
-    }
-  }, {
-    props: {
-      orientation: "vertical",
-      marked: true
-    },
-    style: {
-      marginRight: 44
-    }
-  }]
-})));
-const SliderRail = styled("span", {
-  name: "MuiSlider",
-  slot: "Rail"
-})({
-  display: "block",
-  position: "absolute",
-  borderRadius: "inherit",
-  backgroundColor: "currentColor",
-  opacity: 0.38,
-  variants: [{
-    props: {
-      orientation: "horizontal"
-    },
-    style: {
-      width: "100%",
-      height: "inherit",
-      top: "50%",
-      transform: "translateY(-50%)"
-    }
-  }, {
-    props: {
-      orientation: "vertical"
-    },
-    style: {
-      height: "100%",
-      width: "inherit",
-      left: "50%",
-      transform: "translateX(-50%)"
-    }
-  }, {
-    props: {
-      track: "inverted"
-    },
-    style: {
-      opacity: 1
-    }
-  }]
-});
-const SliderTrack = styled("span", {
-  name: "MuiSlider",
-  slot: "Track"
-})(memoTheme(({
-  theme: theme2
-}) => {
-  return {
-    display: "block",
-    position: "absolute",
-    borderRadius: "inherit",
-    border: "1px solid currentColor",
-    backgroundColor: "currentColor",
-    transition: theme2.transitions.create(["left", "width", "bottom", "height"], {
-      duration: theme2.transitions.duration.shortest
-    }),
-    variants: [{
-      props: {
-        size: "small"
-      },
-      style: {
-        border: "none"
-      }
-    }, {
-      props: {
-        orientation: "horizontal"
-      },
-      style: {
-        height: "inherit",
-        top: "50%",
-        transform: "translateY(-50%)"
-      }
-    }, {
-      props: {
-        orientation: "vertical"
-      },
-      style: {
-        width: "inherit",
-        left: "50%",
-        transform: "translateX(-50%)"
-      }
-    }, {
-      props: {
-        track: false
-      },
-      style: {
-        display: "none"
-      }
-    }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
-      props: {
-        color: color2,
-        track: "inverted"
-      },
-      style: {
-        ...theme2.vars ? {
-          backgroundColor: theme2.vars.palette.Slider[`${color2}Track`],
-          borderColor: theme2.vars.palette.Slider[`${color2}Track`]
-        } : {
-          backgroundColor: theme2.lighten(theme2.palette[color2].main, 0.62),
-          borderColor: theme2.lighten(theme2.palette[color2].main, 0.62),
-          ...theme2.applyStyles("dark", {
-            backgroundColor: theme2.darken(theme2.palette[color2].main, 0.5)
-          }),
-          ...theme2.applyStyles("dark", {
-            borderColor: theme2.darken(theme2.palette[color2].main, 0.5)
-          })
-        }
-      }
-    }))]
-  };
-}));
-const SliderThumb = styled("span", {
-  name: "MuiSlider",
-  slot: "Thumb",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.thumb, styles2[`thumbColor${capitalize(ownerState.color)}`], ownerState.size !== "medium" && styles2[`thumbSize${capitalize(ownerState.size)}`]];
-  }
-})(memoTheme(({
-  theme: theme2
-}) => ({
-  position: "absolute",
-  width: 20,
-  height: 20,
-  boxSizing: "border-box",
-  borderRadius: "50%",
-  outline: 0,
-  backgroundColor: "currentColor",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  transition: theme2.transitions.create(["box-shadow", "left", "bottom"], {
-    duration: theme2.transitions.duration.shortest
-  }),
-  "&::before": {
-    position: "absolute",
-    content: '""',
-    borderRadius: "inherit",
-    width: "100%",
-    height: "100%",
-    boxShadow: (theme2.vars || theme2).shadows[2]
-  },
-  "&::after": {
-    position: "absolute",
-    content: '""',
-    borderRadius: "50%",
-    // 42px is the hit target
-    width: 42,
-    height: 42,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)"
-  },
-  [`&.${sliderClasses.disabled}`]: {
-    "&:hover": {
-      boxShadow: "none"
-    }
-  },
-  variants: [{
-    props: {
-      size: "small"
-    },
-    style: {
-      width: 12,
-      height: 12,
-      "&::before": {
-        boxShadow: "none"
-      }
-    }
-  }, {
-    props: {
-      orientation: "horizontal"
-    },
-    style: {
-      top: "50%",
-      transform: "translate(-50%, -50%)"
-    }
-  }, {
-    props: {
-      orientation: "vertical"
-    },
-    style: {
-      left: "50%",
-      transform: "translate(-50%, 50%)"
-    }
-  }, ...Object.entries(theme2.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
-    props: {
-      color: color2
-    },
-    style: {
-      [`&:hover, &.${sliderClasses.focusVisible}`]: {
-        boxShadow: `0px 0px 0px 8px ${theme2.alpha((theme2.vars || theme2).palette[color2].main, 0.16)}`,
-        "@media (hover: none)": {
-          boxShadow: "none"
-        }
-      },
-      [`&.${sliderClasses.active}`]: {
-        boxShadow: `0px 0px 0px 14px ${theme2.alpha((theme2.vars || theme2).palette[color2].main, 0.16)}`
-      }
-    }
-  }))]
-})));
-const SliderValueLabel = styled(SliderValueLabel$1, {
-  name: "MuiSlider",
-  slot: "ValueLabel"
-})(memoTheme(({
-  theme: theme2
-}) => ({
-  zIndex: 1,
-  whiteSpace: "nowrap",
-  ...theme2.typography.body2,
-  fontWeight: 500,
-  transition: theme2.transitions.create(["transform"], {
-    duration: theme2.transitions.duration.shortest
-  }),
-  position: "absolute",
-  backgroundColor: (theme2.vars || theme2).palette.grey[600],
-  borderRadius: 2,
-  color: (theme2.vars || theme2).palette.common.white,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "0.25rem 0.75rem",
-  variants: [{
-    props: {
-      orientation: "horizontal"
-    },
-    style: {
-      transform: "translateY(-100%) scale(0)",
-      top: "-10px",
-      transformOrigin: "bottom center",
-      "&::before": {
-        position: "absolute",
-        content: '""',
-        width: 8,
-        height: 8,
-        transform: "translate(-50%, 50%) rotate(45deg)",
-        backgroundColor: "inherit",
-        bottom: 0,
-        left: "50%"
-      },
-      [`&.${sliderClasses.valueLabelOpen}`]: {
-        transform: "translateY(-100%) scale(1)"
-      }
-    }
-  }, {
-    props: {
-      orientation: "vertical"
-    },
-    style: {
-      transform: "translateY(-50%) scale(0)",
-      right: "30px",
-      top: "50%",
-      transformOrigin: "right center",
-      "&::before": {
-        position: "absolute",
-        content: '""',
-        width: 8,
-        height: 8,
-        transform: "translate(-50%, -50%) rotate(45deg)",
-        backgroundColor: "inherit",
-        right: -8,
-        top: "50%"
-      },
-      [`&.${sliderClasses.valueLabelOpen}`]: {
-        transform: "translateY(-50%) scale(1)"
-      }
-    }
-  }, {
-    props: {
-      size: "small"
-    },
-    style: {
-      fontSize: theme2.typography.pxToRem(12),
-      padding: "0.25rem 0.5rem"
-    }
-  }, {
-    props: {
-      orientation: "vertical",
-      size: "small"
-    },
-    style: {
-      right: "20px"
-    }
-  }]
-})));
-const SliderMark = styled("span", {
-  name: "MuiSlider",
-  slot: "Mark",
-  shouldForwardProp: (prop) => slotShouldForwardProp(prop) && prop !== "markActive",
-  overridesResolver: (props, styles2) => {
-    const {
-      markActive
-    } = props;
-    return [styles2.mark, markActive && styles2.markActive];
-  }
-})(memoTheme(({
-  theme: theme2
-}) => ({
-  position: "absolute",
-  width: 2,
-  height: 2,
-  borderRadius: 1,
-  backgroundColor: "currentColor",
-  variants: [{
-    props: {
-      orientation: "horizontal"
-    },
-    style: {
-      top: "50%",
-      transform: "translate(-1px, -50%)"
-    }
-  }, {
-    props: {
-      orientation: "vertical"
-    },
-    style: {
-      left: "50%",
-      transform: "translate(-50%, 1px)"
-    }
-  }, {
-    props: {
-      markActive: true
-    },
-    style: {
-      backgroundColor: (theme2.vars || theme2).palette.background.paper,
-      opacity: 0.8
-    }
-  }]
-})));
-const SliderMarkLabel = styled("span", {
-  name: "MuiSlider",
-  slot: "MarkLabel",
-  shouldForwardProp: (prop) => slotShouldForwardProp(prop) && prop !== "markLabelActive"
-})(memoTheme(({
-  theme: theme2
-}) => ({
-  ...theme2.typography.body2,
-  color: (theme2.vars || theme2).palette.text.secondary,
-  position: "absolute",
-  whiteSpace: "nowrap",
-  variants: [{
-    props: {
-      orientation: "horizontal"
-    },
-    style: {
-      top: 30,
-      transform: "translateX(-50%)",
-      "@media (pointer: coarse)": {
-        top: 40
-      }
-    }
-  }, {
-    props: {
-      orientation: "vertical"
-    },
-    style: {
-      left: 36,
-      transform: "translateY(50%)",
-      "@media (pointer: coarse)": {
-        left: 44
-      }
-    }
-  }, {
-    props: {
-      markLabelActive: true
-    },
-    style: {
-      color: (theme2.vars || theme2).palette.text.primary
-    }
-  }]
-})));
-const useUtilityClasses = (ownerState) => {
-  const {
-    disabled,
-    dragging,
-    marked,
-    orientation,
-    track,
-    classes,
-    color: color2,
-    size
-  } = ownerState;
-  const slots = {
-    root: ["root", disabled && "disabled", dragging && "dragging", marked && "marked", orientation === "vertical" && "vertical", track === "inverted" && "trackInverted", track === false && "trackFalse", color2 && `color${capitalize(color2)}`, size && `size${capitalize(size)}`],
-    rail: ["rail"],
-    track: ["track"],
-    mark: ["mark"],
-    markActive: ["markActive"],
-    markLabel: ["markLabel"],
-    markLabelActive: ["markLabelActive"],
-    valueLabel: ["valueLabel"],
-    thumb: ["thumb", disabled && "disabled", size && `thumbSize${capitalize(size)}`, color2 && `thumbColor${capitalize(color2)}`],
-    active: ["active"],
-    disabled: ["disabled"],
-    focusVisible: ["focusVisible"]
-  };
-  return composeClasses(slots, getSliderUtilityClass, classes);
-};
-const Forward = ({
-  children
-}) => children;
-const Slider = /* @__PURE__ */ reactExports.forwardRef(function Slider2(inputProps, ref) {
-  const props = useDefaultProps({
-    props: inputProps,
-    name: "MuiSlider"
-  });
-  const isRtl = useRtl();
-  const {
-    "aria-label": ariaLabel,
-    "aria-valuetext": ariaValuetext,
-    "aria-labelledby": ariaLabelledby,
-    // eslint-disable-next-line react/prop-types
-    component = "span",
-    components = {},
-    componentsProps = {},
-    color: color2 = "primary",
-    classes: classesProp,
-    className,
-    disableSwap = false,
-    disabled = false,
-    getAriaLabel,
-    getAriaValueText,
-    marks: marksProp = false,
-    max = 100,
-    min = 0,
-    name,
-    onChange,
-    onChangeCommitted,
-    orientation = "horizontal",
-    shiftStep = 10,
-    size = "medium",
-    step = 1,
-    scale = Identity,
-    slotProps,
-    slots,
-    tabIndex,
-    track = "normal",
-    value: valueProp,
-    valueLabelDisplay = "off",
-    valueLabelFormat = Identity,
-    ...other
-  } = props;
-  const ownerState = {
-    ...props,
-    isRtl,
-    max,
-    min,
-    classes: classesProp,
-    disabled,
-    disableSwap,
-    orientation,
-    marks: marksProp,
-    color: color2,
-    size,
-    step,
-    shiftStep,
-    scale,
-    track,
-    valueLabelDisplay,
-    valueLabelFormat
-  };
-  const {
-    axisProps: axisProps2,
-    getRootProps,
-    getHiddenInputProps,
-    getThumbProps,
-    open,
-    active,
-    axis,
-    focusedThumbIndex,
-    range,
-    dragging,
-    marks,
-    values: values2,
-    trackOffset,
-    trackLeap,
-    getThumbStyle
-  } = useSlider({
-    ...ownerState,
-    rootRef: ref
-  });
-  ownerState.marked = marks.length > 0 && marks.some((mark) => mark.label);
-  ownerState.dragging = dragging;
-  ownerState.focusedThumbIndex = focusedThumbIndex;
-  const classes = useUtilityClasses(ownerState);
-  const RootSlot = slots?.root ?? components.Root ?? SliderRoot;
-  const RailSlot = slots?.rail ?? components.Rail ?? SliderRail;
-  const TrackSlot = slots?.track ?? components.Track ?? SliderTrack;
-  const ThumbSlot = slots?.thumb ?? components.Thumb ?? SliderThumb;
-  const ValueLabelSlot = slots?.valueLabel ?? components.ValueLabel ?? SliderValueLabel;
-  const MarkSlot = slots?.mark ?? components.Mark ?? SliderMark;
-  const MarkLabelSlot = slots?.markLabel ?? components.MarkLabel ?? SliderMarkLabel;
-  const InputSlot = slots?.input ?? components.Input ?? "input";
-  const rootSlotProps = slotProps?.root ?? componentsProps.root;
-  const railSlotProps = slotProps?.rail ?? componentsProps.rail;
-  const trackSlotProps = slotProps?.track ?? componentsProps.track;
-  const thumbSlotProps = slotProps?.thumb ?? componentsProps.thumb;
-  const valueLabelSlotProps = slotProps?.valueLabel ?? componentsProps.valueLabel;
-  const markSlotProps = slotProps?.mark ?? componentsProps.mark;
-  const markLabelSlotProps = slotProps?.markLabel ?? componentsProps.markLabel;
-  const inputSlotProps = slotProps?.input ?? componentsProps.input;
-  const rootProps = useSlotProps({
-    elementType: RootSlot,
-    getSlotProps: getRootProps,
-    externalSlotProps: rootSlotProps,
-    externalForwardedProps: other,
-    additionalProps: {
-      ...shouldSpreadAdditionalProps(RootSlot) && {
-        as: component
-      }
-    },
-    ownerState: {
-      ...ownerState,
-      ...rootSlotProps?.ownerState
-    },
-    className: [classes.root, className]
-  });
-  const railProps = useSlotProps({
-    elementType: RailSlot,
-    externalSlotProps: railSlotProps,
-    ownerState,
-    className: classes.rail
-  });
-  const trackProps = useSlotProps({
-    elementType: TrackSlot,
-    externalSlotProps: trackSlotProps,
-    additionalProps: {
-      style: {
-        ...axisProps2[axis].offset(trackOffset),
-        ...axisProps2[axis].leap(trackLeap)
-      }
-    },
-    ownerState: {
-      ...ownerState,
-      ...trackSlotProps?.ownerState
-    },
-    className: classes.track
-  });
-  const thumbProps = useSlotProps({
-    elementType: ThumbSlot,
-    getSlotProps: getThumbProps,
-    externalSlotProps: thumbSlotProps,
-    ownerState: {
-      ...ownerState,
-      ...thumbSlotProps?.ownerState
-    },
-    className: classes.thumb
-  });
-  const valueLabelProps = useSlotProps({
-    elementType: ValueLabelSlot,
-    externalSlotProps: valueLabelSlotProps,
-    ownerState: {
-      ...ownerState,
-      ...valueLabelSlotProps?.ownerState
-    },
-    className: classes.valueLabel
-  });
-  const markProps = useSlotProps({
-    elementType: MarkSlot,
-    externalSlotProps: markSlotProps,
-    ownerState,
-    className: classes.mark
-  });
-  const markLabelProps = useSlotProps({
-    elementType: MarkLabelSlot,
-    externalSlotProps: markLabelSlotProps,
-    ownerState,
-    className: classes.markLabel
-  });
-  const inputSliderProps = useSlotProps({
-    elementType: InputSlot,
-    getSlotProps: getHiddenInputProps,
-    externalSlotProps: inputSlotProps,
-    ownerState
-  });
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(RootSlot, {
-    ...rootProps,
-    children: [/* @__PURE__ */ jsxRuntimeExports.jsx(RailSlot, {
-      ...railProps
-    }), /* @__PURE__ */ jsxRuntimeExports.jsx(TrackSlot, {
-      ...trackProps
-    }), marks.filter((mark) => mark.value >= min && mark.value <= max).map((mark, index) => {
-      const percent = valueToPercent(mark.value, min, max);
-      const style2 = axisProps2[axis].offset(percent);
-      let markActive;
-      if (track === false) {
-        markActive = values2.includes(mark.value);
-      } else {
-        markActive = track === "normal" && (range ? mark.value >= values2[0] && mark.value <= values2[values2.length - 1] : mark.value <= values2[0]) || track === "inverted" && (range ? mark.value <= values2[0] || mark.value >= values2[values2.length - 1] : mark.value >= values2[0]);
-      }
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
-        children: [/* @__PURE__ */ jsxRuntimeExports.jsx(MarkSlot, {
-          "data-index": index,
-          ...markProps,
-          ...!isHostComponent(MarkSlot) && {
-            markActive
-          },
-          style: {
-            ...style2,
-            ...markProps.style
-          },
-          className: clsx(markProps.className, markActive && classes.markActive)
-        }), mark.label != null ? /* @__PURE__ */ jsxRuntimeExports.jsx(MarkLabelSlot, {
-          "aria-hidden": true,
-          "data-index": index,
-          ...markLabelProps,
-          ...!isHostComponent(MarkLabelSlot) && {
-            markLabelActive: markActive
-          },
-          style: {
-            ...style2,
-            ...markLabelProps.style
-          },
-          className: clsx(classes.markLabel, markLabelProps.className, markActive && classes.markLabelActive),
-          children: mark.label
-        }) : null]
-      }, index);
-    }), values2.map((value, index) => {
-      const percent = valueToPercent(value, min, max);
-      const style2 = axisProps2[axis].offset(percent);
-      const ValueLabelComponent = valueLabelDisplay === "off" ? Forward : ValueLabelSlot;
-      return (
-        /* TODO v6: Change component structure. It will help in avoiding the complicated React.cloneElement API added in SliderValueLabel component. Should be: Thumb -> Input, ValueLabel. Follow Joy UI's Slider structure. */
-        /* @__PURE__ */ jsxRuntimeExports.jsx(ValueLabelComponent, {
-          ...!isHostComponent(ValueLabelComponent) && {
-            valueLabelFormat,
-            valueLabelDisplay,
-            value: typeof valueLabelFormat === "function" ? valueLabelFormat(scale(value), index) : valueLabelFormat,
-            index,
-            open: open === index || active === index || valueLabelDisplay === "on",
-            disabled
-          },
-          ...valueLabelProps,
-          children: /* @__PURE__ */ jsxRuntimeExports.jsx(ThumbSlot, {
-            "data-index": index,
-            ...thumbProps,
-            className: clsx(classes.thumb, thumbProps.className, active === index && classes.active, focusedThumbIndex === index && classes.focusVisible),
-            style: {
-              ...style2,
-              ...getThumbStyle(index),
-              ...thumbProps.style
-            },
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(InputSlot, {
-              "data-index": index,
-              "aria-label": getAriaLabel ? getAriaLabel(index) : ariaLabel,
-              "aria-valuenow": scale(value),
-              "aria-labelledby": ariaLabelledby,
-              "aria-valuetext": getAriaValueText ? getAriaValueText(scale(value), index) : ariaValuetext,
-              value: values2[index],
-              ...inputSliderProps
-            })
-          })
-        }, index)
-      );
-    })]
-  });
-});
-function ThumbSlider({ onChange, onChangeCommitted, value, min, max, step = 10 }) {
-  const [val, setVal] = reactExports.useState(value);
-  function onValueChange(e, newValue) {
-    setVal(newValue);
-    if (onChange) {
-      onChange(e, newValue);
-    }
-  }
-  function onCommitment(e, newValue) {
-    if (onChangeCommitted) {
-      onChangeCommitted(e, newValue);
-    }
-  }
-  function stepUp() {
-    const newValue = Math.min(val + step, max);
-    onValueChange(null, newValue);
-    onCommitment(null, newValue);
-  }
-  function stepDown() {
-    const newValue = Math.max(val - step, min);
-    onValueChange(null, newValue);
-    onCommitment(null, newValue);
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Stack, { spacing: 1, direction: "row", sx: { alignItems: "center", mb: 1 }, p: 1, className: "thumb-size-slider", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(PhotoOutlinedIcon, { fontSize: "small", onClick: stepDown, className: "thumb-size-icon" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Slider,
-      {
-        "aria-label": "Size",
-        size: "small",
-        onChange: onValueChange,
-        onChangeCommitted: onCommitment,
-        min,
-        max,
-        value: val
-      }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(PhotoOutlinedIcon, { fontSize: "large", onClick: stepUp, className: "thumb-size-icon" })
-  ] });
-}
-const DisabledByDefaultIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M3 3v18h18V3zm14 12.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12z"
-}));
-const ArrowForwardIosIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M6.23 20.23 8 22l10-10L8 2 6.23 3.77 14.46 12z"
-}));
-const KeyboardDoubleArrowRightSharpIcon = createSvgIcon([/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M6.41 6 5 7.41 9.58 12 5 16.59 6.41 18l6-6z"
-}, "0"), /* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "m13 6-1.41 1.41L16.17 12l-4.58 4.59L13 18l6-6z"
-}, "1")]);
-const KeyboardDoubleArrowLeftSharpIcon = createSvgIcon([/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M17.59 18 19 16.59 14.42 12 19 7.41 17.59 6l-6 6z"
-}, "0"), /* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "m11 18 1.41-1.41L7.83 12l4.58-4.59L11 6l-6 6z"
-}, "1")]);
-const InputSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M21 3.01H3c-1.1 0-2 .9-2 2V9h2V4.99h18v14.03H3V15H1v4.01c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98v-14c0-1.11-.9-2-2-2M11 16l4-4-4-4v3H1v2h10zM23 3.01H1V9h2V4.99h18v14.03H3V15H1v5.99h22zM11 16l4-4-4-4v3H1v2h10z"
-}));
-const PhotoSizeSelectActualSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M23 3H1v18h22zM5 17l3.5-4.5 2.5 3.01L14.5 11l4.5 6z"
-}));
-const DriveFileMoveSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M22 6H12l-2-2H2v16h20zM12 17v-3H8v-2h4V9l4 4z"
-}));
-const MoreVertSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2"
-}));
-const WebAssetOffSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M6.83 4H22v15.17l-2-2V8h-9.17zm13.66 19.31L17.17 20H2V4.83L.69 3.51 2.1 2.1l19.8 19.8zM15.17 18l-10-10H4v10z"
-}));
-const BurstModeSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M1 5h2v14H1zm4 0h2v14H5zm18 0H9v14h14zM11 17l2.5-3.15L15.29 16l2.5-3.22L21 17z"
-}));
-function GalleryProgressBar({ galleryItems, mediaItem, onItemClick }) {
-  if (galleryItems.length === 0 || !mediaItem) {
-    return null;
-  }
-  const itemProgress = (mediaItem.fileIndex + 1) / mediaItem.queueItem.outputs.total * 100;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "gallery-progress-bar", style: { "--item-progress": itemProgress + "%" }, children: galleryItems.map((item, index) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      className: `progress-item${index < mediaItem.itemIndex ? " active" : ""}${index === mediaItem.itemIndex ? " current" : ""}`,
-      onClick: () => onItemClick(index)
-    },
-    item.dbID
-  )) });
-}
-class OrderedMap {
-  constructor(entries = []) {
-    this.map = /* @__PURE__ */ new Map();
-    this.keys = [];
-    this.indexByKey = /* @__PURE__ */ new Map();
-    for (const [k, v] of entries) this.set(k, v);
-  }
-  get length() {
-    return this.keys.length;
-  }
-  has(key) {
-    return this.map.has(key);
-  }
-  get(key) {
-    return this.map.get(key);
-  }
-  set(key, value) {
-    if (!this.map.has(key)) {
-      this.indexByKey.set(key, this.keys.length);
-      this.keys.push(key);
-    }
-    this.map.set(key, value);
-    return this;
-  }
-  delete(key) {
-    if (!this.map.has(key)) return false;
-    const idx = this.indexByKey.get(key);
-    this.map.delete(key);
-    this.indexByKey.delete(key);
-    this.keys.splice(idx, 1);
-    for (let i = idx; i < this.keys.length; i++) {
-      this.indexByKey.set(this.keys[i], i);
-    }
-    return true;
-  }
-  // Index-based access
-  keyAt(i) {
-    return this.keys[i];
-  }
-  at(i) {
-    const key = this.keys[i];
-    if (key === void 0) return void 0;
-    return this.map.get(key);
-  }
-  prevIndex(i) {
-    return i > 0 ? i - 1 : -1;
-  }
-  nextIndex(i) {
-    return i < this.keys.length - 1 ? i + 1 : -1;
-  }
-  prev(i) {
-    return this.at(this.prevIndex(i));
-  }
-  next(i) {
-    return this.at(this.nextIndex(i));
-  }
-  get first() {
-    return this.at(0);
-  }
-  get last() {
-    return this.at(this.keys.length - 1);
-  }
-  indexOf(key) {
-    return this.indexByKey.get(key) ?? -1;
-  }
-  // Iterate in order
-  *entries() {
-    for (const key of this.keys) yield [key, this.map.get(key)];
-  }
-  *keys() {
-    yield* this.keys;
-  }
-  *values() {
-    for (const key of this.keys) {
-      yield this.map.get(key);
-    }
-  }
-}
-function Gallery({ items, activeItem }) {
-  const [galleryItems, setGalleryItems] = reactExports.useState(null);
-  const [mediaItem, setMediaItem] = reactExports.useState(null);
-  const [uiState, setUiState] = reactExports.useState({
-    actionsMenuOpen: false
-  });
-  useAppStore((state) => state.mode);
-  const galleryOptions = useOptionsStore((state) => state.Gallery);
-  const showUI = useOptionsStore((state) => state.show_gallery_ui);
-  const setMode = useAppStore((state) => state.setMode);
-  const setDirectOption = useOptionsStore((state) => state.setDirectOption);
-  const thumbsContainerRef = reactExports.useRef(null);
-  function closeGallery() {
-    window.parent.postMessage({ type: "QM_Gallery_Close" }, "*");
-    document.body.classList.remove("gallery-open");
-    setMode("queue");
-  }
-  function toggleUI() {
-    apiCall("queue_manager/options", { key: "show_gallery_ui", value: !showUI }, "POST");
-    setDirectOption("show_gallery_ui", !showUI);
-  }
-  function updateMediaItem(items2) {
-    const itemIndex = items2.indexOf(activeItem.dbID);
-    if (itemIndex === -1) {
-      console.error("Item with dbID not found in gallery data:", activeItem);
-      return;
-    }
-    const queueItem = items2.get(activeItem.dbID);
-    setMediaItem({
-      itemIndex,
-      queueItem,
-      fileIndex: activeItem.fileIndex,
-      file: queueItem.outputs.files[activeItem.fileIndex],
-      totalFiles: queueItem.outputs.total
-    });
-  }
-  function previousImage() {
-    if (mediaItem.fileIndex > 0) {
-      setMediaItem((prev2) => ({
-        ...prev2,
-        fileIndex: mediaItem.fileIndex - 1,
-        file: mediaItem.queueItem.outputs.files[mediaItem.fileIndex - 1]
-      }));
-      return;
-    }
-    previousItem2(true);
-  }
-  function previousItem2(showLastFile = false) {
-    if (mediaItem.itemIndex > 0) {
-      const prevItemIndex = mediaItem.itemIndex - 1;
-      const prevQueueItem = galleryItems.at(prevItemIndex);
-      const prevFileIndex = showLastFile ? prevQueueItem.outputs.files.length - 1 : 0;
-      setMediaItem((prev2) => ({
-        ...prev2,
-        itemIndex: prevItemIndex,
-        queueItem: prevQueueItem,
-        fileIndex: prevFileIndex,
-        file: prevQueueItem.outputs.files[prevFileIndex],
-        totalFiles: prevQueueItem.outputs.total
-      }));
-    }
-  }
-  function nextImage() {
-    if (mediaItem.fileIndex < mediaItem.queueItem.outputs.files.length - 1) {
-      setMediaItem((prev2) => ({
-        ...prev2,
-        fileIndex: mediaItem.fileIndex + 1,
-        file: mediaItem.queueItem.outputs.files[mediaItem.fileIndex + 1]
-      }));
-      return;
-    }
-    nextItem2();
-  }
-  function nextItem2() {
-    if (mediaItem.itemIndex < galleryItems.length - 1) {
-      const nextItemIndex = mediaItem.itemIndex + 1;
-      const nextQueueItem = galleryItems.at(nextItemIndex);
-      setMediaItem((prev2) => ({
-        ...prev2,
-        itemIndex: nextItemIndex,
-        queueItem: nextQueueItem,
-        fileIndex: 0,
-        file: nextQueueItem.outputs.files[0],
-        totalFiles: nextQueueItem.outputs.total
-      }));
-    }
-  }
-  function isFirstItem() {
-    return mediaItem.itemIndex === 0;
-  }
-  function isLastItem() {
-    return mediaItem.itemIndex === galleryItems.length - 1;
-  }
-  function isFirstImage() {
-    return mediaItem.fileIndex === 0 && isFirstItem();
-  }
-  function isLastImage() {
-    return mediaItem.fileIndex === mediaItem.queueItem.outputs.files.length - 1 && isLastItem();
-  }
-  function toggleActionsMenu() {
-    setUiState((prev2) => ({
-      ...prev2,
-      actionsMenuOpen: !prev2.actionsMenuOpen
-    }));
-  }
-  const onOutsideClickActionsMenu = useEvent((event) => {
-    if (uiState.actionsMenuOpen && !event.target.closest(".media-actions")) {
-      setUiState((prev2) => ({
-        ...prev2,
-        actionsMenuOpen: false
-      }));
-    }
-  });
-  const loadWorkflow = useEvent((event) => {
-    msgLoadWorkflow(mediaItem.queueItem.workflow, mediaItem.queueItem.number);
-  });
-  const loadImage = useEvent(async (event) => {
-    const fileURL = baseURL + `api/view?filename=${mediaItem.file.filename}&type=output&subfolder=${mediaItem.file.subfolder}`;
-    window.parent.postMessage({
-      type: "QM_LoadWorkflowFromImage",
-      fileURL,
-      filename: mediaItem.file.filename
-    }, "*");
-  });
-  const deleteWorkflow = useEvent(async (event) => {
-    try {
-      await apiCall(`api/queue`, {
-        delete: [mediaItem.queueItem.promptID]
-      });
-      if (galleryItems.length <= 1) {
-        closeGallery();
-        return;
-      }
-      const nextItemIndex = mediaItem.itemIndex < galleryItems.length - 1 ? mediaItem.itemIndex + 1 : mediaItem.itemIndex - 1;
-      const nextQueueItem = galleryItems.at(nextItemIndex);
-      setMediaItem({
-        itemIndex: mediaItem.itemIndex === galleryItems.length - 1 ? nextItemIndex : mediaItem.itemIndex,
-        // actual index changes only if we deleted the last item
-        queueItem: nextQueueItem,
-        fileIndex: 0,
-        file: nextQueueItem.outputs.files[0],
-        totalFiles: nextQueueItem.outputs.total
-      });
-      setGalleryItems((prevItems) => {
-        if (!prevItems || prevItems.length === 0) {
-          return new OrderedMap();
-        }
-        prevItems.delete(mediaItem.queueItem.dbID);
-        return new OrderedMap(prevItems.entries());
-      });
-    } catch (error) {
-      console.error("Error deleting workflow:", error);
-    }
-  });
-  const openImageLocation = useEvent(async (event) => {
-    const file = mediaItem.queueItem.outputs.files[mediaItem.fileIndex];
-    if (!file) {
-      console.error("No file found to open location:", mediaItem);
-      return;
-    }
-    const queryArgs = `?id=${mediaItem.queueItem.dbID}&filename=${file.filename}&subfolder=${file.subfolder}`;
-    await apiCall(`queue_manager/open_location` + queryArgs, null, "GET");
-  });
-  const keyboardNavigation = useEvent((event) => {
-    if (event.key === "ArrowLeft") {
-      if (!isFirstImage()) {
-        previousImage();
-      }
-    } else if (event.key === "ArrowRight") {
-      if (!isLastImage()) {
-        nextImage();
-      }
-    } else if (event.key === "ArrowUp") {
-      if (!isFirstItem()) {
-        previousItem2();
-      }
-    } else if (event.key === "ArrowDown") {
-      if (!isLastItem()) {
-        nextItem2();
-      }
-    } else if (event.key === "Escape") {
-      closeGallery();
-    } else if (event.key === "Home") {
-      if (galleryItems && galleryItems.length > 0) {
-        const firstItem = galleryItems.first;
-        setMediaItem({
-          itemIndex: 0,
-          queueItem: firstItem,
-          fileIndex: 0,
-          file: firstItem.outputs.files[0],
-          totalFiles: firstItem.outputs.total
-        });
-      }
-    } else if (event.key === "End") {
-      if (galleryItems && galleryItems.length > 0) {
-        const lastItem = galleryItems.last;
-        const lastFileIndex = lastItem.outputs.files.length - 1;
-        setMediaItem({
-          itemIndex: galleryItems.length - 1,
-          queueItem: lastItem,
-          fileIndex: lastFileIndex,
-          file: lastItem.outputs.files[lastFileIndex],
-          totalFiles: lastItem.outputs.total
-        });
-      }
-    } else if (event.key.toLowerCase() === "t") {
-      toggleUI();
-    }
-  });
-  function onItemClick(itemIndex) {
-    if (galleryItems && galleryItems.length > 0 && itemIndex >= 0 && itemIndex < galleryItems.length) {
-      const queueItem = galleryItems.at(itemIndex);
-      setMediaItem({
-        itemIndex,
-        queueItem,
-        fileIndex: 0,
-        file: queueItem.outputs.files[0],
-        totalFiles: queueItem.outputs.total
-      });
-    }
-  }
-  reactExports.useEffect(() => {
-    if (!items || items.length === 0) {
-      return;
-    }
-    setGalleryItems(items);
-    updateMediaItem(items);
-  }, [items]);
-  reactExports.useEffect(() => {
-    updateMediaItem(items);
-  }, [activeItem]);
-  reactExports.useLayoutEffect(() => {
-    const el = thumbsContainerRef.current;
-    if (!el) return;
-    let pointerId = null;
-    let isPointerDown = false;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startScrollLeft = 0;
-    let suppressClickUntil = 0;
-    const DRAG_THRESHOLD_PX = 8;
-    const SUPPRESS_CLICK_MS = 250;
-    const canScrollX = () => el.scrollWidth > el.clientWidth + 1;
-    const onPointerDown = (e) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      if (!canScrollX()) return;
-      pointerId = e.pointerId;
-      isPointerDown = true;
-      isDragging = false;
-      startX = e.clientX;
-      startY = e.clientY;
-      startScrollLeft = el.scrollLeft;
-      el.classList.add("is-dragging");
-    };
-    const onPointerMove = (e) => {
-      if (!isPointerDown || e.pointerId !== pointerId) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      if (!isDragging) {
-        const movedEnough = Math.abs(dx) >= DRAG_THRESHOLD_PX || Math.abs(dy) >= DRAG_THRESHOLD_PX;
-        const horizontalIntent = Math.abs(dx) > Math.abs(dy);
-        if (!movedEnough) return;
-        if (!horizontalIntent) {
-          isPointerDown = false;
-          pointerId = null;
-          el.classList.remove("is-dragging");
-          return;
-        }
-        isDragging = true;
-        suppressClickUntil = Date.now() + SUPPRESS_CLICK_MS;
-        try {
-          el.setPointerCapture(pointerId);
-        } catch {
-        }
-      }
-      e.preventDefault();
-      el.scrollLeft = startScrollLeft - dx;
-    };
-    const endDrag = (e) => {
-      if (pointerId == null) return;
-      if (e.pointerId !== pointerId) return;
-      isPointerDown = false;
-      isDragging = false;
-      try {
-        el.releasePointerCapture(pointerId);
-      } catch {
-      }
-      pointerId = null;
-      el.classList.remove("is-dragging");
-    };
-    const onClickCapture = (e) => {
-      if (Date.now() < suppressClickUntil) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-    };
-    el.addEventListener("pointerdown", onPointerDown);
-    el.addEventListener("pointermove", onPointerMove, { passive: false });
-    window.addEventListener("pointerup", endDrag);
-    window.addEventListener("pointercancel", endDrag);
-    el.addEventListener("click", onClickCapture, true);
-    return () => {
-      el.removeEventListener("pointerdown", onPointerDown);
-      el.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", endDrag);
-      window.removeEventListener("pointercancel", endDrag);
-      el.removeEventListener("click", onClickCapture, true);
-    };
-  }, [galleryItems]);
-  reactExports.useEffect(() => {
-    window.addEventListener("click", onOutsideClickActionsMenu);
-    window.addEventListener("keydown", keyboardNavigation);
-    return () => {
-      window.removeEventListener("click", onOutsideClickActionsMenu);
-      window.removeEventListener("keydown", keyboardNavigation);
-    };
-  }, [keyboardNavigation, onOutsideClickActionsMenu]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "gallery-page", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "head-nav", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { size: "large", variant: "contained", className: "hide-ui", onClick: toggleUI, title: (showUI ? "Hide" : "Show") + " thumbnails (T)", children: showUI ? /* @__PURE__ */ jsxRuntimeExports.jsx(WebAssetOffSharpIcon, { fontSize: "large" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(BurstModeSharpIcon, { fontSize: "large" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { size: "large", variant: "contained", className: "close-button", onClick: closeGallery, title: "Close (Esc)", children: /* @__PURE__ */ jsxRuntimeExports.jsx(DisabledByDefaultIcon, { fontSize: "large" }) })
-    ] }),
-    galleryItems && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "image-box", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { children: [
-        mediaItem.queueItem.workflow.workflow_name,
-        " ",
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-          "(",
-          mediaItem.fileIndex + 1,
-          " / ",
-          mediaItem.totalFiles,
-          ")"
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("figure", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          MediaItem,
-          {
-            file: mediaItem.file,
-            autoplay: galleryOptions.AutoPlayVideos,
-            toggleable: true,
-            className: showUI ? "" : "no-ui"
-          }
-        ),
-        showUI && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "node-thumbs", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "node-thumbs-container", ref: thumbsContainerRef, children: mediaItem.queueItem.outputs.files.map((file, index) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-          MediaItem,
-          {
-            file,
-            className: `node-thumb play-button large-play-button ${index === mediaItem.fileIndex ? "active" : ""}`,
-            controls: false,
-            autoplay: false,
-            onClick: () => setMediaItem((prev2) => ({
-              ...prev2,
-              fileIndex: index,
-              file
-            }))
-          },
-          index
-        )) }) })
-      ] }),
-      showUI && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "gallery-nav", children: [
-          !isFirstImage() && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            IconButton,
-            {
-              color: "primary",
-              size: "large",
-              onClick: () => previousImage(),
-              className: "previous-button",
-              title: "Previous Image (←)",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowForwardIosIcon, { fontSize: "inherit" })
-            }
-          ),
-          !isLastImage() && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            IconButton,
-            {
-              color: "primary",
-              size: "large",
-              onClick: () => nextImage(),
-              className: "next-button",
-              title: "Next Image (→)",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowForwardIosIcon, { fontSize: "inherit" })
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "footer-nav", children: [
-          mediaItem.itemIndex > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "prev-item", onClick: () => previousItem2(), title: "Previous Prompt (ArrowUp)", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(KeyboardDoubleArrowLeftSharpIcon, { fontSize: "inherit" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              MediaItem,
-              {
-                file: galleryItems.at(mediaItem.itemIndex - 1).outputs.files[0],
-                className: "cover-media-thumb play-button large-play-button",
-                controls: false,
-                autoplay: false,
-                title: "Previous Prompt (ArrowUp)"
-              }
-            )
-          ] }),
-          mediaItem.itemIndex < galleryItems.length - 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "next-item", onClick: () => nextItem2(), title: "Next Prompt (ArrowDown)", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(KeyboardDoubleArrowRightSharpIcon, { fontSize: "inherit" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              MediaItem,
-              {
-                file: galleryItems.at(mediaItem.itemIndex + 1).outputs.files[0],
-                className: "cover-media-thumb play-button large-play-button",
-                controls: false,
-                autoplay: false,
-                title: "Next Prompt (ArrowDown)"
-              }
-            )
-          ] })
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "media-actions", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { size: "large", variant: "contained", className: "trigger", onClick: toggleActionsMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(MoreVertSharpIcon, { fontSize: "medium" }) }),
-        uiState.actionsMenuOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "action-buttons", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { type: "button", variant: "contained", color: "secondary", size: "small", className: "load-workflow", onClick: loadWorkflow, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(InputSharpIcon, {}),
-            "  Load queued workflow"
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { type: "button", variant: "contained", color: "secondary", size: "small", className: "load-image", onClick: loadImage, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(PhotoSizeSelectActualSharpIcon, {}),
-            "  Load saved file"
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { type: "button", variant: "contained", color: "secondary", size: "small", className: "open-image-location", onClick: openImageLocation, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(DriveFileMoveSharpIcon, {}),
-            "  Open image location"
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { type: "button", variant: "contained", color: "secondary", size: "small", className: "delete-workflow", onClick: deleteWorkflow, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
-            "  Delete workflow"
-          ] })
-        ] })
-      ] }),
-      galleryItems && galleryItems.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(GalleryProgressBar, { galleryItems: Array.from(galleryItems.values()), mediaItem, onItemClick })
-    ] })
-  ] });
-}
-const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-}));
-function SplashScreen({ onClick }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-screen", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { className: "close", onClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(CloseSharpIcon, {}) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-content", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { children: "ComfyUI Queue Manager" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "sub", children: "Version: v0.1.0" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("h4", { className: "sub", children: [
-        "Released: 25",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("sup", { children: "th" }),
-        " January 2026"
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "What's new?" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Previews and gallery" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Release v0.1.0 introduces a big new feature: outputs previews and gallery." }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
-        "Head over to the ",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: "Completed" }),
-        " tab to see previews from generated outputs (only new jobs completed after this release was introduced). Click on media item to see it in ",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: "Gallery" }),
-        " mode. Keyboard shortcuts available. "
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Settings" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
-        "A new settings panel is available in ",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("b", { children: "ComfyUI Menu -> Settings -> Queue Manager" }),
-        " where you can influence certain features of the extension."
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "New style and UI improvements" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "An attempt to make the UI look less motley. " }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "More functional pagination experience, especially if you hoard tens of pages." }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Completion Time" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "From now on completed jobs will show total execution time." }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Bugfixes" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "A couple of minor unreported issues discovered throughout. Check Release Notes for more details." }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
-          "For more details check the updated manual on Github: ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", children: "Queue Manager Manual" }),
-          "."
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
-          "For full Release Notes view ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md", target: "_blank", children: "Changelog" }),
-          "."
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
-          "Leave a feedback or report an issue here ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/issues", target: "_blank", children: "Issues" }),
-          ". "
-        ] })
-      ] })
-    ] })
-  ] });
-}
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
@@ -29491,14 +27023,11 @@ function Home() {
   const previousListOrderRef = reactExports.useRef(completedListOrder);
   const setAllOptions = useOptionsStore((state) => state.setAllOptions);
   const setOption = useOptionsStore((state) => state.setOption);
-  const setDirectOption = useOptionsStore((state) => state.setDirectOption);
   const filters = useAppStore((state) => state.filters);
   const route = useAppStore((state) => state.route);
-  const mode = useAppStore((state) => state.mode);
   const shiftDown = useAppStore((state) => state.shiftDown);
   const setFilters = useAppStore((state) => state.setFilters);
   const setRoute = useAppStore((state) => state.setRoute);
-  const setMode = useAppStore((state) => state.setMode);
   const setShiftDown = useAppStore((state) => state.setShiftDown);
   const [currentJob, setProgress] = reactExports.useState({
     id: null,
@@ -29509,9 +27038,7 @@ function Home() {
     // false if events about workflow execution are received before the workflow data is loaded
     progress: 0
   });
-  const [galleryData, setGallery] = reactExports.useState(null);
   const [showSplash, setShowSplash] = reactExports.useState(false);
-  const latestThumbSizePxRef = reactExports.useRef(150);
   const fetchIdRef = reactExports.useRef(0);
   reactExports.useMemo(() => {
     const f = filters ? JSON.stringify(filters) : "";
@@ -29519,17 +27046,6 @@ function Home() {
     return `${route}|${f}|${order}`;
   }, [route, filters, completedListOrder]);
   reactExports.useRef(null);
-  const applyGridVars = reactExports.useCallback((thumbSizePx) => {
-    const root = document.documentElement;
-    const gapPx = 6;
-    const minCols = 1;
-    const width2 = window.innerWidth;
-    const denom = thumbSizePx + gapPx;
-    const cols = Number.isFinite(denom) && denom > 0 ? Math.max(minCols, Math.floor((width2 + gapPx) / denom)) : minCols;
-    root.style.setProperty("--thumb-size", `${thumbSizePx}px`);
-    root.style.setProperty("--gap", `${gapPx}px`);
-    root.style.setProperty("--cols", String(cols));
-  }, []);
   const isFilterOn = reactExports.useCallback(() => {
     return filters && Object.keys(filters).length > 0;
   }, [filters]);
@@ -29551,34 +27067,17 @@ function Home() {
     }
     return queryArgs;
   }, [route]);
-  const updateCoverSize = reactExports.useCallback((event, newValue) => {
-    document.documentElement.style.setProperty("--cover-size", newValue + "px");
-  }, []);
-  const onCoverSizeCommited = reactExports.useCallback((event, newValue) => {
-    setTimeout(() => {
-      setDirectOption("cover_size", newValue);
-      apiCall("queue_manager/options", { key: "cover_size", value: newValue }, "POST");
-    });
-  }, [setDirectOption]);
-  const updateThumbnailSize = reactExports.useCallback((event, newValue) => {
-    const n = Number(newValue);
-    const thumbSizePx = Number.isFinite(n) && n > 0 ? n : 150;
-    latestThumbSizePxRef.current = thumbSizePx;
-    applyGridVars(thumbSizePx);
-  }, [applyGridVars]);
   const fetchOptions = reactExports.useCallback(async () => {
     const newOptions = await apiCall(`queue_manager/options`, null, "GET");
     if (newOptions) {
       setAllOptions({ ...newOptions });
-      updateThumbnailSize(null, newOptions.thumb_size ? newOptions.thumb_size : 150);
-      updateCoverSize(null, newOptions.cover_size ? newOptions.cover_size : 50);
       if (compareVersions(newOptions.splash_screen, newOptions.__version__) < 0) {
         setShowSplash(true);
       }
     } else {
       console.error("Failed to fetch options");
     }
-  }, [setAllOptions, updateCoverSize, updateThumbnailSize]);
+  }, [setAllOptions]);
   const fetchQueueItems = reactExports.useCallback(async ({ page, route: requestedRoute, filters: filters2, reload = false } = {}) => {
     const fetchId = ++fetchIdRef.current;
     let queryArgs = "";
@@ -29831,64 +27330,12 @@ function Home() {
       console.error("Error importing queue:", error);
     }
   });
-  const openGallery = reactExports.useCallback((galleryData2 = null) => {
-    if (galleryData2) {
-      window.parent.postMessage({
-        type: "QM_Gallery_Show"
-      }, "*");
-      setMode("gallery");
-      document.body.classList.add("gallery-open");
-    }
-  }, [setMode]);
-  const onMediaItemClick = reactExports.useCallback((mediaItem) => {
-    let items = new OrderedMap();
-    appStatus.queue.pending.map((item, index) => {
-      if (item[3] && item[3].outputs) {
-        const outputs = new MediaOutputs(item[3], options.Gallery);
-        if (outputs.files.length > 0) {
-          items.set(item[3].db_id, {
-            dbID: item[3].db_id,
-            promptID: item[1],
-            number: item[0],
-            workflow: item[3].extra_pnginfo.workflow,
-            outputs
-          });
-        }
-      }
-    });
-    if (items.length === 0) {
-      setGallery((prev2) => ({
-        ...prev2,
-        items: null
-      }));
-      return;
-    }
-    if (!items || items.length === 0) {
-      console.error("No items found in gallery data:", galleryData);
-      return;
-    }
-    setGallery({
-      items,
-      activeItem: mediaItem
-    });
-    openGallery(mediaItem);
-  }, [appStatus.queue, galleryData, openGallery, options.Gallery]);
-  function onThumbSizeCommited(event, newValue) {
-    setTimeout(() => {
-      setDirectOption("thumb_size", newValue);
-      apiCall("queue_manager/options", { key: "thumb_size", value: newValue }, "POST");
-    });
-  }
-  const setThumbMode = useEvent((mode2) => {
-    setDirectOption("thumb_mode", mode2);
-    apiCall("queue_manager/options", { key: "thumb_mode", value: mode2 }, "POST");
-  });
   const openSplash = useEvent(() => {
     setShowSplash(true);
   });
   const appContextValue = reactExports.useMemo(() => {
-    return { onMediaItemClick, openSplash, fetchQueueItems };
-  }, [onMediaItemClick, openSplash, fetchQueueItems]);
+    return { openSplash, fetchQueueItems };
+  }, [openSplash, fetchQueueItems]);
   const closeSplash = useEvent((event) => {
     setShowSplash(false);
     if (!options.splash_screen || options.splash_screen !== options.__version__) {
@@ -29927,16 +27374,6 @@ function Home() {
     }
   }, [appStatus.queue, currentJob.id, currentJob.integrity, currentJob.nodes]);
   reactExports.useEffect(() => {
-    const onResize = () => applyGridVars(latestThumbSizePxRef.current);
-    window.addEventListener("resize", onResize, { passive: true });
-    const ro = new ResizeObserver(() => onResize());
-    ro.observe(document.documentElement);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      ro.disconnect();
-    };
-  }, [applyGridVars]);
-  reactExports.useEffect(() => {
     fetchQueueItems({ route: "queue" });
     fetchOptions();
     window.addEventListener("message", handleMessage);
@@ -29956,7 +27393,7 @@ function Home() {
     );
     return () => window.removeEventListener("message", handleMessage);
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `route-${route} qm-container mode-${mode}` + (appStatus.loading ? " loading" : "") + (appStatus.reloading ? " reloading" : ""), children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `route-${route} qm-container` + (appStatus.loading ? " loading" : "") + (appStatus.reloading ? " reloading" : ""), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "px-2 py-1 text-sm header font-bold", children: [
       "Queue Manager",
       appStatus.loading && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {})
@@ -30073,61 +27510,6 @@ function Home() {
         }
       ) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "footer", children: [
-        route === "completed" && (options.Gallery.ShowImages || options.Gallery.ShowVideos) && /* @__PURE__ */ jsxRuntimeExports.jsxs(Stack, { spacing: 1, direction: "row", sx: { alignItems: "center" }, children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            Stack,
-            {
-              spacing: 1,
-              className: "thumb-mode",
-              direction: "row",
-              sx: { alignItems: "center", justifyContent: "start", flex: 1 },
-              p: 1,
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { title: "No thumbnails", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  ImageNotSupportedSharpIcon,
-                  {
-                    className: options.thumb_mode === "none" ? "active" : "",
-                    onClick: () => setThumbMode("none")
-                  }
-                ) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { title: "Cover image only", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  WallpaperSharpIcon,
-                  {
-                    className: options.thumb_mode === "cover" ? "active" : "",
-                    onClick: () => setThumbMode("cover")
-                  }
-                ) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { title: "Show all outputs", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  ViewModuleSharpIcon,
-                  {
-                    className: options.thumb_mode === "grid" ? "active" : "",
-                    onClick: () => setThumbMode("grid")
-                  }
-                ) })
-              ]
-            }
-          ),
-          options.thumb_mode === "grid" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            ThumbSlider,
-            {
-              min: 50,
-              max: 500,
-              value: options.thumb_size ? options.thumb_size : 150,
-              onChange: updateThumbnailSize,
-              onChangeCommitted: onThumbSizeCommited
-            }
-          ),
-          options.thumb_mode === "cover" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            ThumbSlider,
-            {
-              min: 25,
-              max: 200,
-              value: options.cover_size ? options.cover_size : 50,
-              onChange: updateCoverSize,
-              onChangeCommitted: onCoverSizeCommited
-            }
-          )
-        ] }),
         appStatus.queue && appStatus.queue.info && appStatus.queue.info.last_page > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pagination", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             Pagination,
@@ -30288,7 +27670,6 @@ function Home() {
           )
         ] }) })
       ] }),
-      mode === "gallery" && galleryData && /* @__PURE__ */ jsxRuntimeExports.jsx(Gallery, { items: galleryData.items, activeItem: galleryData.activeItem }),
       showSplash && /* @__PURE__ */ jsxRuntimeExports.jsx(SplashScreen, { onClick: closeSplash })
     ] })
   ] });

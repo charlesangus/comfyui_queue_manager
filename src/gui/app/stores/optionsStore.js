@@ -3,15 +3,8 @@ import { create } from 'zustand';
 export const useOptionsStore = create((set) => ({
   Basic:{},
   Completed:{
-    CoverThumbMode: "Cropped",
-    GridThumbMode: "Square Fit",
     ListOrder: "Newest first",
   },
-  Gallery:{},
-  thumb_mode: 'cover',
-  thumb_size: 150,
-  cover_size: 50,
-  show_gallery_ui: true,
 
   /**
    * Set a single option within a category

@@ -4,9 +4,7 @@
 import React, { memo, useCallback, useContext, useMemo } from "react";
 import { apiCall, msgLoadWorkflow } from "../internals/functions";
 import { AppContext } from "../internals/app-context";
-import { MediaItem } from "../components/MediaItem";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
-import { MediaOutputs } from "../models/MediaOutputs";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import {useAppStore} from "@/app/stores/appStore";
 
@@ -20,21 +18,12 @@ export const QueueItemRow = memo(
     info,
 
     route,
-    thumbMode,
-    galleryOptions,
     filters,
   }) {
-    const { onMediaItemClick, fetchQueueItems } = useContext(AppContext);
+    const { fetchQueueItems } = useContext(AppContext);
 
     const dbId = item?.[3]?.db_id;
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
-
-    const mediaOutputs = useMemo(() => {
-      if (item?.[3]?.outputs && route === "completed") {
-        return new MediaOutputs(item[3], galleryOptions);
-      }
-      return null;
-    }, [item, route, galleryOptions]);
 
     const cancelQueueItem = useCallback(async () => {
       const cancelRoute = mode === "running" || mode === "external" ? "interrupt" : "queue";
@@ -98,17 +87,6 @@ const executionTimeLabel = useMemo(() => {
   return ` ${rawSeconds.toFixed(2)}s`;
 }, [item?.[3]?.execution_time]);
 
-    const showCover =
-      route === "completed" &&
-      thumbMode === "cover" &&
-      (galleryOptions.ShowImages || galleryOptions.ShowVideos);
-
-    const showGrid =
-      item?.[3]?.total_files > 0 &&
-      route === "completed" &&
-      thumbMode === "grid" &&
-      (galleryOptions.ShowImages || galleryOptions.ShowVideos);
-
     const rowIndex =
       index === undefined || !info ? "" : index + 1 + info.page * info.page_size;
 
@@ -125,35 +103,9 @@ const executionTimeLabel = useMemo(() => {
             {loader ? <LoaderSpinner /> : null}
           </td>
 
-          {/* Thumbnail in Cover mode */}
-          {showCover ? (
-            <td className="px-3 py-1 cover">
-              {mediaOutputs?.cover ? (
-                <MediaItem
-                  file={mediaOutputs.cover}
-                  controls={false}
-                  autoplay={false}
-                  onClick={() => onMediaItemClick({ dbID: dbId, fileIndex: 0 })}
-                  className="play-button"
-                  title="Open gallery"
-                />
-              ) : null}
-            </td>
-          ) : null}
-
           {/* Workflow Name */}
           <td className="px-3 py-1 text-left name">
             <div className="name-cell">
-              {mediaOutputs && item[3].total_files > 0 ? (
-                <span
-                  className="total shiny-button"
-                  title={`Total file outputs: ${mediaOutputs.total}`}
-                  onClick={() => onMediaItemClick({ dbID: dbId, fileIndex: 0 })}
-                >
-                  {mediaOutputs.total}
-                </span>
-              ) : null}
-
               <button className="plain" onClick={filterByWorkflow} title="Filter view by the workflow">
                 {mode === "external"
                   ? "External job"
@@ -218,45 +170,9 @@ const executionTimeLabel = useMemo(() => {
                   Run
                 </button>
               ) : null}
-
-              {route === "completed" ? (
-                <button
-
-                  className="view violet-button shiny-button"
-                  onClick={() => onMediaItemClick({ dbID: dbId, fileIndex: 0 })}
-                  title="View outputs in gallery"
-                >
-                  View
-                </button>
-              ) : null}
             </div>
           </td>
         </tr>
-
-        {/*
-        *
-        * Queue Item Outputs
-        *
-        */}
-        {showGrid ? (
-          <tr className="dark:odd:bg-neutral-900 odd:bg-neutral-100 gallery">
-            <td colSpan={4} className="px-3 py-1">
-              <div className="flex flex-wrap gap-2 items">
-                {mediaOutputs?.files?.length
-                  ? mediaOutputs.files.map((file, fileIndex) => (
-                      <MediaItem
-                        key={`${file.filename}-${file.subfolder}`}
-                        file={file}
-                        autoplay={false}
-                        onClick={() => onMediaItemClick({ dbID: dbId, fileIndex })}
-                        title="Open gallery"
-                      />
-                    ))
-                  : null}
-              </div>
-            </td>
-          </tr>
-        ) : null}
       </>
     );
   },
@@ -271,8 +187,6 @@ const executionTimeLabel = useMemo(() => {
       prev.index === next.index &&
       prev.mode === next.mode &&
       prev.route === next.route &&
-      prev.thumbMode === next.thumbMode &&
-      prev.galleryOptions === next.galleryOptions &&
       prev.filters === next.filters &&
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size
