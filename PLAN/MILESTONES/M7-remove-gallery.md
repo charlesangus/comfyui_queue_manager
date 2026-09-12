@@ -11,7 +11,7 @@ before M2 so the card component is built from the trimmed row, not the gallery-e
 
 ## Phase 7.1: Backend
 
-- [ ] M7.P1.T1 — Remove `QM_Gallery`, `open_location`, and gallery options
+- [x] M7.P1.T1 — Remove `QM_Gallery`, `open_location`, and gallery options
   - files: `src/comfyui_queue_manager/qm_gallery.py` (delete), `src/comfyui_queue_manager/queue_manager.py`, `src/comfyui_queue_manager/qm_server.py`, `src/comfyui_queue_manager/qm_queue.py`, `src/comfyui_queue_manager/helpers.py`
   - approach: Delete `qm_gallery.py` and the `QM_Gallery(self)` construction in
     `queue_manager.py`; drop `self.gallery` in `QM_Server.__init__` and the
