@@ -61,7 +61,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `.woff` files.
   - size: M
 
-- [ ] M10.P1.T3 — MUI is driven by the same tokens (or removed where a plain element does)
+- [x] M10.P1.T3 — MUI is driven by the same tokens (or removed where a plain element does)
   - files: `src/gui/theme.js`, `src/gui/main.jsx`, `src/gui/app/components/TopMenu.jsx`, `src/gui/app/components/SplashScreen.jsx`, `src/gui/app/index.jsx`, `src/gui/app/components/Queue.jsx`
   - approach: Actual `@mui/material` usage post-M7 (confirmed at M10 start, corrects this
     task's original guess): `TopMenu` uses only `@mui/icons-material` icons (no `Menu`
