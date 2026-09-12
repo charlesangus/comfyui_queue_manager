@@ -1,4 +1,12 @@
-from comfyui_queue_manager.qm_card import extract_card_entries
+from comfyui_queue_manager.qm_card import extract_card_entries, load_card, load_card_by_prompt_id, merge_entry, save_card
+
+
+def _insert_queue_item(qm_db, prompt_id="prompt-card"):
+    qm_db.write_query(
+        "INSERT INTO queue (prompt_id, prompt, status) VALUES (?, '[]', 0)",
+        (prompt_id,),
+    )
+    return qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (prompt_id,))["id"]
 
 
 def test_extracts_literal_text_and_applies_metadata_defaults():
@@ -61,3 +69,64 @@ def test_skips_missing_and_dangling_values_and_sorts_by_index_then_node_id():
         {"index": 2, "label": "", "kind": "text", "value": "first"},
         {"index": 2, "label": "", "kind": "text", "value": "second"},
     ]
+
+
+def test_save_card_replaces_duplicate_rows_and_loads_by_id_or_prompt(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    qm_db.write_query("INSERT INTO meta (item_id, key, value) VALUES (?, 'card', '[]')", (db_id,))
+    qm_db.write_query("INSERT INTO meta (item_id, key, value) VALUES (?, 'card', '[]')", (db_id,))
+    entries = [{"index": 1, "label": "title", "kind": "text", "value": "saved"}]
+
+    save_card(db_id, entries)
+
+    assert load_card(db_id) == entries
+    assert load_card_by_prompt_id("prompt-card") == entries
+    assert qm_db.read_single("SELECT COUNT(*) FROM meta WHERE item_id = ? AND key = 'card'", (db_id,))[0] == 1
+
+
+def test_merge_entry_replaces_unique_exact_match(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    save_card(db_id, [{"index": 1, "label": "title", "kind": "text", "value": "old"}])
+    replacement = {"index": 1, "label": "title", "kind": "text", "value": "new"}
+
+    assert merge_entry("prompt-card", replacement) == [replacement]
+    assert load_card(db_id) == [replacement]
+
+
+def test_merge_entry_keeps_same_index_with_different_label(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    other_label = {"index": 2, "label": "other", "kind": "text", "value": "keep"}
+    save_card(db_id, [other_label, {"index": 2, "label": "target", "kind": "text", "value": "old"}])
+    replacement = {"index": 2, "label": "target", "kind": "text", "value": "new"}
+
+    assert merge_entry("prompt-card", replacement) == [other_label, replacement]
+
+
+def test_merge_entry_prefers_first_placeholder_among_exact_matches(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    first = {"index": 3, "label": "same", "kind": "text", "value": "resolved"}
+    placeholder = {"index": 3, "label": "same", "kind": "text", "value": "pending", "placeholder": True}
+    later_placeholder = {"index": 3, "label": "same", "kind": "text", "value": "later", "placeholder": True}
+    save_card(db_id, [first, placeholder, later_placeholder])
+    replacement = {"index": 3, "label": "same", "kind": "image", "value": {"filename": "done.png"}}
+
+    assert merge_entry("prompt-card", replacement) == [first, replacement, later_placeholder]
+
+
+def test_merge_entry_replaces_only_first_exact_match_without_placeholder(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    second = {"index": 4, "label": "same", "kind": "text", "value": "second"}
+    save_card(db_id, [{"index": 4, "label": "same", "kind": "text", "value": "first"}, second])
+    replacement = {"index": 4, "label": "same", "kind": "text", "value": "new"}
+
+    assert merge_entry("prompt-card", replacement) == [replacement, second]
+
+
+def test_merge_entry_appends_unmatched_label_with_stable_index_order(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    same_index_first = {"index": 2, "label": "first", "kind": "text", "value": "first"}
+    later = {"index": 5, "label": "later", "kind": "text", "value": "later"}
+    save_card(db_id, [same_index_first, later])
+    appended = {"index": 2, "label": "new", "kind": "text", "value": "new"}
+
+    assert merge_entry("prompt-card", appended) == [same_index_first, appended, later]

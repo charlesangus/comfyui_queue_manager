@@ -1,6 +1,78 @@
 """Static extraction of Queue Card Info entries from ComfyUI prompt graphs."""
 
+import json
 from typing import Any
+
+from .qm_db import get_conn, read_single
+
+
+def save_card(db_id: int, entries: list[dict]) -> None:
+    with get_conn() as conn:
+        conn.execute("DELETE FROM meta WHERE item_id = ? AND key = 'card'", (db_id,))
+        conn.execute(
+            "INSERT INTO meta (item_id, key, value) VALUES (?, 'card', ?)",
+            (db_id, json.dumps(entries)),
+        )
+
+
+def load_card(db_id: int) -> list[dict] | None:
+    row = read_single(
+        """
+        SELECT value
+        FROM meta
+        WHERE item_id = ? AND key = 'card'
+        ORDER BY id DESC
+        LIMIT 1
+    """,
+        (db_id,),
+    )
+    return None if row is None else json.loads(row[0])
+
+
+def load_card_by_prompt_id(prompt_id: str) -> list[dict] | None:
+    row = read_single(
+        """
+        SELECT card.value
+        FROM queue
+        LEFT JOIN meta AS card
+            ON queue.id = card.item_id
+            AND card.key = 'card'
+            AND card.id = (
+                SELECT MAX(candidate.id)
+                FROM meta AS candidate
+                WHERE candidate.item_id = queue.id AND candidate.key = 'card'
+            )
+        WHERE queue.prompt_id = ?
+    """,
+        (prompt_id,),
+    )
+    return None if row is None or row[0] is None else json.loads(row[0])
+
+
+def merge_entry(prompt_id: str, entry: dict) -> list[dict] | None:
+    row = read_single("SELECT id FROM queue WHERE prompt_id = ?", (prompt_id,))
+    if row is None:
+        return None
+
+    db_id = row[0]
+    entries = load_card(db_id) or []
+    exact_matches = [
+        index
+        for index, existing in enumerate(entries)
+        if existing.get("index") == entry.get("index") and existing.get("label") == entry.get("label")
+    ]
+    placeholder_matches = [index for index in exact_matches if entries[index].get("placeholder")]
+
+    if placeholder_matches:
+        entries[placeholder_matches[0]] = entry
+    elif exact_matches:
+        entries[exact_matches[0]] = entry
+    else:
+        entries.append(entry)
+        entries.sort(key=lambda existing: existing.get("index", 1))
+
+    save_card(db_id, entries)
+    return entries
 
 
 def _card_metadata(inputs: dict[str, Any]) -> tuple[int, str]:

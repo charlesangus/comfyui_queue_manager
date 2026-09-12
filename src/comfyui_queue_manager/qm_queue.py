@@ -7,6 +7,7 @@ from server import PromptServer
 import json
 import heapq
 
+from .qm_card import extract_card_entries, load_card_by_prompt_id, save_card
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -91,7 +92,13 @@ class QM_Queue:
 
             match route:
                 case "queue":
-                    running.extend(self.native_queue.currently_running.values())
+                    for native_item in self.native_queue.currently_running.values():
+                        item = list(native_item)
+                        item[3] = item[3].copy()
+                        card = load_card_by_prompt_id(item[1])
+                        if card is not None:
+                            item[3]["card"] = card
+                        running.append(tuple(item))
                 case "archive":
                     order_string = "ORDER BY queue.updated_at, number"
                 case "completed":
@@ -103,6 +110,18 @@ class QM_Queue:
                     join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
                     join_string += " LEFT JOIN meta as exec_time ON queue.id = exec_time.item_id AND exec_time.key = 'execution_time'"
                     select_string = f"{select_string}, outputs.value as outputs, exec_time.value as execution_time"
+
+            join_string += """
+                LEFT JOIN meta AS card
+                    ON queue.id = card.item_id
+                    AND card.key = 'card'
+                    AND card.id = (
+                        SELECT MAX(candidate.id)
+                        FROM meta AS candidate
+                        WHERE candidate.item_id = queue.id AND candidate.key = 'card'
+                    )
+            """
+            select_string = f"{select_string}, card.value AS card"
 
             where_clauses = [self.get_route_query(route)]
 
@@ -139,6 +158,8 @@ class QM_Queue:
                     item = json.loads(row["prompt"])
                     # Add db_id to the item
                     item[3]["db_id"] = row["id"]
+                    if row["card"] is not None:
+                        item[3]["card"] = json.loads(row["card"])
 
                     if route == "queue":
                         item[0] = row["number"]  # set the number to the one from the database
@@ -385,6 +406,11 @@ class QM_Queue:
                     json.dumps(item),
                 ),
             )
+
+            card_entries = extract_card_entries(item[2])
+            if card_entries:
+                db_row = read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))
+                save_card(db_row[0], card_entries)
 
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
 
@@ -908,4 +934,3 @@ class QM_Queue:
                 return "status = 2"  # completed
 
         return ""
-
