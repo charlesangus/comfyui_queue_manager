@@ -41,7 +41,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     the new values each time.
   - size: S
 
-- [ ] M10.P1.T2 — Iframe applies the theme and exposes `--qm-*` tokens
+- [x] M10.P1.T2 — Iframe applies the theme and exposes `--qm-*` tokens
   - files: `src/gui/app/hooks/useComfyTheme.js` (new), `src/gui/app/index.jsx`, `src/gui/styles/_variables.scss`, `src/gui/styles/_layout.scss`, `src/gui/styles/_mixins.scss`
   - approach: `useComfyTheme()` listens for `QM_Theme` and writes every received variable onto
     `document.documentElement.style`, sets `font-family`/`font-size` on `body`, and toggles a
