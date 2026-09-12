@@ -62,17 +62,25 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
   - size: M
 
 - [ ] M10.P1.T3 — MUI is driven by the same tokens (or removed where a plain element does)
-  - files: `src/gui/theme.js`, `src/gui/main.jsx`, `src/gui/app/components/TopMenu.jsx`, `src/gui/app/components/SplashScreen.jsx`
-  - approach: Audit what `@mui/material` is still used for after M7 (expected: `Menu` in
-    `TopMenu`, `Dialog`/`Modal` in `SplashScreen`, `GlobalStyles`, and `@mui/icons-material`
-    icons). Rebuild `theme.js` as a function `buildTheme(vars, dark)` producing an MUI theme
-    whose `palette.mode`, `background`, `text`, `primary`, `error` and `divider` come from the
-    bridged variables, re-created via `useMemo` when the theme message changes; delete the
-    `GlobalStyles` neutral-colour shim in `main.jsx` and the Tailwind `neutral-*`/`dark:`
-    utility classes in JSX that depended on it, replacing them with token-based classes.
-    Where a MUI component is only providing a styled box, replace it with a plain element.
-  - verify: `npm run lint`/`npm run build` pass; the top menu and splash dialog match the panel
-    colours in both a dark and a light palette.
+  - files: `src/gui/theme.js`, `src/gui/main.jsx`, `src/gui/app/components/TopMenu.jsx`, `src/gui/app/components/SplashScreen.jsx`, `src/gui/app/index.jsx`, `src/gui/app/components/Queue.jsx`
+  - approach: Actual `@mui/material` usage post-M7 (confirmed at M10 start, corrects this
+    task's original guess): `TopMenu` uses only `@mui/icons-material` icons (no `Menu`
+    component — the dropdown is a hand-rolled `<section>`); `SplashScreen` uses a plain
+    `Button` + icon (no `Dialog`/`Modal`); `main.jsx` has the `GlobalStyles` neutral-colour
+    shim; the Tailwind `neutral-*`/`dark:` utility classes it feeds live in `index.jsx:597`
+    and `Queue.jsx:60`, not in `TopMenu`/`SplashScreen`. Rebuild `theme.js` as a function
+    `buildTheme(vars, dark)` producing an MUI theme whose `palette.mode`, `background`,
+    `text`, `primary`, `error` and `divider` come from the bridged `--qm-*` tokens (M10.P1.T2),
+    re-created via `useMemo` in `main.jsx` when the theme message changes; delete the
+    `GlobalStyles` neutral-colour shim in `main.jsx` and the `neutral-*`/`dark:` classes in
+    `index.jsx` and `Queue.jsx`, replacing them with token-based classes/inline styles using
+    `--qm-*`. `TopMenu`/`SplashScreen` need no MUI-component surgery (nothing to replace) —
+    just make sure their `shiny-button`/`close` styling is consistent with the token-driven
+    theme (still using `--qm-*` under the hood via M10.P2's `.qm-btn` work if it's landed by
+    then; if not, leave their classNames as-is and let M10.P2.T1 restyle them).
+  - verify: `npm run lint`/`npm run build` pass; `grep -rn "neutral-\|dark:" src/gui/app` finds
+    nothing; the top menu and splash screen match the panel colours in both a dark and a light
+    palette.
   - size: M
 
 ## Phase 10.2: Restyle the existing surfaces
@@ -128,5 +136,10 @@ one custom palette: the panel recolours live, buttons/tabs/footer match native c
   re-implemented in the iframe: it follows every palette (including custom ones) with no
   duplication, and the `--qm-*` token layer keeps the app's own styles independent of ComfyUI
   variable names (only `_variables.scss` and the bridge list know them).
+- 2026-09-12 — M10.P1.T3's brief revised at freshness-check/start time: the actual post-M7
+  `@mui/material` usage in `TopMenu`/`SplashScreen` is lighter than the original guess (icons
+  and a plain `Button` only, no `Menu`/`Dialog`), while the `neutral-*`/`dark:` Tailwind
+  classes the task targets actually live in `index.jsx` and `Queue.jsx`. Task's `files` and
+  `approach` updated in place to match; scope/intent unchanged.
 - 2026-09-11 — Bundled Roboto is dropped in favour of the parent page's font: matching ComfyUI
   matters more than a fixed typeface, and it removes ~30 font files from the shipped bundle.
