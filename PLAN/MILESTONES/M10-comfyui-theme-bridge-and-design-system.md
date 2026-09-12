@@ -191,6 +191,18 @@ one custom palette: the panel recolours live, buttons/tabs/footer match native c
 
 ## Decisions
 
+- 2026-09-12 — PR #3 review round (Codex, verified quota-available): first read of
+  `/tmp/cat-pm-findings.json` was a stale leftover from an unrelated prior run, posted in error as
+  a PR comment (about `qm_queue.py`, untouched by this milestone) and immediately retracted once
+  the actual background review finished with different content. The real review found a genuine
+  blocker — `theme.js`'s `buildTheme()` passed raw `var(--qm-*)` strings into MUI palette colors,
+  which MUI's augmentation can't parse, throwing before first render (reproduced directly with
+  `node`) — plus 7 smaller findings (Import button still MUI, `--qm-primary-fg`/shadow not
+  theme-derived, un-tokenized font, stale `bun.lock` Roboto entries, two comment-policy
+  violations). All 8 verified against the actual code before posting as inline PR comments, then
+  fixed in one batch (code: 787acbf). Lesson: always re-check that a background task actually
+  finished (fresh notification, not just "the output file exists") before trusting its content —
+  a stale artifact at a reused tmp path can look identical to a real result.
 - 2026-09-12 — M10.P2.T4's own verify claim ("prefers-color-scheme grep clean") turned out to be
   scoped to the regions it edited, not the whole file as instructed — five more scattered
   instances remained in `_queue.scss` (`.pending .total:hover`, `.pending button:hover`,
