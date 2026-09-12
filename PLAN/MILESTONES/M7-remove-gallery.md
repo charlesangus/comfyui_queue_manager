@@ -136,3 +136,11 @@ check in ComfyUI that all three tabs work and completed thumbnails open in a new
   `QueueItemRow.jsx` expect — the data path the new thumbnail row renders from is intact
   end-to-end. The actual visual render (thumbnails appearing, click opening a new tab) still
   needs a human with a browser — flagged for the user.
+- 2026-09-12 — PR #2 review round (Codex, quota available): 3 findings, all confirmed and
+  fixed on the branch (commit ae68927) — `viewURL()` in `MediaItem.jsx` hard-coded
+  `type=output` instead of honoring `file.type` (now `file.type ?? "output"`) and interpolated
+  `filename`/`subfolder` unescaped into the query string (now built with `URLSearchParams`,
+  which also fixes the type fallback issue at the same call site); a narration comment added by
+  M7.P2.T2 in `index.jsx`'s `QM_Setting_Changed` handler was deleted per the comment policy —
+  the pre-commit checker missed it (worth checking why later, not blocking this milestone).
+  One review round; no second round needed.
