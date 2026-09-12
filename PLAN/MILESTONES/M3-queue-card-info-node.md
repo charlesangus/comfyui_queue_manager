@@ -37,7 +37,7 @@ defined in M2):
   - verify: `pytest tests/test_qm_card.py` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M3.P1.T2 — Persist card entries in `meta` and expose them on every queue read
+- [x] M3.P1.T2 — Persist card entries in `meta` and expose them on every queue read
   - files: `src/comfyui_queue_manager/qm_card.py`, `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: In `qm_card.py` add `save_card(db_id, entries)` (DELETE the existing `meta` row
     with `key='card'` for that `item_id`, then INSERT the JSON — `meta` has no unique constraint
@@ -130,3 +130,7 @@ M3.P2.T2 passes in a ComfyUI instance; `web/docs/Queue Card Info.md` present; re
   by `/queue_manager/card-image` rather than written into ComfyUI's `output/` or `temp/`:
   `temp/` is wiped on restart (cards must survive restarts because the queue does) and
   `output/` is the user's; the `/view` endpoint only serves those two plus `input/`.
+- 2026-09-12 — Runtime entries match static entries by exact `(index, label)`, preferring the
+  first placeholder and otherwise the first match; unmatched entries append with a stable
+  index sort. This preserves differently labelled entries that share an index without adding
+  node identity to M2's persisted card contract.
