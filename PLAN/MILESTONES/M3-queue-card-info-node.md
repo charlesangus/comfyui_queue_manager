@@ -79,7 +79,7 @@ defined in M2):
     value leaves the static entry); `ruff check .` passes.
   - size: M
 
-- [ ] M3.P1.T4 — Serve card images and clean up orphaned ones
+- [x] M3.P1.T4 — Serve card images and clean up orphaned ones
   - files: `src/comfyui_queue_manager/qm_server.py`, `src/comfyui_queue_manager/qm_card.py`, `src/comfyui_queue_manager/qm_queue.py`
   - approach: Add `GET /queue_manager/card-image?name=<file>` in `qm_server.py` that validates
     `name` against `^[A-Za-z0-9_-]+\.png$` (400 otherwise) and returns `web.FileResponse` from
