@@ -476,11 +476,11 @@ button {
 .filters {
   font-size: 0.8rem;
   background-color: var(--qm-bg);
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--qm-border);
   padding: 15px;
 
   .label {
-    border: 1px solid #ffffff44;
+    border: 1px solid var(--qm-border);
     height: 1.5rem;
     border-right: none;
     border-top-left-radius: 5px;
@@ -494,17 +494,8 @@ button {
     font-size: 13px;
     font-family: "Cabin", helvetica, arial, sans-serif;
 
-    @media (prefers-color-scheme: light) {
-      border-color: #00000022;
-    }
-
     .type {
-      opacity: 0.6;
-
-      @media (prefers-color-scheme: light) {
-        opacity: 1;
-        font-style: italic;
-      }
+      color: var(--qm-fg-muted);
     }
   }
 
@@ -517,18 +508,11 @@ button {
       display: flex;
       align-items: center;
       justify-content: center;
-
-      @media (prefers-color-scheme: light) {
-        color: black;
-      }
+      color: var(--qm-fg);
 
       &.close-all {
         display: flex;
         align-items: center;
-
-        @media (prefers-color-scheme: light) {
-          color: black;
-        }
       }
     }
   }
@@ -546,14 +530,10 @@ button {
   top: 2.875rem;
   right: 0;
   background-color: var(--qm-surface);
-  color: white;
-  box-shadow: 0 5px 6px rgba(0, 0, 0, 1);
+  color: var(--qm-fg);
+  box-shadow: 0 5px 6px rgba(0, 0, 0, 0.4);
   display: none;
   border-bottom-left-radius: 0.5rem;
-
-  @media (prefers-color-scheme: light) {
-    box-shadow: 0 5px 6px rgba(0, 0, 0, 0.4);
-  }
 
   &.open {
     display: block;
@@ -562,7 +542,7 @@ button {
 
   .container {
     padding: 1rem 1rem;
-    background-color: #ffffff22;
+    background-color: var(--qm-surface-hover);
     border-bottom-left-radius: 0.5rem;
     display: flex;
     flex-direction: column;
@@ -581,17 +561,11 @@ button {
     font-weight: 300;
     letter-spacing: 0.4px;
     padding: 5px 10px;
+    color: var(--qm-fg);
 
-    @media (prefers-color-scheme: light) {
-      color: #333;
-    }
     &:hover {
-      background-color: #00000022;
+      background-color: var(--qm-surface-hover);
       //transition: 0.3s ease-in-out all;
-
-      @media (prefers-color-scheme: dark) {
-        background-color: #ffffff22;
-      }
     }
   }
 }
@@ -601,7 +575,7 @@ button {
   right: 0;
   z-index: 1;
   background-color: transparent;
-  color: white;
+  color: var(--qm-fg);
   cursor: pointer;
   width: 2.875rem;
   height: 2.875rem;
@@ -610,10 +584,6 @@ button {
   justify-content: center;
   margin: 0;
   padding: 0;
-
-  @media (prefers-color-scheme: light) {
-    color: black;
-  }
 
   span {
     flex: 1;
@@ -629,7 +599,7 @@ button {
     border-bottom-color: var(--qm-surface);
 
     span {
-      background-color: #ffffff22;
+      background-color: var(--qm-surface-hover);
     }
   }
 }
