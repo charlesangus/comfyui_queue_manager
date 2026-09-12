@@ -97,7 +97,7 @@ To view the Queue Manager window, click the Queue Manager button in the sidebar 
 
 ![main-window.png](readme-img/main-window.png)
 
-On the right you have action buttons like Delete, Load, Archive, Run which are applicable to a single item in the queue.
+Each job appears as a card. On the right side of each card you have action buttons like Delete, Load, Archive, Run which are applicable to that individual item.
 
 On the bottom you have buttons like Archive All, Export Queue etc. which are applicable to all items in the current tab.
 
@@ -107,9 +107,9 @@ When button on the bottom has a asterisk `*` next to it, it means that the actio
 ### Archive
 **Archive** is a place where you can park your queue items to play them later.
 
-When in the **Queue** tab you can archive individual items by clicking the **Archive** button in the actions columns or you can archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
+When in the **Queue** tab you can archive individual items by clicking the **Archive** button on each card, or you can archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
 
-Similarly, when in **Archive** tab you can play archived items by clicking the **Run** button in the actions column or you can play all archived items by clicking the **Run All** button on the bottom of the window.
+Similarly, when in **Archive** tab you can play archived items by clicking the **Run** button on each card, or you can play all archived items by clicking the **Run All** button on the bottom of the window.
 
 #### Run at front of the queue
 You can run an item, entire archive or filtered out list of jobs at the front of the queue by pressing and holding the **Shift** while clicking the **Run** or **Run All** buttons.
@@ -124,7 +124,7 @@ You can export items from any tab (Queue, Archive, Completed) to a file by click
 You can import items from a file to the Queue or to the Archive by clicking the Import Queue/Archive button on the bottom of the window.
 
 ### Filter by workflow
-You can filter the currently displayed list of items by workflow by clicking on the name in the workflow column.
+You can filter the currently displayed list of items by workflow by clicking on the workflow name displayed on each card.
 
 Once filtered out the group actions on the bottom of the window (like `Archive All *`, `Run All *`, `Delete All *`) will only apply to the filtered items.
 
