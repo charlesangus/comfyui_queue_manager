@@ -1,5 +1,8 @@
 import sys
 from types import ModuleType
+import importlib
+import os
+import pytest
 
 class PromptQueue:
     def __init__(self):
@@ -27,10 +30,22 @@ sys.modules["execution"] = stub_execution
 stub_folder_paths = ModuleType("folder_paths")
 sys.modules["folder_paths"] = stub_folder_paths
 
-import os
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 src_path = os.path.join(repo_root, "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
+
+
+@pytest.fixture
+def qm_db(tmp_path, monkeypatch):
+    db_file = tmp_path / "test_qm-queue.db"
+    monkeypatch.setenv("QM_DB_PATH", str(db_file))
+
+    import comfyui_queue_manager.qm_db
+    qm_db_module = importlib.reload(comfyui_queue_manager.qm_db)
+
+    qm_db_module.init_schema()
+
+    yield qm_db_module
