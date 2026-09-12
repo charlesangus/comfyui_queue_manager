@@ -25,7 +25,7 @@ baseURL>" }` for images the extension serves itself; `kind: "text"` values are s
 
 ## Phase 2.1: Card component
 
-- [ ] M2.P1.T1 — Create `QueueCard` from `QueueItemRow`, keeping all behaviour, as a `<div>`-based card
+- [x] M2.P1.T1 — Create `QueueCard` from `QueueItemRow`, keeping all behaviour, as a `<div>`-based card
   - files: `src/gui/app/components/QueueCard.jsx` (new), `src/gui/app/components/QueueItemRow.jsx` (delete after T2)
   - approach: Copy `QueueItemRow.jsx` to `QueueCard.jsx` and restructure the markup into
     `<article className="qm-card {running|pending} ...">` with three regions: `.card-header`
