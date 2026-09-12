@@ -103,6 +103,11 @@ load, archive, run, run-at-front with Shift, thumbnails opening in a new tab).
   that `playItem`/Shift-detection/`handleThumbnailClick` are byte-for-byte unchanged from the old
   `QueueItemRow.jsx`, only the surrounding markup moved to `QueueCard.jsx`. Test queue/history
   data cleaned up afterward (`DELETE /queue_manager/queue`, unpaused).
+- 2026-09-12 — PR #4 review round (Codex): 5 findings (progress-bar overlay hidden behind opaque
+  card-header background, text-tile expand not keyboard-accessible, two hard-coded border-radius
+  values violating the "no new radii" constraint, one stale README roadmap line, one stray
+  file-path comment). All fixed in one follow-up commit (code: 996a09c), rebuilt `web/.gui/`,
+  `npm run build`/`npm run lint` re-verified clean against baseline. One review round, closed.
 - 2026-09-12 — While driving the manual check, a raw `/prompt` submission without
   `extra_data.extra_pnginfo` crashed the ComfyUI `prompt_worker` thread (`qm_queue.py`'s
   `queue_get` assumes `extra_pnginfo` is always present, unlike `queue_put` which already
