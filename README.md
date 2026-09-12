@@ -221,6 +221,7 @@ Nevertheless, here are some pointers if you have some PR ideas for critical fixe
 - Server side (python) part of the extension is in `/src/comfyui_queue_manager`
 - Source code for the React app is in `/src/gui`. I use bun to build it but you can as well use npm.
 - database is in `/data/` (sqlite files are created automatically on first run after installation)
+- Building the GUI: `cd src/gui && npm install && npm run build`. This writes to `web/.gui/`, which is committed to the repo (ComfyUI serves it straight from there, no build step at install time). Any change under `src/gui/` must be followed by a rebuild, and the rebuilt `web/.gui/` must be committed alongside the source change — see `src/gui/README.md` for details. Commits that include a rebuild are tagged "- Release build;".
 
 Better docs will come later.
 

@@ -286,6 +286,13 @@ class QM_Queue:
                         # Save outputs to the meta table
                         write_query(
                             """
+                                DELETE FROM meta
+                                WHERE item_id = ? AND key = 'outputs'
+                            """,
+                            (db_id,),
+                        )
+                        write_query(
+                            """
                                 INSERT INTO meta (item_id, key, value)
                                 VALUES (?, 'outputs', ?)
                             """,
@@ -309,6 +316,13 @@ class QM_Queue:
                             break
 
                     if exec_time is not None:
+                        write_query(
+                            """
+                                DELETE FROM meta
+                                WHERE item_id = ? AND key = 'execution_time'
+                            """,
+                            (db_id,),
+                        )
                         write_query(
                             """
                                 INSERT INTO meta (item_id, key, value)
@@ -340,11 +354,31 @@ class QM_Queue:
                 self.original_put(tuple(item))
                 return
 
+            existing = read_single(
+                """
+                SELECT status
+                FROM queue
+                WHERE prompt_id = ?
+            """,
+                (item[1],),
+            )
+            # A running row's native-queue slot is already occupied by the in-flight
+            # item; upserting here would reset its status to 0 and let a resubmission
+            # share that row, merging two logical tasks into one.
+            if existing is not None and existing[0] == 1:
+                return
+
             # Add the item to the database
             write_query(
                 """
-                INSERT OR REPLACE INTO queue (prompt_id, number, name, workflow_id, prompt)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status)
+                VALUES (?, ?, ?, ?, ?, 0)
+                ON CONFLICT(prompt_id) DO UPDATE SET
+                    number = excluded.number,
+                    name = excluded.name,
+                    workflow_id = excluded.workflow_id,
+                    prompt = excluded.prompt,
+                    status = 0
             """,
                 (
                     item[1],

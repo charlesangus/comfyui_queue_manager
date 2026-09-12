@@ -41,6 +41,10 @@ minversion = "8.0"
 testpaths = [
     "tests",
 ]
+# Repo root has its own __init__.py (the ComfyUI node loader). Without this,
+# pytest wraps rootdir in a Package and imports that __init__.py during test
+# setup, pulling in real ComfyUI/aiohttp deps the tests stub out.
+addopts = "--confcutdir=tests"
 
 [tool.mypy]
 files = "."
@@ -60,7 +64,7 @@ disable_error_code = "attr-defined"
 # extend-exclude = ["static", "ci/templates"]
 line-length = 140
 src = ["src", "tests"]
-target-version = "py39"
+target-version = "py312"
 
 # Add rules to ban exec/eval
 [tool.ruff.lint]
