@@ -53,7 +53,7 @@ before M2 so the card component is built from the trimmed row, not the gallery-e
     completed tabs load and the footer shows only pagination and the bulk buttons.
   - size: M
 
-- [ ] M7.P2.T3 — Completed rows show output thumbnails that open in a new tab
+- [x] M7.P2.T3 — Completed rows show output thumbnails that open in a new tab
   - files: `src/gui/app/components/QueueItemRow.jsx`, `src/gui/app/components/Queue.jsx`, `src/gui/app/components/MediaItem.jsx`, `src/gui/styles/_queue.scss`
   - approach: Replace the `showCover`/`showGrid` branches in `QueueItemRow` with one
     `.outputs` flex-wrap under the row (completed route only) rendering `MediaItem` for every
@@ -108,3 +108,9 @@ check in ComfyUI that all three tabs work and completed thumbnails open in a new
   M7.P2.T3. `MediaItem.jsx` is temporarily unused (0 importers) until T3 rewires it. Also
   committed the `npm run build` output with this task's commit rather than deferring the
   rebuild to T3, per the board's build convention (any `src/gui/` change ships its rebuild).
+- 2026-09-12 — M7.P2.T3 also added `rel="noreferrer"` to three pre-existing `target="_blank"`
+  links in `SplashScreen.jsx`/`TopMenu.jsx` while wiring the new thumbnail click-through,
+  clearing pre-existing lint errors unrelated to the gallery removal; no behavior change, kept
+  as a harmless drive-by fix (lint went from 18 to 14 problems, no new ones).
+  Manual verification of the new thumbnail click-through in a live ComfyUI instance is still
+  outstanding — deferred to the milestone's verification gate.
