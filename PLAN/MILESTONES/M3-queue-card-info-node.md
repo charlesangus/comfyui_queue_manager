@@ -54,7 +54,7 @@ defined in M2):
   - verify: `pytest tests/` passes; `ruff check .` passes.
   - size: M
 
-- [ ] M3.P1.T3 — The `Queue Card Info` node with runtime capture and thumbnail files
+- [x] M3.P1.T3 — The `Queue Card Info` node with runtime capture and thumbnail files
   - files: `src/comfyui_queue_manager/nodes.py`, `src/comfyui_queue_manager/qm_card.py`, `tests/test_nodes.py` (new)
   - approach: In `nodes.py` define `AnyType(str)` with `__ne__` returning `False` (the
     community wildcard idiom) and `class QueueCardInfo` with `INPUT_TYPES = {"required":
