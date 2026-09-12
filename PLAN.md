@@ -81,7 +81,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 |----|-----------|--------|------|
 | M1 | Groundwork: green test suite and build | done | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
 | M7 | Remove the gallery | done | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
-| M10 | ComfyUI theme bridge and design system | doing | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
+| M10 | ComfyUI theme bridge and design system | done | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
 | M2 | Rich queue cards | todo | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
 | M3 | Queue Card Info node | todo | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
 | M8 | Frontend refactor and a JS test runner | todo | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
