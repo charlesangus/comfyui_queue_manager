@@ -1,4 +1,4 @@
-import {QueueManagerOrigin, QueueManagerURL} from './config.js';
+import {QueueManagerOrigin, QueueManagerURL, QM_THEME_VARS} from './config.js';
 import {settings} from './settings.js';
 
 import { app } from '../../../scripts/app.js';
@@ -26,6 +26,71 @@ function postMessageToIframe(message, type) {
       message: message
     }, QueueManagerOrigin);
   }
+}
+
+function collectTheme() {
+  const style = getComputedStyle(document.documentElement);
+  const bodyStyle = getComputedStyle(document.body);
+  const vars = {};
+
+  for (const varName of QM_THEME_VARS) {
+    const value = style.getPropertyValue(varName).trim();
+    if (value) {
+      vars[varName] = value;
+    }
+  }
+
+  const fontFamily = bodyStyle.fontFamily;
+  const fontSize = bodyStyle.fontSize;
+  const dark = document.documentElement.classList.contains('dark-theme');
+
+  return {
+    vars,
+    fontFamily,
+    fontSize,
+    dark,
+  };
+}
+
+function postThemeToIframe() {
+  const theme = collectTheme();
+  const iframe = theIframe();
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({
+      type: 'QM_Theme',
+      ...theme,
+    }, QueueManagerOrigin);
+  }
+}
+
+let lastSentTheme = null;
+let themeUpdateTimeout = null;
+
+export function setupThemeObserver() {
+  postThemeToIframe();
+  lastSentTheme = JSON.stringify(collectTheme());
+
+  const observer = new MutationObserver(() => {
+    if (themeUpdateTimeout) {
+      clearTimeout(themeUpdateTimeout);
+    }
+
+    // Debounce theme updates by 100ms to avoid excessive iframe messages during rapid theme changes
+    themeUpdateTimeout = setTimeout(() => {
+      const currentTheme = collectTheme();
+      const currentThemeStr = JSON.stringify(currentTheme);
+
+      if (currentThemeStr !== lastSentTheme) {
+        lastSentTheme = currentThemeStr;
+        postThemeToIframe();
+      }
+    }, 100);
+  });
+
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['style', 'class'],
+  });
 }
 
 export function compareVersions(a, b) {
@@ -314,11 +379,13 @@ export function handleIframeMessages() {
       // Handshake message from iframe
       if (type === "QM_QueueManager_Hello") {
         const settings = extensionSettings('values');
+        const theme = collectTheme();
         // send back clientId to iframe
         event.source.postMessage(
           { type: "QM_QueueManager_Hello",
             clientId: app.api.clientId,
-            settings
+            settings,
+            ...theme,
           },
           event.origin
         );

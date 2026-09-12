@@ -9,3 +9,43 @@ export const QM_PROD_URL = window.location.protocol + "//" + window.location.hos
 // Envo dependant manager URLs
 export const QueueManagerURL = QM_ENVIRONMENT === "development" ? QM_DEV_URL : QM_PROD_URL;
 export const QueueManagerOrigin = QM_ENVIRONMENT === "development" ? QM_DEV_URL : window.location.origin;
+
+// ComfyUI theme CSS variables to send to iframe
+export const QM_THEME_VARS = [
+  // ComfyUI base colors
+  '--fg-color',
+  '--bg-color',
+  '--comfy-menu-bg',
+  '--comfy-menu-secondary-bg',
+  '--comfy-input-bg',
+  '--input-text',
+  '--descrip-text',
+  '--drag-text',
+  '--error-text',
+  '--border-color',
+  '--tr-even-bg-color',
+  '--tr-odd-bg-color',
+  '--content-bg',
+  '--content-fg',
+  '--content-hover-bg',
+  '--content-hover-fg',
+  '--bar-shadow',
+  // PrimeVue tokens
+  '--p-toolbar-background',
+  '--p-primary-color',
+  '--p-content-border-color',
+  '--p-text-color',
+  '--p-text-muted-color',
+  // Surface tokens (0-900)
+  '--p-surface-0',
+  '--p-surface-50',
+  '--p-surface-100',
+  '--p-surface-200',
+  '--p-surface-300',
+  '--p-surface-400',
+  '--p-surface-500',
+  '--p-surface-600',
+  '--p-surface-700',
+  '--p-surface-800',
+  '--p-surface-900',
+];
