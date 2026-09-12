@@ -155,7 +155,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `npm run lint`/`npm run build` pass.
   - size: S
 
-- [ ] M10.P2.T5 — Sweep the remaining scattered `prefers-color-scheme` blocks in `_queue.scss`
+- [x] M10.P2.T5 — Sweep the remaining scattered `prefers-color-scheme` blocks in `_queue.scss`
   - files: `src/gui/styles/_queue.scss`
   - approach: T4's grep verify was scoped by its subagent to the three regions it edited rather
     than the whole file, so it missed five more instances left over from before T2/T4: `.pending
