@@ -32,7 +32,7 @@ backend can be unit-tested without a ComfyUI install.
   - verify: `pytest tests/` passes and the new test creates no file under `data/`.
   - size: S
 
-- [ ] M1.P1.T3 — Add a fake-ComfyUI fixture that can construct `QM_Queue`
+- [x] M1.P1.T3 — Add a fake-ComfyUI fixture that can construct `QM_Queue`
   - files: `tests/conftest.py`, `tests/fake_comfy.py` (new), `tests/test_qm_queue.py` (new)
   - approach: `qm_queue.py` imports `execution.PromptQueue`, `server.PromptServer`,
     `folder_paths`; `qm_server.py` additionally needs `aiohttp.web`. In `tests/fake_comfy.py`
