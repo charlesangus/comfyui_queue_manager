@@ -176,7 +176,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `npm run lint`/`npm run build` pass.
   - size: S
 
-- [ ] M10.P2.T3 — Rebuild, changelog, screenshot note
+- [x] M10.P2.T3 — Rebuild, changelog, screenshot note
   - files: `web/.gui/**`, `CHANGELOG.md`, `README.md`
   - approach: `npm run build`; commit `web/.gui/` (note the font files disappearing). Changelog
     entry "Panel now follows the ComfyUI colour palette and font". Add a one-line note at the
