@@ -70,7 +70,7 @@ backend can be unit-tested without a ComfyUI install.
 
 ## Phase 1.3: Small backend fixes
 
-- [ ] M1.P3.T2 — Fix ruff `target-version` so `ruff check .` can run at all
+- [x] M1.P3.T2 — Fix ruff `target-version` so `ruff check .` can run at all
   - files: `pyproject.toml`
   - approach: `[tool.ruff] target-version = "py39"` rejects `qm_queue.py`'s and `qm_server.py`'s
     pre-existing `match`/`case` statements (3.10+ syntax) as `invalid-syntax`, so `ruff check .`
