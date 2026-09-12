@@ -38,7 +38,7 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function Home() {
+export default function Home({ onDarkChange }) {
   const [appStatus, setAppStatus] = useState({
     loading: true,
     reloading: false,
@@ -73,7 +73,7 @@ export default function Home() {
 
   const [showSplash, setShowSplash] = useState(false);
 
-  useComfyTheme();
+  useComfyTheme(onDarkChange);
 
   const fetchIdRef = useRef(0);
 
@@ -594,7 +594,7 @@ export default function Home() {
             {Object.values(filters).map(filter =>
               <div className="filter flex items-center" key={filter.type}>
                 <span
-                  className="inline-flex text-neutral-800 dark:text-neutral-200 close label"><span
+                  className="inline-flex close label" style={{ color: "var(--qm-fg-muted)" }}><span
                   className={'type'}>{filter.type + ": "}&nbsp;</span>{filter.valueLabel}</span>
                 <button
                   className="shiny-button close "

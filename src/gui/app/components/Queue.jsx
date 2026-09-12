@@ -57,7 +57,7 @@ export const Queue = memo(function Queue({ data, isLoading, error, progress }) {
       <div className={"table-container"}>
         <>
           <table className="min-w-full border border-0">
-            <thead className="dark:bg-neutral-800 bg-neutral-200 text-xs uppercase">
+            <thead className="text-xs uppercase" style={{ backgroundColor: "var(--qm-surface)" }}>
               <tr>
                 <th className="px-3 py-2 text-left">#</th>
                 <th className="px-3 py-2 text-left workflow-column">
