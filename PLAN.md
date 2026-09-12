@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: M7.P3.T2
-pm_heartbeat: 2026-09-12T08:10:00+00:00
+current: null
+pm_heartbeat: 2026-09-12T08:30:00+00:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -80,7 +80,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 | ID | Milestone | Status | File |
 |----|-----------|--------|------|
 | M1 | Groundwork: green test suite and build | done | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
-| M7 | Remove the gallery | doing | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
+| M7 | Remove the gallery | done | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
 | M10 | ComfyUI theme bridge and design system | todo | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
 | M2 | Rich queue cards | todo | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
 | M3 | Queue Card Info node | todo | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |

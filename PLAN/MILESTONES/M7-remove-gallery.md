@@ -78,7 +78,7 @@ before M2 so the card component is built from the trimmed row, not the gallery-e
     the extension still loads in ComfyUI (sidebar tab appears).
   - size: S
 
-- [ ] M7.P3.T2 — README, changelog, release build
+- [x] M7.P3.T2 — README, changelog, release build
   - files: `README.md`, `CHANGELOG.md`, `web/.gui/**`
   - approach: Remove the "Gallery / output previews" and "Gallery view" manual sections and
     their TOC entries; rewrite "Extension Settings" to list only the remaining settings; update
@@ -114,3 +114,25 @@ check in ComfyUI that all three tabs work and completed thumbnails open in a new
   as a harmless drive-by fix (lint went from 18 to 14 problems, no new ones).
   Manual verification of the new thumbnail click-through in a live ComfyUI instance is still
   outstanding — deferred to the milestone's verification gate.
+- 2026-09-12 — M7.P3.T2's implementer only deleted the Manual's "Gallery / output previews"
+  section without adding the shorter replacement the task asked for, and left the CHANGELOG
+  entry as a full `v0.2.0` version bump; the PM (not a subagent) fixed this directly since it
+  was mechanical: added a short "Output thumbnails" Manual section + ToC entry, bumped
+  `pyproject.toml` version to `0.2.0` to stay in sync with the new CHANGELOG entry, and rewrote
+  `SplashScreen.jsx`'s "What's new" copy (hardcoded to the prior release, v0.1.0) to describe
+  v0.2.0 instead of the removed gallery — required to satisfy the milestone's own
+  `grep -rni gallery` verification gate, which also caught a stale comment in
+  `web/js/settings.js` and dead `tr.gallery` CSS in `_queue.scss` (renamed to `tr.outputs-row`
+  to preserve the row/thumbnail-strip hover-highlight relationship it implemented).
+- 2026-09-12 — Verification gate: `pytest tests/`, `ruff check .`, `npm run lint`, `npm run build`
+  all pass; `grep -rni gallery` over `src/`, `web/js`, `web/queue-manager.js`, `web/styles`,
+  `README.md` is empty. No browser/DOM tool was available in this session, so the "all three
+  tabs work and thumbnails open in a new tab" check was done at the API level instead against
+  the local ComfyUI test instance (`.local/ComfyUI`, see memory `comfyui-test-instance.md`):
+  started the server clean, confirmed `/queue_manager/open_location` now 404s (was 200 with the
+  old handler), `/queue_manager/options` returns only `queue_paused`/`splash_screen`, queued a
+  tiny `EmptyImage → SaveImage` workflow via `POST /prompt`, and confirmed the completed item's
+  `outputs`/`total_images`/`execution_time` fields are populated exactly as `MediaOutputs.js` and
+  `QueueItemRow.jsx` expect — the data path the new thumbnail row renders from is intact
+  end-to-end. The actual visual render (thumbnails appearing, click opening a new tab) still
+  needs a human with a browser — flagged for the user.
