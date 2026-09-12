@@ -20,7 +20,7 @@ states. No new features.
     other, running-card progress bar, footer and pagination at both widths, splash and top
     menu, keyboard focus rings on every interactive element, empty/loading/error list states.
     Record each defect as one line `- <surface>: <what's wrong> → <fix>` under `## Decisions`
-    (audit findings). Group them into the two fix tasks below (T2 structural, T3 cosmetic) and
+    (audit findings). Group them into the two fix tasks below (M11.P2.T1 structural, M11.P2.T2 cosmetic) and
     add trailing-numbered tasks here if a finding does not fit either.
   - verify: The findings list exists and every entry names a surface and a fix.
   - size: S

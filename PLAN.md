@@ -1,5 +1,5 @@
 ---
-title: Queue Manager upgrades — gallery removal, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
+title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: draft
 current: null
 ship: pr-per-milestone
