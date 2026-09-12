@@ -33,3 +33,42 @@ def test_queue_put_and_get_round_trip(qm_queue):
         ("prompt-abc-123",),
     )
     assert row_after["status"] == 1
+
+
+def test_queue_put_upsert_preserves_row_id_and_meta(qm_queue):
+    item = _make_item(100, "prompt-xyz-789", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+
+    first_row = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-xyz-789",),
+    )
+    first_id = first_row["id"]
+
+    qm_queue.qm_db.write_query(
+        "INSERT INTO meta (item_id, key, value) VALUES (?, 'execution_time', '1.23')",
+        (first_id,),
+    )
+
+    meta_count_before = qm_queue.qm_db.read_single(
+        "SELECT COUNT(*) as count FROM meta WHERE item_id = ?",
+        (first_id,),
+    )["count"]
+    assert meta_count_before == 1
+
+    item2 = _make_item(50, "prompt-xyz-789", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item2)
+
+    second_row = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-xyz-789",),
+    )
+    second_id = second_row["id"]
+
+    assert first_id == second_id
+
+    meta_count_after = qm_queue.qm_db.read_single(
+        "SELECT COUNT(*) as count FROM meta WHERE item_id = ?",
+        (first_id,),
+    )["count"]
+    assert meta_count_after == 1

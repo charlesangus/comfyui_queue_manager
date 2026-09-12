@@ -343,8 +343,14 @@ class QM_Queue:
             # Add the item to the database
             write_query(
                 """
-                INSERT OR REPLACE INTO queue (prompt_id, number, name, workflow_id, prompt)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status)
+                VALUES (?, ?, ?, ?, ?, 0)
+                ON CONFLICT(prompt_id) DO UPDATE SET
+                    number = excluded.number,
+                    name = excluded.name,
+                    workflow_id = excluded.workflow_id,
+                    prompt = excluded.prompt,
+                    status = 0
             """,
                 (
                     item[1],
