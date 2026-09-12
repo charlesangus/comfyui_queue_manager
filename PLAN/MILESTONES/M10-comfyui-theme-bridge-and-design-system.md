@@ -21,7 +21,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
 
 ## Phase 10.1: Theme bridge
 
-- [ ] M10.P1.T1 — Parent page sends the live theme to the iframe
+- [x] M10.P1.T1 — Parent page sends the live theme to the iframe
   - files: `web/js/functions.js`, `web/js/config.js`
   - approach: Add `collectTheme()` that reads `getComputedStyle(document.documentElement)`
     for a fixed list of variable names (`QM_THEME_VARS` in `config.js`: the `comfy_base` keys
