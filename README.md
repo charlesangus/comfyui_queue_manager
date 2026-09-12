@@ -75,6 +75,8 @@ In no particular order, just some ideas I have for the future of this extension.
 and other things I forgot about.
 
 ## Manual
+*Note: The screenshots below predate the ComfyUI theme and design update and will be retaken.*
+
 ### Pause / Resume Queue
 Click the pause button to pause the queue.
 Currently running workflow will finish, but no new workflows will be started until you resume the queue.
