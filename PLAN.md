@@ -57,9 +57,12 @@ Done when every milestone below is merged into `main` on the fork with a release
   with the change (history uses `- Release build;` commits). `npm install` in `src/gui/` first
   (`node_modules/` is not present in a fresh clone; node 24 is available). Never hand-edit
   `web/.gui/assets/index.js`.
-- There is no ComfyUI install in this workspace; tasks that touch ComfyUI internals must state the
-  assumed API and verify with unit tests that stub `server.PromptServer` (see `tests/conftest.py`
-  for the `sys.path` setup) rather than a live server.
+- **Test instance:** ComfyUI v0.35.1 (frontend 1.51.10) at `~/ComfyUI`, CPU only, with this repo
+  symlinked into its `custom_nodes/`; start/stop commands and caveats in
+  `PLAN/DECISIONS/2026-09-11-local-comfyui-test-instance.md`. Backend logic is still unit-tested
+  with the fake-ComfyUI harness (M1); the live instance is for the manual gate checks and for
+  reading real ComfyUI internals (`~/ComfyUI/server.py`, `execution.py`, `nodes.py`, and the
+  frontend bundle under `~/ComfyUI/.venv/lib/python3.11/site-packages/comfyui_frontend_package/static/`).
 - Docs: README "Manual" section documents each feature with screenshots under `readme-img/`; node
   docs live in `web/docs/<Node Name>.md`. Update both when a feature lands. `CHANGELOG.md` gets
   an entry per milestone.
@@ -89,11 +92,6 @@ Done when every milestone below is merged into `main` on the fork with a release
 Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 were planned).
 
 # Open questions
-
-- Which ComfyUI instance should be used for the manual verification steps in each gate (path
-  to the install or URL, and how this repo is linked into its `custom_nodes/`)? This workspace
-  has none; until answered the PM can only run the automated checks and must flag the manual
-  steps as unverified in each PR.
 
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the

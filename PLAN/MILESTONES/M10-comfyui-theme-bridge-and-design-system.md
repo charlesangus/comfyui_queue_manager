@@ -16,19 +16,21 @@ tokens `--p-toolbar-background`, `--p-primary-color`, `--p-surface-*`, `--p-cont
 `comfy_base` section of a colour palette (`--fg-color`, `--bg-color`, `--comfy-menu-bg`,
 `--comfy-menu-secondary-bg`, `--comfy-input-bg`, `--input-text`, `--descrip-text`,
 `--border-color`, `--error-text`, `--content-bg`, `--content-fg`, `--content-hover-bg`,
-`--primary-bg`, `--primary-fg`, `--primary-hover-bg`, `--secondary-bg`, `--secondary-fg`, …) set on
-`document.documentElement`, with `dark-theme` toggled on the root for dark palettes.
+`--content-hover-fg`, `--drag-text`, `--tr-even-bg-color`, `--tr-odd-bg-color`, `--bar-shadow`)
+set on `document.documentElement`, with `dark-theme` toggled on the root for dark palettes.
 
 ## Phase 10.1: Theme bridge
 
 - [ ] M10.P1.T1 — Parent page sends the live theme to the iframe
   - files: `web/js/functions.js`, `web/js/config.js`
   - approach: Add `collectTheme()` that reads `getComputedStyle(document.documentElement)`
-    for a fixed list of variable names (`QM_THEME_VARS` in `config.js`: every `comfy_base` key
-    above and the `--p-*` tokens listed above — **confirm the exact names** by dumping
-    `[...document.documentElement.style]` and `getComputedStyle(document.documentElement)` in
-    the browser console of the installed ComfyUI, and record the frontend version in
-    `## Decisions`), `document.body`'s computed `font-family`/`font-size`, and
+    for a fixed list of variable names (`QM_THEME_VARS` in `config.js`: the `comfy_base` keys
+    verified in frontend 1.51.10 — `fg-color, bg-color, comfy-menu-bg, comfy-menu-secondary-bg,
+    comfy-input-bg, input-text, descrip-text, drag-text, error-text, border-color,
+    tr-even-bg-color, tr-odd-bg-color, content-bg, content-fg, content-hover-bg,
+    content-hover-fg, bar-shadow`, each as `--<key>` — plus the `--p-*` PrimeVue tokens listed
+    above; confirm the `--p-*` names by dumping `getComputedStyle(document.documentElement)` in
+    the browser on `~/ComfyUI`), `document.body`'s computed `font-family`/`font-size`, and
     `document.documentElement.classList.contains("dark-theme")`. Send it as `{type:
     "QM_Theme", vars, fontFamily, fontSize, dark}` (a) in the `QM_QueueManager_Hello` reply,
     and (b) whenever it changes: a `MutationObserver` on `document.documentElement` for

@@ -31,11 +31,9 @@ handling sees the job.
     Rename `injectWorkflowName()` to `hookQueuePrompt()` (update the call in
     `web/queue-manager.js`). Inside the wrapper, after stamping `workflow_name`, detect a partial
     execution: `Array.isArray(data.partialExecutionTargets) && data.partialExecutionTargets.
-    length > 0`. **Verify the property name first** against the installed frontend: locate the
-    `comfyui_frontend_package` static bundle (`python -c "import comfyui_frontend_package,
-    os; print(os.path.dirname(comfyui_frontend_package.__file__))"` in the ComfyUI venv) and
-    grep it for `partial_execution_targets` to see which `data` field feeds it; record the
-    finding and the frontend version in this milestone's `## Decisions`. When it is a partial
+    length > 0` (verified in frontend 1.51.10: `api.queuePrompt` sends
+    `partial_execution_targets: n.partialExecutionTargets`; `~/ComfyUI/server.py` reads it at
+    `post_prompt`). When it is a partial
     execution and the setting is not `Off`, set `data.workflow.qm_interactive = "front" |
     "interrupt"`. Read the setting with `app.extensionManager.setting.get(id)`.
   - verify: With the setting on `Front of queue`, running a single output node in ComfyUI sends a
