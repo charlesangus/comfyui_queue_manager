@@ -7,7 +7,7 @@ backend can be unit-tested without a ComfyUI install.
 
 ## Phase 1.1: Tests
 
-- [ ] M1.P1.T1 — Replace the stale `Example` node test with tests for the `WorkflowName` node
+- [x] M1.P1.T1 — Replace the stale `Example` node test with tests for the `WorkflowName` node
   - files: `tests/test_comfyui_queue_manager.py`, `tests/conftest.py`
   - approach: In `tests/conftest.py`, before any package import, install a stub `server` module
     into `sys.modules` exposing a `PromptServer` class with a class attribute `instance` whose
@@ -69,6 +69,18 @@ backend can be unit-tested without a ComfyUI install.
   - size: S
 
 ## Phase 1.3: Small backend fixes
+
+- [ ] M1.P3.T2 — Fix ruff `target-version` so `ruff check .` can run at all
+  - files: `pyproject.toml`
+  - approach: `[tool.ruff] target-version = "py39"` rejects `qm_queue.py`'s and `qm_server.py`'s
+    pre-existing `match`/`case` statements (3.10+ syntax) as `invalid-syntax`, so `ruff check .`
+    fails on every commit today regardless of what else changes — discovered while verifying
+    M1.P1.T1. CI (`.github/workflows/build-pipeline.yml`) actually runs Python 3.12, so `py39`
+    was stale config, not a deliberate supported-version floor. Bump `target-version` to
+    `"py312"` to match CI.
+  - verify: `ruff check .` no longer reports `invalid-syntax` on the `match` statements (other
+    pre-existing findings, if any, are noted here rather than silently fixed).
+  - size: S
 
 - [ ] M1.P3.T1 — Replace `INSERT OR REPLACE` in `queue_put` with an upsert that keeps the row id
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`

@@ -1,7 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
-status: draft
-current: null
+status: running
+current: M1.P1.T2
+pm_heartbeat: 2026-09-12T00:20:00+00:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -26,7 +27,8 @@ Done when every milestone below is merged into `main` on the fork with a release
 # Context and constraints
 
 - ComfyUI custom-node extension; fork of `QuietNoise/comfyui_queue_manager` at
-  `github.com/charlesangus/comfyui_queue_manager` (remote `origin`). Python 3.9+ (ruff target),
+  `github.com/charlesangus/comfyui_queue_manager` (remote `origin`). Python 3.12 (matches CI's
+  `build-pipeline.yml`; ruff `target-version` fixed to match in M1.P3.T2 — was stale `py39`),
   line length 140, double quotes. `ruff check .` and `pytest tests/` run in CI on PRs to `main`.
 - **Backend** `src/comfyui_queue_manager/`: `qm_queue.py` (hijacks native `PromptQueue.put/get/
   task_done/get_current_queue/get_tasks_remaining`), `qm_db.py` (sqlite at `data/qm-queue.db`,
@@ -77,7 +79,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 
 | ID | Milestone | Status | File |
 |----|-----------|--------|------|
-| M1 | Groundwork: green test suite and build | todo | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
+| M1 | Groundwork: green test suite and build | doing | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
 | M7 | Remove the gallery | todo | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
 | M10 | ComfyUI theme bridge and design system | todo | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
 | M2 | Rich queue cards | todo | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
@@ -92,15 +94,6 @@ Done when every milestone below is merged into `main` on the fork with a release
 Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 were planned).
 
 # Open questions
-
-- **GUI builds are blocked in this workspace:** `registry.npmjs.org` and the mirrors
-  (npmmirror, yarnpkg, jsdelivr, unpkg) are unreachable from the sandbox (only PyPI and GitHub
-  are), and `~/.npm/_cacache` holds 30 of the 560 lockfile packages, so `npm ci` cannot
-  complete and `npm run build` cannot run. Every milestone that touches `src/gui/` (M7, M10,
-  M2, M3, M8, M9, M4, M5, M6, M11) needs one of: network access to the npm registry from this
-  sandbox, a pre-populated `src/gui/node_modules/` (e.g. copied in from a machine that ran
-  `npm ci` on the same lockfile), or a fully warmed `~/.npm/_cacache`. Until resolved the PM
-  should run the backend milestones (M1 minus M1.P2.T1) and stop before M7.
 
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the

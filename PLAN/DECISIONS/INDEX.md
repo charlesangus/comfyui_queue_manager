@@ -1,3 +1,5 @@
 - 2026-09-11 — fake-comfy-test-harness: backend tests stub `server`/`execution`/`folder_paths`/`nodes` instead of needing ComfyUI → DECISIONS/2026-09-11-fake-comfy-test-harness.md
 - 2026-09-11 — drop-gallery: the Gallery lightbox, thumbnail modes and their settings are removed; completed jobs keep a plain thumbnail strip → DECISIONS/2026-09-11-drop-gallery.md
-- 2026-09-11 — local-comfyui-test-instance: ComfyUI v0.35.1 at ~/ComfyUI (CPU, venv, extension symlinked into custom_nodes) is the manual-verification target → DECISIONS/2026-09-11-local-comfyui-test-instance.md
+- 2026-09-11 — local-comfyui-test-instance: ComfyUI v0.35.1 (CPU, venv, extension symlinked into custom_nodes) is the manual-verification target; moved 2026-09-12 to `<repo>/.local/ComfyUI` (gitignored, survives reboots) after `~/ComfyUI` was wiped by a container reboot → DECISIONS/2026-09-11-local-comfyui-test-instance.md
+- 2026-09-12 — npm-registry-reachable: `registry.npmjs.org` and mirrors are reachable again from the sandbox, unblocking `npm ci`/`npm run build` in `src/gui/` → DECISIONS/2026-09-12-npm-registry-reachable.md
+- 2026-09-12 — ruff-target-py312: ruff `target-version` bumped from stale `py39` to `py312` (matches CI) after `ruff check .` failed repo-wide on pre-existing `match` statements → DECISIONS/2026-09-12-ruff-target-py312.md
