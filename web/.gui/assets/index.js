@@ -19410,8 +19410,13 @@ function LoaderSpinner() {
   ) });
 }
 function viewURL(file) {
-  const { filename, subfolder } = file;
-  return `${baseURL}api/view?filename=${filename}&type=output&subfolder=${subfolder}`;
+  const { filename, subfolder, type } = file;
+  const params = new URLSearchParams({
+    filename,
+    type: type ?? "output",
+    subfolder
+  });
+  return `${baseURL}api/view?${params.toString()}`;
 }
 const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autoplay, className = "", controls = true, toggleable = false, title = "" }) {
   const { filename } = file;

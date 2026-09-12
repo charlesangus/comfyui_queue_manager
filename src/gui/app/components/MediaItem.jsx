@@ -3,8 +3,13 @@ import {baseURL} from "../internals/config";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function viewURL(file) {
-  const {filename, subfolder} = file;
-  return `${baseURL}api/view?filename=${filename}&type=output&subfolder=${subfolder}`;
+  const {filename, subfolder, type} = file;
+  const params = new URLSearchParams({
+    filename,
+    type: type ?? "output",
+    subfolder,
+  });
+  return `${baseURL}api/view?${params.toString()}`;
 }
 
 export const MediaItem = memo(function MediaItem({file, onClick, autoplay, className="", controls=true, toggleable=false, title=""}) {

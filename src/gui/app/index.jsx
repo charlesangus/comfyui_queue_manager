@@ -378,7 +378,6 @@ export default function Home() {
         setAllOptions({...event.data.settings});
         break;
       case "QM_Setting_Changed": {
-          // check if path like "Basic.PageSize" in event.data.message.setting represent an existing object path in options
           const settingPath = event.data.message.setting.split('.');
           let current = options;
           let exists = true;
