@@ -51,25 +51,6 @@ export const msgLoadWorkflow = (workflow, number) => {
   );
 }
 
-export function mediaType (outputs) {
-  return {
-    isImage : (!outputs.animated || outputs.animated[0] !== true),
-    isVideo : (outputs.animated && outputs.animated[0] === true) || (outputs.gifs && outputs.gifs.length > 0)
-  }
-}
-
-
-export function hasVideos(outputs) {
-  for (const nodeID in outputs) {
-    const nodeOutputs = outputs[nodeID];
-    const { isVideo } = mediaType(nodeOutputs);
-    if (isVideo) {
-      return true;
-    }
-  }
-  return false;
-}
-
 export function compareVersions(a, b) {
   const pa = String(a).split('.').map(x => parseInt(x, 10) || 0);
   const pb = String(b).split('.').map(x => parseInt(x, 10) || 0);

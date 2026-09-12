@@ -1,4 +1,4 @@
-import {QueueManagerGalleryURL, QueueManagerOrigin, QueueManagerURL} from './config.js';
+import {QueueManagerOrigin, QueueManagerURL} from './config.js';
 import {settings} from './settings.js';
 
 import { app } from '../../../scripts/app.js';
@@ -324,28 +324,6 @@ export function handleIframeMessages() {
         );
       }
 
-      // Show gallery modal
-      if (type === "QM_Gallery_Show") {
-        document.body.classList.add('show-qm-fullscreen');
-      }
-
-      // Close gallery modal
-      if (type === "QM_Gallery_Close") {
-        document.body.classList.remove('show-qm-fullscreen');
-      }
-
-      // Load workflow from image file
-      if (type === "QM_LoadWorkflowFromImage") {
-        const filename = event.data.filename;
-        const res = await fetch(event.data.fileURL, { mode: 'cors' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const blob = await res.blob();
-        const type =  res.headers.get('Content-Type');
-        const theFile = new File([blob], filename, {type: type});
-
-        app.handleFile(theFile);
-      }
     }, false);
 }
 

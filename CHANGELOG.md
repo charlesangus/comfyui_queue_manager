@@ -1,5 +1,13 @@
 # Release Notes
 
+## v0.2.0
+_Sep 12, 2026_
+### Removed
+- Removed the gallery lightbox, cover/grid thumbnail modes, and associated size sliders.
+- Completed jobs now show output thumbnails that open in a new browser tab.
+
+---
+
 ## v0.1.0
 _Sep 06, 2026_
 ### New features and enhancements

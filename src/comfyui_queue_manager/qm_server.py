@@ -14,7 +14,6 @@ class QM_Server:
     def __init__(self, queue_manager, __version__):
         self.queue_manager = queue_manager
         self.queue = queue_manager.queue
-        self.gallery = queue_manager.gallery
         self.user_manager = PromptServer.instance.user_manager
         self.__version__ = __version__
 
@@ -250,32 +249,10 @@ class QM_Server:
 
             return web.json_response(takeover_client)
 
-        @PromptServer.instance.routes.get("/queue_manager/open_location")
-        async def open_location(request):
-            id = request.query.get("id", None)
-            filename = request.query.get("filename", None)
-            subfolder = request.query.get("subfolder", None)
-
-            # If any is None, return error
-            if id is None or filename is None:
-                return web.json_response({"error": "Missing parameters"}, status=400)
-
-            result = self.queue_manager.queue.open_file_location(id, filename, subfolder)
-
-            # Return result of the operation
-            if result is None:
-                return web.json_response({"error": "File not found"}, status=404)
-
-            return web.json_response("Location opened")
-
         # Allowed options with their default values
         self.allowed_options = {
-            "thumb_size": 150,
-            "cover_size": 50,
-            "thumb_mode": "cover",
             "queue_paused": False,
-            "splash_screen": "0.0.0",  # last seen splash screen version
-            "show_gallery_ui": True,
+            "splash_screen": "0.0.0",
         }
 
         # Get options
@@ -325,23 +302,10 @@ class QM_Server:
                 return web.json_response({"error": "Option not allowed"}, status=400)
 
             # Validate / sanitize value based on option
-            if option == "thumb_size":  # thumb size must be a positive integer between 50 and 500
-                if not isinstance(value, int) or value < 50 or value > 500:
-                    return web.json_response({"error": "Invalid thumb_size value"}, status=400)
-            elif option == "thumb_mode":  # thumb mode must be one of the allowed modes
-                allowed_modes = ["none", "cover", "grid"]
-                if value not in allowed_modes:
-                    return web.json_response({"error": "Invalid thumb_mode value"}, status=400)
-            elif option == "cover_size":  # cover size must be a positive integer between 50 and 500
-                if not isinstance(value, int) or value < 25 or value > 200:
-                    return web.json_response({"error": "Invalid cover_size value"}, status=400)
-            #     Boolean options
-            elif option == "queue_paused" or option == "show_gallery_ui":
+            if option == "queue_paused":
                 if not isinstance(value, bool):
-                    return web.json_response({"error": "Invalid " + option + " value"}, status=400)
-            elif (
-                option == "splash_screen"
-            ):  # splash_screen we always set to current version (indication that user has seen the latest splash)
+                    return web.json_response({"error": "Invalid queue_paused value"}, status=400)
+            elif option == "splash_screen":
                 value = self.__version__
 
             # Set the specific option

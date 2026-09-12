@@ -214,7 +214,7 @@ header.header {
 
   .pending {
     td {
-      &:not(.actions):not(.cover) {
+      &:not(.actions) {
         > * {
           opacity: 0.6;
           transition: opacity 0.3s ease;
@@ -308,7 +308,7 @@ header.header {
         }
       }
 
-      & + tr.gallery {
+      & + tr.outputs-row {
         td {
           background: var(--background-faded);
 
@@ -319,13 +319,13 @@ header.header {
       }
     }
 
-    &:has(+ tr.gallery) {
+    &:has(+ tr.outputs-row) {
       td {
         border-bottom: #00000044 solid 1px;
       }
     }
 
-    &:has(+ tr.gallery:hover) {
+    &:has(+ tr.outputs-row:hover) {
       background: var(--background-faded);
       color: var(--foreground);
 
@@ -348,146 +348,41 @@ header.header {
     padding: 20px;
   }
 
-  .gallery {
+  .outputs-row {
     td {
-      border-bottom: 1px solid rgba(81, 81, 81, 1);;
-    }
+      padding: 8px 12px;
+      background-color: #ffffff05;
 
-    .items {
-      flex-wrap: wrap;
-      gap: calc(var(--gap, 0px));
-      min-width: 0;
-      margin: 6px 0;
-
-      .media-item {
-        box-sizing: border-box;
-        flex: 0 0 calc(
-          (100% - (calc(var(--cols, 1) - 1) * var(--gap, 0px)))
-          / var(--cols, 1)
-        );
-        max-width: calc(
-          (100% - (calc(var(--cols, 1) - 1) * var(--gap, 0px)))
-          / var(--cols, 1)
-        );
-
-        position: relative;
-        overflow: hidden;
-        border-radius: 0.25rem;
-        color: white;
-        text-align: center;
-        cursor: pointer;
-        outline: 1px solid transparent;
-        transition: outline 0.3s ease;
-
-
-        img, video {
-          width: 100%;
-          height: auto;
-          border-radius: 0.25rem;
-          object-fit: contain;
-
-        }
-
-        &:hover {
-          outline: 1px solid white;
-          background-color: var(--color-neutral-700);
-          img, video {
-
-          }
-        }
+      @media (prefers-color-scheme: light) {
+        background-color: #ffffff99;
       }
     }
   }
 
-  .cover {
-    text-align: center;
+  .outputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 
-    .media-item {
-      width: var(--cover-size);
-      height: var(--cover-size);
-      transition: all 0.3s ease;
-      border-radius: 10px;
-      outline: 1px solid transparent;
+    .thumbnail {
+      flex: 0 0 var(--qm-thumb, 96px);
+      width: var(--qm-thumb, 96px);
+      height: var(--qm-thumb, 96px);
       cursor: pointer;
-      margin: 6px auto;
+      border-radius: 4px;
+      overflow: hidden;
+      outline: 1px solid transparent;
+      transition: outline 0.3s ease;
 
       img, video {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        border-radius: 10px;
-        overflow: hidden;
+        object-fit: contain;
       }
-    }
-  }
-  tr:hover .cover .media-item {
-    outline: 1px solid white;
-  }
 
-  .cover-fit {
-    .cover {
-      .media-item {
-        img, video {
-          background-color: #ffffff10;
-          object-fit: contain;
-
-          @media (prefers-color-scheme: light) {
-            background-color: #00000020;
-          }
-        }
-      }
-    }
-  }
-
-  .grid-square_cropped {
-    .gallery {
-      .media-item {
-        position: relative;
-        padding-bottom: calc(var(--thumb-size));
-        border-radius: 0.25rem;
-        img, video {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          left: 0;
-          top: 0;
-        }
-      }
-    }
-  }
-
-  .grid-square_fit {
-    .gallery {
-      .media-item {
-        position: relative;
-        padding-bottom: calc(var(--thumb-size));
-        border-radius: 0.25rem;
-        img, video {
-          background-color: #ffffff10;
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-
-          @media (prefers-color-scheme: light) {
-            background-color: #00000020;
-          }
-        }
-      }
-    }
-  }
-
-  .grid-as_is {
-    .gallery {
-      .media-item {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        img, video {
-          max-width: calc(var(--thumb-size));
-        }
+      &:hover {
+        outline: 1px solid white;
+        background-color: var(--color-neutral-700);
       }
     }
   }

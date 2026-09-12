@@ -63,7 +63,7 @@ export default function TopMenu() {
         className={"top-menu" + (uiState.menuOpen ? ' open' : '')}>
         <div className={"container"}>
           <button type={"button"}  className={"button shiny-button"} onClick={takeOver}><AdsClickSharpIcon /> Take over focus</button>
-          <a className={"button shiny-button"} href={"https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual"} target={"_blank"}><QuizSharpIcon /> Documentation</a>
+          <a className={"button shiny-button"} href={"https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual"} target={"_blank"} rel="noreferrer"><QuizSharpIcon /> Documentation</a>
           <button type={"button"}  className={"button shiny-button"} onClick={() => {toggleMenu(); openSplash()}}><InfoOutlineSharpIcon /> About Queue Manager</button>
         </div>
       </section>

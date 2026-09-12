@@ -2,22 +2,15 @@
 
 "use client";
 
-import React, { memo, useMemo } from "react";
+import React, { memo } from "react";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import { QueueItemRow } from "../components/QueueItemRow";
 import { useAppStore } from "../stores/appStore";
-import { useOptionsStore } from "../stores/optionsStore";
 
 const QueueItems = memo(function QueueItems({ running, pending, info }) {
   // Read global state ONCE here (parent of many rows)
   const route = useAppStore((state) => state.route);
   const filters = useAppStore((state) => state.filters);
-
-  const thumbMode = useOptionsStore((state) => state.thumb_mode);
-  const galleryOptions = useOptionsStore((state) => state.Gallery);
-
-  // Optional: keep object identity stable if upstream recreates it
-  const stableGalleryOptions = useMemo(() => galleryOptions, [galleryOptions]);
 
   return (
     <>
@@ -30,8 +23,6 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
           mode={item?.[3]?.extra_pnginfo ? "running" : "external"}
           info={info}
           route={route}
-          thumbMode={thumbMode}
-          galleryOptions={stableGalleryOptions}
           filters={filters}
         />
       ))}
@@ -44,8 +35,6 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
           index={index}
           info={info}
           route={route}
-          thumbMode={thumbMode}
-          galleryOptions={stableGalleryOptions}
           filters={filters}
         />
       ))}
@@ -56,31 +45,13 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
 // take items from parent component
 export const Queue = memo(function Queue({ data, isLoading, error, progress }) {
   const route = useAppStore((state) => state.route);
-  const thumbMode = useOptionsStore((state) => state.thumb_mode);
-  const options = useOptionsStore((state) => state.Completed);
-  const galleryOptions = useOptionsStore((state) => state.Gallery);
-
-  const coverMode = String(options.CoverThumbMode ?? "Cropped")
-    .toLowerCase()
-    .replace(/\s+/g, "_");
-  const gridMode = String(options.GridThumbMode ?? "Square Fit")
-    .toLowerCase()
-    .replace(/\s+/g, "_");
 
   const running = data?.running ?? [];
   const pending = data?.pending ?? [];
 
   return (
     <div
-      className={
-        "overflow-x-auto table-wrapper" +
-        (isLoading ? " loading" : "") +
-        " cover-" +
-        coverMode +
-        " grid-" +
-        gridMode +
-        " mode-"
-      }
+      className={"overflow-x-auto table-wrapper" + (isLoading ? " loading" : "")}
       style={{ "--job-progress": progress + "%" }}
     >
       <div className={"table-container"}>
@@ -89,16 +60,13 @@ export const Queue = memo(function Queue({ data, isLoading, error, progress }) {
             <thead className="dark:bg-neutral-800 bg-neutral-200 text-xs uppercase">
               <tr>
                 <th className="px-3 py-2 text-left">#</th>
-                {route === "completed" &&
-                  thumbMode === "cover" &&
-                  (galleryOptions.ShowImages || galleryOptions.ShowVideos) && (
-                    <th className="px-3 py-2 cover">Thumbnail</th>
-                  )}
                 <th className="px-3 py-2 text-left workflow-column">
                   Workflow
                 </th>
                 {route === "completed" &&
-                  <th></th>
+                  <th className="px-3 py-2 text-left">
+                    Info
+                  </th>
                 }
                 <th className="px-3 py-2" align="right">
                   Actions

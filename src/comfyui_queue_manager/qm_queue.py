@@ -6,10 +6,7 @@ from server import PromptServer
 
 import json
 import heapq
-import folder_paths
-import os
 
-from .helpers import reveal_file
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -912,48 +909,3 @@ class QM_Queue:
 
         return ""
 
-    def open_file_location(self, db_id, filename="", subfolder=""):
-        if filename == "":
-            return None
-
-        # Get outputs metadata for the given item ID
-        row = read_single(
-            """
-            SELECT value
-            FROM meta
-            WHERE item_id = ? AND key = 'outputs'
-        """,
-            (db_id,),
-        )
-
-        if row is None:
-            return None
-
-        # Cycle through nodes, check if "images" and "gifs" have the filename and subfolder combination
-        row = json.loads(row[0])
-        found = False
-        for node_id, output in row.items():
-            files = []
-            if "images" in output:
-                files = output["images"]
-            elif "gifs" in output:
-                files = output["gifs"]
-
-            for file in files:
-                if (file["filename"] == filename) and file["subfolder"] == subfolder:
-                    filename = file["filename"]
-                    found = True
-                    break
-
-            if found:
-                break
-
-        if not found:
-            return None
-
-        # Get outputs folder path from settings
-        target_path = os.path.join(folder_paths.get_output_directory(), subfolder, filename)
-
-        reveal_file(target_path)
-
-        return target_path
