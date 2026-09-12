@@ -1,8 +1,10 @@
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 import importlib
 import os
 import pytest
+
+from fake_comfy import FakePromptQueue, FakePromptServer, FakeFolderPaths
 
 class PromptQueue:
     def __init__(self):
@@ -49,3 +51,61 @@ def qm_db(tmp_path, monkeypatch):
     qm_db_module.init_schema()
 
     yield qm_db_module
+
+
+class _FakeOptions:
+    def __init__(self):
+        self._values = {}
+
+    def get(self, key, default=None, with_timestamp=False):
+        value = self._values.get(key, default)
+        return (value, None) if with_timestamp else value
+
+    def set(self, key, value):
+        self._values[key] = value
+
+
+class _FakeQueueManager:
+    def __init__(self):
+        self.options = _FakeOptions()
+
+
+@pytest.fixture
+def qm_queue(qm_db, monkeypatch, tmp_path):
+    # qm_queue.py is imported under the "src." prefix (per the real node
+    # package layout), which is a distinct module tree from the plain
+    # "comfyui_queue_manager" tree the qm_db fixture reloads above. Its
+    # qm_db submodule must be reloaded too, using the same QM_DB_PATH env
+    # var, so both trees point at the same sqlite file on disk.
+    import src.comfyui_queue_manager.qm_db as src_qm_db
+
+    src_qm_db = importlib.reload(src_qm_db)
+    src_qm_db.init_schema()
+
+    import src.comfyui_queue_manager.qm_queue as qm_queue_module
+
+    qm_queue_module = importlib.reload(qm_queue_module)
+
+    import server as server_module
+
+    fake_folder_paths = FakeFolderPaths(tmp_path)
+    import folder_paths as folder_paths_module
+
+    monkeypatch.setattr(folder_paths_module, "get_input_directory", fake_folder_paths.get_input_directory, raising=False)
+    monkeypatch.setattr(folder_paths_module, "get_output_directory", fake_folder_paths.get_output_directory, raising=False)
+    monkeypatch.setattr(folder_paths_module, "get_temp_directory", fake_folder_paths.get_temp_directory, raising=False)
+
+    fake_native_queue = FakePromptQueue()
+    fake_server = FakePromptServer(fake_native_queue)
+    monkeypatch.setattr(server_module.PromptServer, "instance", fake_server)
+
+    queue_manager = _FakeQueueManager()
+    instance = qm_queue_module.QM_Queue(queue_manager)
+
+    yield SimpleNamespace(
+        qm=instance,
+        server=fake_server,
+        native_queue=fake_native_queue,
+        queue_manager=queue_manager,
+        qm_db=src_qm_db,
+    )
