@@ -115,6 +115,16 @@ backend can be unit-tested without a ComfyUI install.
   doesn't require `npm run lint` to be clean (only `npm run build`), so this doesn't block M1.
   Whichever milestone next touches these files should fix the findings it's already working
   in; a dedicated lint-cleanup task can be filed later if these linger.
+- 2026-09-12 — pr1-codex-review-round1: Codex review of PR #1 found two major
+  data-integrity defects in M1.P3.T1's upsert: (1) resubmitting a `prompt_id`
+  already `status = 1` (running) would reset that row to pending, merging the
+  running item and the resubmission into one row; (2) `task_done`'s meta
+  inserts (outputs/execution_time) had no dedup, so completing the same row
+  twice (now possible since the upsert preserves meta instead of
+  cascade-deleting it) left duplicate rows. Fixed: `queue_put` now no-ops on a
+  running-row conflict; `task_done` deletes the existing `(item_id, key)` meta
+  row before inserting. Two new regression tests added. Round closed, no
+  second round needed.
 - 2026-09-12 — package-lock-regenerated: `src/gui/package-lock.json` was stale against
   `package.json` (still listed `next`, `@mui/material-nextjs`, `eslint-config-next` from a
   since-removed Next.js setup). `npm install` regenerated it to match; committed as part of
