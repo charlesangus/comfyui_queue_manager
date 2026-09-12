@@ -4,8 +4,8 @@
   max-height: 80vh;
   top: 10vh;
   left: 10vw;
-  background-color: var(--color-neutral-800);
-  border: 2px solid var(--color-neutral-600);
+  background-color: var(--qm-surface);
+  border: 2px solid var(--qm-border);
   border-radius: 0.5rem;
   box-shadow: 0 0 50px #000000;
   z-index: 1000;
@@ -20,7 +20,7 @@
   h1 {
     font-size: 2rem;
     font-weight: bold;
-    color: var(--color-neutral-100);
+    color: var(--qm-fg);
     span {
       font-size: 1.2rem;
       display: inline-block;
@@ -40,8 +40,8 @@
     font-size: 1.5rem;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
-    color: var(--color-neutral-200);
-    border-bottom: 1px solid var(--color-neutral-600);
+    color: var(--qm-fg);
+    border-bottom: 1px solid var(--qm-border);
   }
 
   h3 {
