@@ -95,7 +95,7 @@ defined in M2):
 
 ## Phase 3.2: Frontend and docs
 
-- [ ] M3.P2.T1 — Node documentation and README section
+- [x] M3.P2.T1 — Node documentation and README section
   - files: `web/docs/Queue Card Info.md` (new), `README.md`, `CHANGELOG.md`
   - approach: Write the node doc in the style of `web/docs/Workflow Name.md`: purpose, the three
     inputs, what shows for LoadImage / text nodes / image tensors / other types, note that the
