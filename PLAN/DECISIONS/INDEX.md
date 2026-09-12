@@ -1,0 +1,1 @@
+- 2026-09-11 — fake-comfy-test-harness: backend tests stub `server`/`execution`/`folder_paths`/`nodes` instead of needing ComfyUI → DECISIONS/2026-09-11-fake-comfy-test-harness.md

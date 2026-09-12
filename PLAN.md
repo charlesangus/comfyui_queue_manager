@@ -1,0 +1,77 @@
+---
+title: Queue Manager upgrades — rich cards, card-info node, selection, priority, interactive preemption
+status: draft
+current: null
+ship: pr-per-milestone
+publish_decisions: docs/decisions/
+---
+
+# Goal
+
+The Queue Manager sidebar shows each job as a rich card instead of a table row: the card carries
+the workflow name, status, a priority badge, and any images/text the workflow "pushed" onto it
+through a new **Queue Card Info** node. Cards can be multi-selected and acted on in bulk (delete,
+archive, run, set priority). Jobs have an integer priority the scheduler honours. Running a single
+node / partial workflow interactively takes precedence over background queue work — either by
+jumping to the front of the queue or (opt-in) by interrupting the running job and re-queuing it.
+Done when every milestone below is merged into `main` on the fork with a release build of the GUI,
+`pytest tests/` and `ruff check .` pass, and the README manual documents the new features.
+
+# Context and constraints
+
+- ComfyUI custom-node extension; fork of `QuietNoise/comfyui_queue_manager` at
+  `github.com/charlesangus/comfyui_queue_manager` (remote `origin`). Python 3.9+ (ruff target),
+  line length 140, double quotes. `ruff check .` and `pytest tests/` run in CI on PRs to `main`.
+- **Backend** `src/comfyui_queue_manager/`: `qm_queue.py` (hijacks native `PromptQueue.put/get/
+  task_done/get_current_queue/get_tasks_remaining`), `qm_db.py` (sqlite at `data/qm-queue.db`,
+  tables `queue`/`meta`/`options`, helpers `write_query/read_query/read_single/write_many`),
+  `qm_server.py` (aiohttp routes under `/queue_manager/*` plus a middleware intercepting native
+  `POST /api/queue` and `POST /api/interrupt`), `nodes.py` (custom nodes; `Workflow Name` exists),
+  `qm_options.py`, `qm_gallery.py`, `queue_manager.py` (wires the singletons; instance is
+  `queueManager` in the package `__init__.py`).
+- Queue ordering: column `queue.number` ascending; negative numbers = "front of queue" (native
+  ComfyUI convention, `PromptServer.instance.number * -1`). Status: 0 pending, 1 running,
+  2 completed, 3 archived. The extension keeps **at most one** pending item in the native heap
+  (`self.native_queue.queue`) and pulls the next from the DB in `queue_get`.
+- **Frontend** is two layers: `web/queue-manager.js` + `web/js/*.js` run inside ComfyUI (register
+  the sidebar tab, inject toolbar buttons, wrap `app.api.queuePrompt`, relay websocket events to
+  the iframe via `postMessage`), and the React 19 / Vite 7 / MUI 7 / Zustand 5 / Tailwind 4 +
+  SCSS app in `src/gui/` that renders inside the iframe. The React app talks to the backend with
+  `apiCall()` from `src/gui/app/internals/functions.js` and receives updates as `window` messages
+  of type `QM_queueStatusUpdated`, `QM_Setting_Changed`, `QM_ParentKeypress`,
+  `QM_QueueManager_Hello`. Queue items are the native tuple shape
+  `[number, prompt_id, prompt_graph, extra_data, outputs_to_execute, …]`; the backend adds
+  `item[3].db_id`, `.outputs`, `.execution_time`, `.total_files` for the frontend.
+- User-facing settings are native ComfyUI settings declared in `web/js/settings.js`
+  (`QueueManager.<Group>.<Name>`), read on the parent page via
+  `app.extensionManager.setting.get(id)` and relayed to the iframe; server-side options live in
+  the `options` table (`qm_options.py`, whitelisted in `qm_server.py`).
+- **Build convention:** any change under `src/gui/` must be followed by `npm run build` from
+  `src/gui/` (outputs `web/.gui/`, unminified on purpose) and the rebuilt `web/.gui/` committed
+  with the change (history uses `- Release build;` commits). `npm install` in `src/gui/` first
+  (`node_modules/` is not present in a fresh clone; node 24 is available). Never hand-edit
+  `web/.gui/assets/index.js`.
+- There is no ComfyUI install in this workspace; tasks that touch ComfyUI internals must state the
+  assumed API and verify with unit tests that stub `server.PromptServer` (see `tests/conftest.py`
+  for the `sys.path` setup) rather than a live server.
+- Docs: README "Manual" section documents each feature with screenshots under `readme-img/`; node
+  docs live in `web/docs/<Node Name>.md`. Update both when a feature lands. `CHANGELOG.md` gets
+  an entry per milestone.
+- No multi-user support is intended (README "Important"); don't design for it.
+
+# Board
+
+| ID | Milestone | Status | File |
+|----|-----------|--------|------|
+| M1 | Groundwork: green test suite and build | todo | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
+| M2 | Rich queue cards | todo | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
+| M3 | Queue Card Info node | todo | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
+| M4 | Card selection and bulk actions | todo | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
+| M5 | Job priority levels | todo | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
+| M6 | Interactive runs preempt the queue | todo | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
+
+# Open questions
+
+- Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
+  URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the
+  fork will be published to the Comfy registry under its own name; left untouched until answered.
