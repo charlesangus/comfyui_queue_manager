@@ -20,8 +20,6 @@ import { useEffect, useState, useCallback, useMemo, useRef} from "react";
 import {apiCall} from "./internals/functions";
 import useEvent from "react-use-event-hook";
 import {AppContext} from "./internals/app-context";
-import ThumbSlider from "./components/ThumbSlider";
-import Gallery from "./components/Gallery";
 import {SplashScreen} from "./components/SplashScreen";
 
 import {compareVersions} from "./internals/functions";
