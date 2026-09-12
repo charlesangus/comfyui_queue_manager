@@ -110,8 +110,20 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
   - size: M
 
 - [ ] M10.P2.T2 — Tabs, list and footer layout
-  - files: `src/gui/styles/_queue.scss`, `src/gui/styles/_footer.scss`, `src/gui/styles/_layout.scss`, `src/gui/app/index.jsx`, `src/gui/app/components/Queue.jsx`
-  - approach: M10.P2.T1 left `_queue.scss`'s `button.run { background-color: rgb(96, 165, 250); }`
+  - files: `src/gui/styles/_queue.scss`, `src/gui/styles/_footer.scss`, `src/gui/styles/_layout.scss`, `src/gui/styles/_splash.scss`, `src/gui/app/index.jsx`, `src/gui/app/components/Queue.jsx`
+  - approach: M10.P1.T3 deleted `main.jsx`'s `GlobalStyles` block, which was the only definition
+    of `--color-neutral-100`…`--color-neutral-900` — every other `var(--color-neutral-*)`
+    reference across `_queue.scss`, `_footer.scss`, and `_splash.scss` (none of them Tailwind
+    utility classes, so T3's JSX-only sweep didn't catch them) has been dangling/invalid since
+    that commit, and `_layout.scss`'s `--background`/`--background-light` are stuck at their
+    light-mode values now that the `prefers-color-scheme` override was removed without a
+    `dark-theme`-class replacement. Confirmed at this task's start — added to its scope since
+    it's the same token-swap work: replace every `--color-neutral-*`/`--background`/
+    `--background-light` reference in `_queue.scss`, `_footer.scss`, and `_splash.scss` with the
+    matching `--qm-*` token (surface/bg → `--qm-surface`/`--qm-bg`, borders → `--qm-border`,
+    text → `--qm-fg`/`--qm-fg-muted`) — `_splash.scss` is small (70 lines) and self-contained,
+    just needs its handful of `--color-neutral-*` refs swapped, no structural change. Also:
+    M10.P2.T1 left `_queue.scss`'s `button.run { background-color: rgb(96, 165, 250); }`
     in place — its specificity currently overrides the new `.qm-btn-primary` background on the
     per-row Run button. Remove that hardcoded override as part of this task's `_queue.scss` pass
     so Run renders with the token-driven `.qm-btn-primary` styling. Tabs (Queue / Archive / Completed) become a segmented control styled like the
@@ -125,6 +137,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     use `@mui/icons-material` equivalents at 20 px.
   - verify: Side-by-side with ComfyUI's native Queue sidebar tab in the same palette, the
     panel's spacing, borders, text sizes and colours match; both palettes checked.
+    `grep -rn "color-neutral\|var(--background" src/gui/styles` finds nothing.
   - size: M
 
 - [ ] M10.P2.T3 — Rebuild, changelog, screenshot note
@@ -142,6 +155,14 @@ one custom palette: the panel recolours live, buttons/tabs/footer match native c
 
 ## Decisions
 
+- 2026-09-12 — Deleting `main.jsx`'s `GlobalStyles` block in M10.P1.T3 left every
+  `var(--color-neutral-*)` reference in `_queue.scss`/`_footer.scss`/`_splash.scss` dangling
+  (they aren't Tailwind classes, so T3's JSX-only sweep didn't touch them), and left
+  `_layout.scss`'s `--background`/`--background-light` stuck at their light-mode value once the
+  `prefers-color-scheme` override was removed. Rather than patch it as a standalone fix, folded
+  the cleanup into M10.P2.T2 (which already restyles `_queue.scss`/`_footer.scss`/`_layout.scss`
+  with `--qm-*` tokens) and added `_splash.scss` to that task's file list — same token-swap work,
+  and `_splash.scss` is small enough not to change the task's `M` sizing.
 - 2026-09-11 — Theme is bridged from the parent page as computed CSS variables rather than
   re-implemented in the iframe: it follows every palette (including custom ones) with no
   duplication, and the `--qm-*` token layer keeps the app's own styles independent of ComfyUI
