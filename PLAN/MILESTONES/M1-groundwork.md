@@ -82,7 +82,7 @@ backend can be unit-tested without a ComfyUI install.
     pre-existing findings, if any, are noted here rather than silently fixed).
   - size: S
 
-- [ ] M1.P3.T1 — Replace `INSERT OR REPLACE` in `queue_put` with an upsert that keeps the row id
+- [x] M1.P3.T1 — Replace `INSERT OR REPLACE` in `queue_put` with an upsert that keeps the row id
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: `INSERT OR REPLACE INTO queue …` deletes and re-inserts the row when a
     `prompt_id` is submitted twice, which changes `queue.id` and cascade-deletes the row's
