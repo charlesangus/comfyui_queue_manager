@@ -86,8 +86,15 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
 ## Phase 10.2: Restyle the existing surfaces
 
 - [ ] M10.P2.T1 — Buttons, inputs and typography
-  - files: `src/gui/styles/_common.scss`, `src/gui/styles/_mixins.scss`, `src/gui/styles/_footer.scss`, `src/gui/app/index.jsx`
-  - approach: Replace the `shiny-button` mixin and the `green/red/yellow/blue-button` classes
+  - files: `src/gui/styles/_common.scss`, `src/gui/styles/_mixins.scss`, `src/gui/styles/_footer.scss`, `src/gui/app/index.jsx`, `src/gui/app/components/QueueItemRow.jsx`, `src/gui/app/components/TopMenu.jsx`
+  - approach: `shiny-button`/`green-button`/`red-button`/`yellow-button`/`blue-button` usage was
+    confirmed at task start (freshness check, corrects the original file list): the mixin/class
+    definitions live in `_common.scss`/`_mixins.scss`, but the classNames are actually applied in
+    `index.jsx` (footer close/delete-all/archive-all/run-all buttons), `QueueItemRow.jsx` (the
+    per-row Delete/Load/Archive/Run buttons — the largest user), and `TopMenu.jsx` (Take over
+    focus / Documentation / About buttons, plain `shiny-button` with no colour variant). All
+    three JSX files need their classNames updated to the new `.qm-btn` family. Replace the
+    `shiny-button` mixin and the `green/red/yellow/blue-button` classes
     with a `.qm-btn` family modelled on PrimeVue's buttons as ComfyUI renders them: flat,
     `--qm-radius-sm`, 1px border `--qm-border`, `--qm-surface` background, `--qm-surface-hover`
     on hover, `--qm-primary` outline on `:focus-visible`, 32 px tall, icon + label with 0.5rem
