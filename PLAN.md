@@ -32,8 +32,8 @@ Done when every milestone below is merged into `main` on the fork with a release
   tables `queue`/`meta`/`options`, helpers `write_query/read_query/read_single/write_many`),
   `qm_server.py` (aiohttp routes under `/queue_manager/*` plus a middleware intercepting native
   `POST /api/queue` and `POST /api/interrupt`), `nodes.py` (custom nodes; `Workflow Name` exists),
-  `qm_options.py`, `queue_manager.py` (`qm_gallery.py` until M7 removes it) (wires the singletons; instance is
-  `queueManager` in the package `__init__.py`).
+  `qm_options.py`, `queue_manager.py` (wires the singletons; instance is `queueManager` in the
+  package `__init__.py`). `qm_gallery.py` exists until M7 removes it.
 - Queue ordering: column `queue.number` ascending; negative numbers = "front of queue" (native
   ComfyUI convention, `PromptServer.instance.number * -1`). Status: 0 pending, 1 running,
   2 completed, 3 archived. The extension keeps **at most one** pending item in the native heap
