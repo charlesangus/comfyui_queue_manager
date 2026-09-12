@@ -1,4 +1,9 @@
-from comfyui_queue_manager.qm_card import extract_card_entries, load_card, load_card_by_prompt_id, merge_entry, save_card
+from pathlib import Path
+
+import pytest
+
+from comfyui_queue_manager import qm_card
+from comfyui_queue_manager.qm_card import capture_runtime_value, extract_card_entries, load_card, load_card_by_prompt_id, merge_entry, save_card
 
 
 def _insert_queue_item(qm_db, prompt_id="prompt-card"):
@@ -130,3 +135,43 @@ def test_merge_entry_appends_unmatched_label_with_stable_index_order(qm_db):
     appended = {"index": 2, "label": "new", "kind": "text", "value": "new"}
 
     assert merge_entry("prompt-card", appended) == [same_index_first, appended, later]
+
+
+def test_capture_runtime_value_handles_scalars_nested_lists_and_empty_lists():
+    assert capture_runtime_value("prompt", 4, "result", [True]) == {
+        "index": 4,
+        "label": "result",
+        "kind": "text",
+        "value": "True",
+    }
+    assert capture_runtime_value("prompt", 5, "nested", [[12.5]]) == {
+        "index": 5,
+        "label": "nested",
+        "kind": "text",
+        "value": "12.5",
+    }
+    assert capture_runtime_value("prompt", 6, "empty", []) is None
+
+
+def test_capture_runtime_tensor_saves_thumbnail_with_safe_name(monkeypatch, tmp_path):
+    torch = pytest.importorskip("torch")
+    image_module = pytest.importorskip("PIL.Image")
+    cards_dir = tmp_path / "cards"
+    monkeypatch.setattr(qm_card, "CARDS_DIR", cards_dir)
+    tensor = torch.full((1, 300, 600, 3), 0.5)
+
+    entry = capture_runtime_value("prompt/id", 7, "preview", tensor)
+
+    assert entry is not None
+    assert entry["index"] == 7
+    assert entry["label"] == "preview"
+    assert entry["kind"] == "image"
+    filename = entry["value"]["url"].removeprefix("queue_manager/card-image?name=")
+    assert "/" not in filename
+    image_path = cards_dir / filename
+    assert image_path.is_file()
+    with image_module.open(image_path) as image:
+        assert image.format == "PNG"
+        assert image.size == (256, 128)
+        assert image.getpixel((0, 0)) == (127, 127, 127)
+    assert Path(filename).name == filename

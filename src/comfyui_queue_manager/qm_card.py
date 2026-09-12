@@ -1,9 +1,59 @@
 """Static extraction of Queue Card Info entries from ComfyUI prompt graphs."""
 
+import hashlib
 import json
+from pathlib import Path
+import re
 from typing import Any
 
 from .qm_db import get_conn, read_single
+
+
+CARDS_DIR = Path(__file__).resolve().parents[2] / "data" / "cards"
+
+
+def _card_image_name(prompt_id: str, index: int) -> str:
+    prompt_component = str(prompt_id)
+    if len(prompt_component) > 200 or not re.fullmatch(r"[A-Za-z0-9._-]+", prompt_component):
+        prompt_component = hashlib.sha256(prompt_component.encode()).hexdigest()
+    return f"{prompt_component}_{index}.png"
+
+
+def capture_runtime_value(prompt_id: str, index: int, label: str, value: Any) -> dict | None:
+    if isinstance(value, list):
+        if not value:
+            return None
+        return capture_runtime_value(prompt_id, index, label, value[0])
+
+    if isinstance(value, (str, int, float, bool)):
+        return {"index": index, "label": label, "kind": "text", "value": str(value)}
+
+    try:
+        import torch
+    except ImportError:
+        return None
+
+    if not isinstance(value, torch.Tensor) or value.ndim != 4:
+        return None
+
+    from PIL import Image
+
+    try:
+        image_data = 255.0 * value[0].cpu().numpy()
+        image = Image.fromarray(image_data.clip(0, 255).astype("uint8"))
+    except (IndexError, KeyError, RuntimeError, TypeError, ValueError):
+        return None
+    image.thumbnail((256, 256))
+
+    CARDS_DIR.mkdir(parents=True, exist_ok=True)
+    filename = _card_image_name(prompt_id, index)
+    image.save(CARDS_DIR / filename, format="PNG")
+    return {
+        "index": index,
+        "label": label,
+        "kind": "image",
+        "value": {"url": f"queue_manager/card-image?name={filename}"},
+    }
 
 
 def save_card(db_id: int, entries: list[dict]) -> None:
