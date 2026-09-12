@@ -5,4 +5,21 @@ $archive-color-darker: #110808;
 :root {
   --font-roboto: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --background-light:  #b6b6b6;
+
+  --qm-bg: var(--comfy-menu-bg, #202020);
+  --qm-surface: var(--comfy-menu-secondary-bg, #2a2a2a);
+  --qm-surface-hover: var(--content-hover-bg, #333333);
+  --qm-fg: var(--fg-color, #e0e0e0);
+  --qm-fg-muted: var(--descrip-text, #999999);
+  --qm-border: var(--border-color, #444444);
+  --qm-input-bg: var(--comfy-input-bg, #1a1a1a);
+  --qm-primary: var(--p-primary-color, #4a90d9);
+  --qm-primary-fg: #ffffff;
+  --qm-danger: var(--error-text, #e74c3c);
+  --qm-success: #2ecc71;
+  --qm-warning: #f39c12;
+  --qm-radius: 0.5rem;
+  --qm-radius-sm: 0.375rem;
+  --qm-space: 0.5rem;
+  --qm-font: var(--qm-font-family, system-ui, sans-serif);
 }

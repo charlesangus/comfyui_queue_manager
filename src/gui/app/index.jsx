@@ -24,6 +24,7 @@ import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
 import {MenuItem, Pagination, Select} from "@mui/material";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
+import {useComfyTheme} from "./hooks/useComfyTheme";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -71,6 +72,8 @@ export default function Home() {
   });
 
   const [showSplash, setShowSplash] = useState(false);
+
+  useComfyTheme();
 
   const fetchIdRef = useRef(0);
 
