@@ -1,4 +1,3 @@
-// `src/gui/app/components/QueueCard.jsx`
 "use client";
 
 import React, { memo, useCallback, useContext, useMemo } from "react";

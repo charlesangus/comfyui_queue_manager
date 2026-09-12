@@ -124,7 +124,7 @@
   min-width: 1.25rem;
   height: 1.25rem;
   padding: 0 0.375rem;
-  border-radius: 999px;
+  border-radius: var(--qm-radius-sm);
   background: var(--qm-surface-hover);
   color: var(--qm-fg-muted);
   font-family: var(--qm-font);

@@ -7,11 +7,24 @@ import { baseURL } from "../internals/config";
 function TextTile({ label, value }) {
   const [expanded, setExpanded] = useState(false);
 
+  const toggleExpanded = () => setExpanded((prev) => !prev);
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      if (event.key === " ") event.preventDefault();
+      toggleExpanded();
+    }
+  };
+
   return (
     <div
       className={`card-info-tile${expanded ? " expanded" : ""}`}
       title={value}
-      onClick={() => setExpanded((prev) => !prev)}
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      onClick={toggleExpanded}
+      onKeyDown={handleKeyDown}
     >
       <div className="tile-caption">{label}</div>
       <div className="tile-body">{value}</div>

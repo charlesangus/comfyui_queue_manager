@@ -160,7 +160,7 @@ header.header {
       flex: 0 0 var(--qm-thumb, 96px);
       width: var(--qm-thumb, 96px);
       height: var(--qm-thumb, 96px);
-      border-radius: 4px;
+      border-radius: var(--qm-radius-sm);
       overflow: hidden;
       display: block;
 
@@ -207,7 +207,7 @@ header.header {
   }
 
   .qm-card.running {
-    &:before {
+    &:after {
       content: '';
       position: absolute;
       top: 0;
@@ -219,12 +219,6 @@ header.header {
       border-right: 2px solid var(--qm-primary);
       transition: width 0.15s ease-in-out;
       pointer-events: none;
-    }
-
-    .card-header,
-    .card-body,
-    .card-actions {
-      position: relative;
     }
   }
 

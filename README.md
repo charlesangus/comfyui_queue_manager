@@ -65,7 +65,7 @@ An extension supporting more streamlined prompt queue management.
 In no particular order, just some ideas I have for the future of this extension.
 - [ ] Queue Manager nodes. On top of Workflow Name node add some other queue related strings you could use to streamline your workflows i.e. custom file names.
 - [ ] Bin. Can't think of a use case for it yet but I feel like it should be there at some stage.
-- [ ] More columns in the queue table. Suggest your favourites.
+- [ ] More info on the cards. Suggest your favourites.
 - [ ] Better user and dev docs.
 - [ ] Ability to rename worklows in the queue.
 - [x] ~~Better progress feedback for longer running actions (like import).~~
@@ -162,7 +162,7 @@ Typical use case is to connect the `workflow_name` output to a node that accepts
 5. Conversely, if you queue jobs with Partner nodes while NOT logged in with Comfy API key then those jobs will NOT be able to use Partner nodes even if you log in later before running them. (See point 3. above for export-import workaround).
 
 ### Output thumbnails
-- Completed jobs show a row of output thumbnails (images and videos) below the job details.
+- Completed jobs show a strip of output thumbnails (images and videos) below the job details.
 - Clicking a thumbnail opens the full file in a new browser tab.
 
 ### Extension Settings

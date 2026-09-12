@@ -19490,12 +19490,23 @@ class MediaOutputs {
 }
 function TextTile({ label, value }) {
   const [expanded, setExpanded] = reactExports.useState(false);
+  const toggleExpanded = () => setExpanded((prev2) => !prev2);
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      if (event.key === " ") event.preventDefault();
+      toggleExpanded();
+    }
+  };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
     {
       className: `card-info-tile${expanded ? " expanded" : ""}`,
       title: value,
-      onClick: () => setExpanded((prev2) => !prev2),
+      role: "button",
+      tabIndex: 0,
+      "aria-expanded": expanded,
+      onClick: toggleExpanded,
+      onKeyDown: handleKeyDown,
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: value })
