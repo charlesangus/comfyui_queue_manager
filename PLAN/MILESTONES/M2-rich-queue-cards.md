@@ -55,7 +55,7 @@ baseURL>" }` for images the extension serves itself; `kind: "text"` values are s
     archive/queue cards show the right action buttons.
   - size: M
 
-- [ ] M2.P1.T3 — Render the card info area from `item[3].card`
+- [x] M2.P1.T3 — Render the card info area from `item[3].card`
   - files: `src/gui/app/components/QueueCard.jsx`, `src/gui/app/components/CardInfo.jsx` (new), `src/gui/styles/_queue.scss`
   - approach: New `CardInfo` component takes `entries` (the array described in the contract
     above), sorts by `index`, and renders a horizontal flex-wrap of tiles: `kind === "image"` →
