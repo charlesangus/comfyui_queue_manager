@@ -141,7 +141,7 @@ const executionTimeLabel = useMemo(() => {
           <td className="px-3 py-1 text-right actions">
             <div style={{ justifyContent: "flex-end" }}  className="buttons">
               <button
-                className="delete red-button shiny-button"
+                className="delete qm-btn qm-btn-danger"
                 onClick={cancelQueueItem}
                 title="Delete workflow from queue"
               >
@@ -150,7 +150,7 @@ const executionTimeLabel = useMemo(() => {
 
               {mode !== "external" ? (
                 <button
-                  className="load green-button shiny-button"
+                  className="load qm-btn qm-btn-primary"
                   onClick={loadQueueItem}
                   title="Load workflow"
                 >
@@ -160,7 +160,7 @@ const executionTimeLabel = useMemo(() => {
 
               {route === "queue" && mode !== "running" ? (
                 <button
-                  className="archive yellow-button shiny-button"
+                  className="archive qm-btn"
                   onClick={archiveQueueItem}
                   title="Move to the archive"
                 >
@@ -170,7 +170,7 @@ const executionTimeLabel = useMemo(() => {
 
               {route === "archive" ? (
                 <button
-                  className="run blue-button shiny-button"
+                  className="run qm-btn qm-btn-primary"
                   onClick={playItem}
                   title="Move to queue"
                 >

@@ -597,7 +597,7 @@ export default function Home({ onDarkChange }) {
                   className="inline-flex close label" style={{ color: "var(--qm-fg-muted)" }}><span
                   className={'type'}>{filter.type + ": "}&nbsp;</span>{filter.valueLabel}</span>
                 <button
-                  className="shiny-button close "
+                  className="qm-btn qm-btn-text qm-icon-btn close"
                   onClick={() => {
                     // remove the filter from the filters object
                     const prev = useAppStore.getState().filters;
@@ -615,7 +615,7 @@ export default function Home({ onDarkChange }) {
 
             {/*  Clear all  */}
             <button
-              className="close close-all ml-auto shiny-button"
+              className="close close-all ml-auto qm-btn qm-btn-text"
               onClick={() => {
                 fetchQueueItems({filters: {}});
               }}
@@ -703,16 +703,16 @@ export default function Home({ onDarkChange }) {
                   {/* Queue Actions  */}
                   {route === 'queue' &&
                     <>
-                      <button onClick={archiveAll} className={"shiny-button yellow-button"}>
+                      <button onClick={archiveAll} className={"qm-btn"}>
                         <Inventory2SharpIcon/>&nbsp;
                         Archive All {isFilterOn() ? "*" : "Pending"}
                       </button>
-                      <a className={"shiny-button"}
+                      <a className={"qm-btn"}
                               href={baseURL + "queue_manager/export" + appendRoute(appendFilters(""))}>
                         <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Queue"}
                       </a>
                       <button color="error" onClick={isFilterOn() ? deleteFromQueue : clearPending}
-                              className={"order-last delete red-button shiny-button"} >
+                              className={"order-last delete qm-btn qm-btn-danger"} >
                         <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete All {isFilterOn() ? "*" : "Pending"}
                       </button>
                     </>
@@ -722,15 +722,15 @@ export default function Home({ onDarkChange }) {
                   {route === 'archive' &&
                     <>
                       <button onClick={playAllArchive}
-                              className="shiny-button blue-button">
+                              className="qm-btn qm-btn-primary">
                         <PlayArrowOutlinedIcon/>&nbsp;&nbsp;Run All {isFilterOn() ? "*" : ""}
                       </button>
-                      <a className={"shiny-button"}
+                      <a className={"qm-btn"}
                               href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>
                         <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Archive"}
                       </a>
                       <button onClick={deleteFromQueue}
-                              className={"shiny-button delete red-button order-last"}>
+                              className={"delete order-last qm-btn qm-btn-danger"}>
                         <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Archive"}
                       </button>
                     </>
@@ -739,12 +739,12 @@ export default function Home({ onDarkChange }) {
                   {/* Completed Actions */}
                   {route === 'completed' &&
                     <>
-                      <a className={"shiny-button"}
+                      <a className={"qm-btn"}
                               href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>
                         <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Completed Jobs"}
                       </a>
                       <button onClick={deleteFromQueue}
-                              className={"order-last delete red-button shiny-button"}>
+                              className={"order-last delete qm-btn qm-btn-danger"}>
                         <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Completed Jobs"}
                       </button>
                     </>
@@ -758,7 +758,7 @@ export default function Home({ onDarkChange }) {
                   encType="multipart/form-data"
                   className={"import-form"}
                 >
-                  <Button variant="contained" color="inherit" size="small" component="label" className={"shiny-button"}>
+                  <Button variant="contained" color="inherit" size="small" component="label" className={"qm-btn"}>
                     <DriveFolderUploadOutlinedIcon/>&nbsp;&nbsp;Import {route === 'queue' ? 'Queue' : 'Archive'}
                     <VisuallyHiddenInput
                       type="file"
