@@ -153,6 +153,13 @@ def test_capture_runtime_value_handles_scalars_nested_lists_and_empty_lists():
     assert capture_runtime_value("prompt", 6, "empty", []) is None
 
 
+def test_card_image_name_matches_route_contract_for_unsafe_prompt_id():
+    filename = qm_card._card_image_name("prompt.with/slash", 2)
+
+    assert qm_card.CARD_IMAGE_NAME_PATTERN.fullmatch(filename) is not None
+    assert "." not in Path(filename).stem
+
+
 def test_capture_runtime_tensor_saves_thumbnail_with_safe_name(monkeypatch, tmp_path):
     torch = pytest.importorskip("torch")
     image_module = pytest.importorskip("PIL.Image")
@@ -175,3 +182,48 @@ def test_capture_runtime_tensor_saves_thumbnail_with_safe_name(monkeypatch, tmp_
         assert image.size == (256, 128)
         assert image.getpixel((0, 0)) == (127, 127, 127)
     assert Path(filename).name == filename
+
+
+def test_remove_card_images_matches_complete_encoded_prompt_id(monkeypatch, tmp_path):
+    cards_dir = tmp_path / "cards"
+    cards_dir.mkdir()
+    monkeypatch.setattr(qm_card, "CARDS_DIR", cards_dir)
+    target_names = [qm_card._card_image_name("job_1", index) for index in (1, 2)]
+    prefix_name = qm_card._card_image_name("job", 1)
+    traversal_name = qm_card._card_image_name("../outside", 1)
+    outside_file = tmp_path / "outside_1.png"
+    for name in [*target_names, prefix_name, traversal_name]:
+        (cards_dir / name).write_bytes(b"png")
+    outside_file.write_bytes(b"outside")
+
+    removed = qm_card.remove_card_images(["job_1", "../outside"])
+
+    assert removed == 3
+    assert all(not (cards_dir / name).exists() for name in [*target_names, traversal_name])
+    assert (cards_dir / prefix_name).is_file()
+    assert outside_file.is_file()
+
+
+def test_prune_orphans_keeps_exact_encoded_queue_prompt_ids(qm_db, monkeypatch, tmp_path):
+    cards_dir = tmp_path / "cards"
+    cards_dir.mkdir()
+    monkeypatch.setattr(qm_card, "CARDS_DIR", cards_dir)
+    _insert_queue_item(qm_db, "live_prompt_1")
+    _insert_queue_item(qm_db, "live/prompt")
+    live_names = [qm_card._card_image_name("live_prompt_1", 4), qm_card._card_image_name("live/prompt", -2)]
+    orphan_names = [qm_card._card_image_name("live_prompt", 1), qm_card._card_image_name("orphan_prompt", 3)]
+    unrelated_names = ["notes.txt", "not-a-runtime-card.png"]
+    for name in [*live_names, *orphan_names, *unrelated_names]:
+        (cards_dir / name).write_bytes(b"png")
+
+    removed = qm_card.prune_orphans()
+
+    assert removed == 2
+    assert all((cards_dir / name).is_file() for name in [*live_names, *unrelated_names])
+    assert all(not (cards_dir / name).exists() for name in orphan_names)
+
+
+def test_prune_orphans_tolerates_absent_cards_directory(qm_db, monkeypatch, tmp_path):
+    monkeypatch.setattr(qm_card, "CARDS_DIR", tmp_path / "missing")
+
+    assert qm_card.prune_orphans() == 0

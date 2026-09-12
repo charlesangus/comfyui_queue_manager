@@ -222,3 +222,36 @@ def test_queue_put_without_card_entries_preserves_existing_card(qm_queue):
     _, pending = qm_queue.qm.get_current_queue(page_size=20)
 
     assert pending[0][3]["card"][0]["value"] == "original"
+
+
+def test_deletion_paths_remove_only_their_card_images(qm_queue, monkeypatch, tmp_path):
+    import src.comfyui_queue_manager.qm_card as qm_card_module
+
+    cards_dir = tmp_path / "cards"
+    cards_dir.mkdir()
+    monkeypatch.setattr(qm_card_module, "CARDS_DIR", cards_dir)
+    rows = [
+        ("explicit_1", 0),
+        ("explicit", 2),
+        ("wipe_pending", 0),
+        ("running_prompt", 1),
+        ("archived_prompt", 3),
+    ]
+    for prompt_id, status in rows:
+        qm_queue.qm_db.write_query(
+            "INSERT INTO queue (prompt_id, prompt, status) VALUES (?, '[]', ?)",
+            (prompt_id, status),
+        )
+        (cards_dir / qm_card_module._card_image_name(prompt_id, 1)).write_bytes(b"png")
+
+    assert qm_queue.qm.delete_items(["explicit_1", "missing"]) is None
+    assert not (cards_dir / qm_card_module._card_image_name("explicit_1", 1)).exists()
+    assert (cards_dir / qm_card_module._card_image_name("explicit", 1)).is_file()
+
+    assert qm_queue.qm.wipe_queue() is None
+    assert not (cards_dir / qm_card_module._card_image_name("wipe_pending", 1)).exists()
+    assert qm_queue.qm.delete_running("running_prompt") == 1
+    assert not (cards_dir / qm_card_module._card_image_name("running_prompt", 1)).exists()
+    assert qm_queue.qm.delete_from_queue("archive") == 1
+    assert not (cards_dir / qm_card_module._card_image_name("archived_prompt", 1)).exists()
+    assert (cards_dir / qm_card_module._card_image_name("explicit", 1)).is_file()

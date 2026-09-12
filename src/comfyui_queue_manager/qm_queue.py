@@ -7,7 +7,7 @@ from server import PromptServer
 import json
 import heapq
 
-from .qm_card import extract_card_entries, load_card_by_prompt_id, save_card
+from .qm_card import extract_card_entries, load_card_by_prompt_id, remove_card_images, save_card
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -542,8 +542,12 @@ class QM_Queue:
             qm_log.info("Deleting items from queue: %s", items)
             # Delete the item from the database
 
+            prompt_ids = []
             deleted = 0
             for item in items:
+                row = read_single("SELECT prompt_id FROM queue WHERE prompt_id = ?", (item,))
+                if row is not None:
+                    prompt_ids.append(row[0])
                 deleted += write_query(
                     """
                     DELETE FROM queue
@@ -554,6 +558,7 @@ class QM_Queue:
                 )
 
             get_conn().commit()
+            remove_card_images(prompt_ids)
 
             if deleted > 0:
                 PromptServer.instance.queue_updated()
@@ -561,11 +566,13 @@ class QM_Queue:
 
     def wipe_queue(self):
         with self.native_queue.mutex:
+            prompt_ids = [row[0] for row in read_query("SELECT prompt_id FROM queue WHERE status = 0")]
             # Wipe the queue from the database
             write_query("""
                 DELETE FROM queue
                 WHERE status = 0
             """)
+            remove_card_images(prompt_ids)
 
     # Set status of pending and running items to 3 (archived)
     def archive_queue(self, filters=None):
@@ -625,14 +632,23 @@ class QM_Queue:
 
     def delete_running(self, prompt_id=None):
         with self.native_queue.mutex:
+            prompt_ids = [
+                row[0]
+                for row in read_query(
+                    "SELECT prompt_id FROM queue WHERE status = 1 AND (? IS NULL OR prompt_id = ?)",
+                    (prompt_id, prompt_id),
+                )
+            ]
             # Interrupt the queue
-            return write_query(
+            deleted = write_query(
                 """
                 DELETE FROM queue
                 WHERE status = 1 AND (? IS NULL OR prompt_id = ?)
             """,
                 (prompt_id, prompt_id),
             )
+            remove_card_images(prompt_ids)
+            return deleted
 
     def play_items(self, items, front, client_id=None):
         """
@@ -764,6 +780,7 @@ class QM_Queue:
     def delete_from_queue(self, route="queue", filters=None):
         with self.native_queue.mutex:
             where_string, params = self.get_filters(filters, [self.get_route_query(route)])
+            prompt_ids = [row[0] for row in read_query(f"SELECT prompt_id FROM queue WHERE {where_string}", params)]
             # Delete the archive from the database
             deleted = write_query(
                 f"""
@@ -772,6 +789,7 @@ class QM_Queue:
             """,
                 params,
             )
+            remove_card_images(prompt_ids)
 
             if route == "queue":
                 PromptServer.instance.queue_updated()

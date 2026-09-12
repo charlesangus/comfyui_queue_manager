@@ -6,17 +6,67 @@ from pathlib import Path
 import re
 from typing import Any
 
-from .qm_db import get_conn, read_single
+from .qm_db import get_conn, read_query, read_single
 
 
 CARDS_DIR = Path(__file__).resolve().parents[2] / "data" / "cards"
+CARD_IMAGE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]+\.png")
+_CARD_IMAGE_PARTS_PATTERN = re.compile(r"(?P<prompt>[A-Za-z0-9_-]+)_(?P<index>-?\d+)\.png")
+
+
+def _prompt_component(prompt_id: str) -> str:
+    prompt_component = str(prompt_id)
+    if len(prompt_component) > 200 or not re.fullmatch(r"[A-Za-z0-9_-]+", prompt_component):
+        return hashlib.sha256(prompt_component.encode()).hexdigest()
+    return prompt_component
 
 
 def _card_image_name(prompt_id: str, index: int) -> str:
-    prompt_component = str(prompt_id)
-    if len(prompt_component) > 200 or not re.fullmatch(r"[A-Za-z0-9._-]+", prompt_component):
-        prompt_component = hashlib.sha256(prompt_component.encode()).hexdigest()
-    return f"{prompt_component}_{index}.png"
+    return f"{_prompt_component(prompt_id)}_{index}.png"
+
+
+def _card_image_files():
+    try:
+        paths = list(CARDS_DIR.iterdir())
+    except OSError:
+        return
+
+    for path in paths:
+        match = _CARD_IMAGE_PARTS_PATTERN.fullmatch(path.name)
+        try:
+            is_file = path.is_file()
+        except OSError:
+            is_file = False
+        if match is not None and is_file:
+            yield path, match.group("prompt")
+
+
+def remove_card_images(prompt_ids) -> int:
+    prompt_components = {_prompt_component(prompt_id) for prompt_id in prompt_ids}
+    removed = 0
+    for path, prompt_component in _card_image_files():
+        if prompt_component not in prompt_components:
+            continue
+        try:
+            path.unlink()
+        except OSError:
+            continue
+        removed += 1
+    return removed
+
+
+def prune_orphans() -> int:
+    prompt_components = {_prompt_component(row[0]) for row in read_query("SELECT prompt_id FROM queue")}
+    removed = 0
+    for path, prompt_component in _card_image_files():
+        if prompt_component in prompt_components:
+            continue
+        try:
+            path.unlink()
+        except OSError:
+            continue
+        removed += 1
+    return removed
 
 
 def capture_runtime_value(prompt_id: str, index: int, label: str, value: Any) -> dict | None:
