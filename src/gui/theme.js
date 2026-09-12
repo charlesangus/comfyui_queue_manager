@@ -3,6 +3,7 @@ import { createTheme } from '@mui/material/styles';
 
 export function buildTheme(dark) {
   return createTheme({
+    cssVariables: { nativeColor: true },
     palette: {
       mode: dark ? 'dark' : 'light',
       background: {

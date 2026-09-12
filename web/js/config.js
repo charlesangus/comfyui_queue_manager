@@ -10,9 +10,7 @@ export const QM_PROD_URL = window.location.protocol + "//" + window.location.hos
 export const QueueManagerURL = QM_ENVIRONMENT === "development" ? QM_DEV_URL : QM_PROD_URL;
 export const QueueManagerOrigin = QM_ENVIRONMENT === "development" ? QM_DEV_URL : window.location.origin;
 
-// ComfyUI theme CSS variables to send to iframe
 export const QM_THEME_VARS = [
-  // ComfyUI base colors
   '--fg-color',
   '--bg-color',
   '--comfy-menu-bg',
@@ -30,13 +28,12 @@ export const QM_THEME_VARS = [
   '--content-hover-bg',
   '--content-hover-fg',
   '--bar-shadow',
-  // PrimeVue tokens
   '--p-toolbar-background',
   '--p-primary-color',
+  '--p-primary-contrast-color',
   '--p-content-border-color',
   '--p-text-color',
   '--p-text-muted-color',
-  // Surface tokens (0-900)
   '--p-surface-0',
   '--p-surface-50',
   '--p-surface-100',

@@ -472,7 +472,7 @@ button {
     line-height: 1.8rem;
     box-sizing: border-box;
     font-size: 13px;
-    font-family: "Cabin", helvetica, arial, sans-serif;
+    font-family: var(--qm-font);
 
     .type {
       color: var(--qm-fg-muted);
@@ -511,7 +511,7 @@ button {
   right: 0;
   background-color: var(--qm-surface);
   color: var(--qm-fg);
-  box-shadow: 0 5px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 5px 6px var(--qm-shadow);
   display: none;
   border-bottom-left-radius: 0.5rem;
 

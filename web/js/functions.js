@@ -75,7 +75,6 @@ export function setupThemeObserver() {
       clearTimeout(themeUpdateTimeout);
     }
 
-    // Debounce theme updates by 100ms to avoid excessive iframe messages during rapid theme changes
     themeUpdateTimeout = setTimeout(() => {
       const currentTheme = collectTheme();
       const currentThemeStr = JSON.stringify(currentTheme);

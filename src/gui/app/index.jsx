@@ -11,7 +11,6 @@ import { styled } from '@mui/material/styles';
 import TopMenu from "./components/TopMenu";
 import {Queue} from "./components/Queue";
 import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
 import {baseURL} from "./internals/config";
 import { useEffect, useState, useCallback, useMemo, useRef} from "react";
 import {apiCall} from "./internals/functions";
@@ -758,7 +757,7 @@ export default function Home({ onDarkChange }) {
                   encType="multipart/form-data"
                   className={"import-form"}
                 >
-                  <Button variant="contained" color="inherit" size="small" component="label" className={"qm-btn"}>
+                  <label className="qm-btn">
                     <DriveFolderUploadOutlinedIcon/>&nbsp;&nbsp;Import {route === 'queue' ? 'Queue' : 'Archive'}
                     <VisuallyHiddenInput
                       type="file"
@@ -768,7 +767,7 @@ export default function Home({ onDarkChange }) {
                       accept=".json"
                       required
                     />
-                  </Button>
+                  </label>
                 </form>
               }
 
