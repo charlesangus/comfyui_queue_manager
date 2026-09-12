@@ -125,6 +125,11 @@ backend can be unit-tested without a ComfyUI install.
   running-row conflict; `task_done` deletes the existing `(item_id, key)` meta
   row before inserting. Two new regression tests added. Round closed, no
   second round needed.
+- 2026-09-12 — merged: PR #1 merged (squash) into `main` as 2152bed. GitHub Actions was
+  disabled on this fork and had to be enabled by the user before CI could run; once enabled, the
+  `comfyui_queue_manager CI build` check (ruff + pytest, the one this milestone's gate cares
+  about) passed on Python 3.12. The `Validate backwards compatibility` check failed for
+  pre-existing, unrelated reasons (see decision above) and isn't a required check.
 - 2026-09-12 — package-lock-regenerated: `src/gui/package-lock.json` was stale against
   `package.json` (still listed `next`, `@mui/material-nextjs`, `eslint-config-next` from a
   since-removed Next.js setup). `npm install` regenerated it to match; committed as part of
