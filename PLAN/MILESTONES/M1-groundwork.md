@@ -21,7 +21,7 @@ backend can be unit-tested without a ComfyUI install.
   - verify: `pytest tests/` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M1.P1.T2 — Add a sqlite fixture and a first test for `qm_db.init_schema`
+- [x] M1.P1.T2 — Add a sqlite fixture and a first test for `qm_db.init_schema`
   - files: `tests/conftest.py`, `tests/test_qm_db.py`, `src/comfyui_queue_manager/qm_db.py`
   - approach: `qm_db.py` hard-codes the DB path at module level (`data/qm-queue.db`). Make the
     path overridable via an environment variable `QM_DB_PATH` read at import (default unchanged),
