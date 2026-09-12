@@ -1,4 +1,4 @@
-import {QueueManagerGalleryURL, QueueManagerOrigin, QueueManagerURL} from './config.js';
+import {QueueManagerOrigin, QueueManagerURL} from './config.js';
 import {settings} from './settings.js';
 
 import { app } from '../../../scripts/app.js';
