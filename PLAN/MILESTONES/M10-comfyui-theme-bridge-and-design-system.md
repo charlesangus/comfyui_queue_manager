@@ -140,7 +140,7 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `grep -rn "color-neutral\|var(--background" src/gui/styles` finds nothing.
   - size: M
 
-- [ ] M10.P2.T4 — Filters panel and top-menu dropdown restyle
+- [x] M10.P2.T4 — Filters panel and top-menu dropdown restyle
   - files: `src/gui/styles/_queue.scss`
   - approach: Added after M10.P2.T2 (freshness gap found while verifying it): `.filters`
     (~line 476), `.top-menu`/`.top-menu-toggle` (~line 538-630) in `_queue.scss` weren't in any
@@ -152,6 +152,27 @@ set on `document.documentElement`, with `dark-theme` toggled on the root for dar
     `--qm-surface-hover`, text → `--qm-fg`/`--qm-fg-muted`, borders → `--qm-border`), deleting
     the media queries once nothing inside them differs from the token's own light/dark value.
   - verify: `grep -n "prefers-color-scheme" src/gui/styles/_queue.scss` finds nothing;
+    `npm run lint`/`npm run build` pass.
+  - size: S
+
+- [ ] M10.P2.T5 — Sweep the remaining scattered `prefers-color-scheme` blocks in `_queue.scss`
+  - files: `src/gui/styles/_queue.scss`
+  - approach: T4's grep verify was scoped by its subagent to the three regions it edited rather
+    than the whole file, so it missed five more instances left over from before T2/T4: `.pending
+    .total:hover` (white/black background+text swap, ~line 199-207), `.pending button:hover`
+    (`gold`/`saddlebrown` text swap, ~line 211-219), `.outputs-row td` background
+    (`#ffffff05`/`#ffffff99`, ~line 287-295), `button.plain:hover` color (`white`/`black`
+    swap, ~line 403-409), and `.page-selector` background (`#fff8`, ~line 447-451). Replace each
+    with the matching `--qm-*` token the same way T2/T4 did (backgrounds → `--qm-surface`/
+    `--qm-surface-hover`, text → `--qm-fg`/`--qm-fg-muted`, an accent/highlight color like the
+    gold hover can map to `--qm-primary` since there's no dedicated accent token), deleting the
+    `prefers-color-scheme` block once folded into the token value. Confirm nothing else remains
+    with `grep -c "prefers-color-scheme" src/gui/styles/_queue.scss` returning `0`, and also spot
+    -check `_common.scss`/`_footer.scss` for the same pattern in case anything survived earlier
+    tasks (they should already be clean, but this task is the last one touching styles before
+    the milestone gate, so it's the right place to confirm the whole app is clean, not just
+    `_queue.scss`).
+  - verify: `grep -rc "prefers-color-scheme" src/gui/styles` shows `0` for every file;
     `npm run lint`/`npm run build` pass.
   - size: S
 
@@ -170,6 +191,13 @@ one custom palette: the panel recolours live, buttons/tabs/footer match native c
 
 ## Decisions
 
+- 2026-09-12 — M10.P2.T4's own verify claim ("prefers-color-scheme grep clean") turned out to be
+  scoped to the regions it edited, not the whole file as instructed — five more scattered
+  instances remained in `_queue.scss` (`.pending .total:hover`, `.pending button:hover`,
+  `.outputs-row`, `button.plain:hover`, `.page-selector`). Added M10.P2.T5 to sweep them plus
+  double-check `_common.scss`/`_footer.scss`, since that's the last styles task before the
+  gate. Lesson for future PM verification: re-run a task's own stated verify command myself
+  against the actual current file rather than trusting a subagent's narrower restatement of it.
 - 2026-09-12 — M10.P2.T2 verification surfaced a further gap: `.filters`/`.top-menu`/
   `.top-menu-toggle` in `_queue.scss` were never in any M10 task's file scope and still carry
   `prefers-color-scheme` blocks and hardcoded colors, which the milestone's own verification
