@@ -56,7 +56,7 @@ backend can be unit-tested without a ComfyUI install.
 
 ## Phase 1.2: Build
 
-- [ ] M1.P2.T1 — Confirm the GUI builds reproducibly from a clean checkout and document it
+- [x] M1.P2.T1 — Confirm the GUI builds reproducibly from a clean checkout and document it
   - files: `src/gui/README.md`, `README.md` (Development section)
   - approach: From `src/gui/`, run `npm install` then `npm run build`; confirm `web/.gui/assets/
     index.js` and `index.css` are regenerated and that `git diff --stat web/.gui` is empty or
@@ -97,3 +97,25 @@ backend can be unit-tested without a ComfyUI install.
 
 **Verification gate:** `pytest tests/` green, `ruff check .` green, `npm run build` from
 `src/gui/` succeeds, rebuilt `web/.gui/` committed.
+
+## Decisions
+
+- 2026-09-12 — ruff-target-py312-task-added: `ruff check .` failed repo-wide on pre-existing
+  `match` statements while verifying M1.P1.T1; added M1.P3.T2 to fix it (project-wide decision
+  filed separately, see `PLAN/DECISIONS/2026-09-12-ruff-target-py312.md`).
+- 2026-09-12 — eslint-config-typo-fixed-lint-debt-deferred: `src/gui/eslint.config.mjs` had a
+  stray character crashing every `npm run lint` invocation before linting started — fixed as
+  part of M1.P2.T1 since a broken lint config directly undermines this milestone's goal. Once
+  fixed, lint reports 32 pre-existing findings (12 errors, 20 warnings) across `Gallery.jsx`,
+  `QueueItemRow.jsx`, `MediaItem.jsx`, `SplashScreen.jsx`, `TopMenu.jsx`, `app/index.jsx`,
+  `app/internals/config.js`, `vite.config.js` — mostly `no-unused-vars`, a few
+  `react-hooks/exhaustive-deps`, `jsx-a11y/media-has-caption`, `react/jsx-no-target-blank`,
+  `no-undef` (`process`/`__dirname` in config files, likely needs `env: node` in that eslint
+  block). Left unfixed — out of scope for a build-validation task; M1's verification gate
+  doesn't require `npm run lint` to be clean (only `npm run build`), so this doesn't block M1.
+  Whichever milestone next touches these files should fix the findings it's already working
+  in; a dedicated lint-cleanup task can be filed later if these linger.
+- 2026-09-12 — package-lock-regenerated: `src/gui/package-lock.json` was stale against
+  `package.json` (still listed `next`, `@mui/material-nextjs`, `eslint-config-next` from a
+  since-removed Next.js setup). `npm install` regenerated it to match; committed as part of
+  M1.P2.T1.
