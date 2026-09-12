@@ -19,7 +19,7 @@ defined in M2):
 
 ## Phase 3.1: Backend
 
-- [ ] M3.P1.T1 — Static extraction of card entries from a prompt graph
+- [x] M3.P1.T1 — Static extraction of card entries from a prompt graph
   - files: `src/comfyui_queue_manager/qm_card.py` (new), `tests/test_qm_card.py` (new)
   - approach: Pure function `extract_card_entries(prompt_graph: dict) -> list[dict]`. The graph is
     `{node_id: {"class_type": str, "inputs": {name: literal | [src_node_id, slot]}}}`. For every
