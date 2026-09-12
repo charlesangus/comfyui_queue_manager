@@ -69,7 +69,7 @@ before M2 so the card component is built from the trimmed row, not the gallery-e
 
 ## Phase 7.3: Dead code, docs, release
 
-- [ ] M7.P3.T1 — Remove dead code and unused config
+- [x] M7.P3.T1 — Remove dead code and unused config
   - files: `web/js/archive.js` (delete), `web/js/config.js`, `src/gui/app/layout.js` (delete), `web/queue-manager.js`
   - approach: Delete `web/js/archive.js` (fully commented out) and `src/gui/app/layout.js`
     (empty); remove `QM_GALLERY_PROD_URL`/`QM_GALLERY_DEV_URL` and any gallery URL switch from
