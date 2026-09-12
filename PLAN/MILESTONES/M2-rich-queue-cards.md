@@ -8,7 +8,8 @@ to the item as `item[3].card` — the data M3's node will supply. Card layout, t
 header → `.card-info` (M3 entries) → `.card-outputs` (completed-job thumbnails, from M7) →
 actions. This milestone ships with the info area
 driven by an empty/absent `card` array (nothing visible), so the UI change is complete and
-reviewable on its own and M3 only has to populate data.
+reviewable on its own and M3 only has to populate data. All styling uses the `--qm-*` tokens
+and `.qm-btn` classes from M10 — no new colours, radii or fonts.
 
 Card data contract (consumed here, produced in M3): `item[3].card` is an array, sorted by
 `index`, of entries:

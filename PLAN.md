@@ -17,7 +17,8 @@ stopped them. Cards can be multi-selected and acted on in bulk (delete,
 archive, run, set priority). Jobs have an integer priority the scheduler honours. Running a single
 node / partial workflow interactively takes precedence over background queue work — either by
 jumping to the front of the queue or (opt-in) by interrupting the running job and re-queuing it.
-Failed and interrupted jobs stay visible in Completed instead of vanishing. The frontend is split
+Failed and interrupted jobs stay visible in Completed instead of vanishing. The panel follows the
+user's ComfyUI colour palette and font and reads as a native part of the ComfyUI UI. The frontend is split
 into hooks/components with a Vitest suite, and CI runs both the Python and the GUI checks.
 Done when every milestone below is merged into `main` on the fork with a release build of the GUI,
 `pytest tests/` and `ruff check .` pass, and the README manual documents the new features.
@@ -62,6 +63,11 @@ Done when every milestone below is merged into `main` on the fork with a release
 - Docs: README "Manual" section documents each feature with screenshots under `readme-img/`; node
   docs live in `web/docs/<Node Name>.md`. Update both when a feature lands. `CHANGELOG.md` gets
   an entry per milestone.
+- **Styling (from M10 on):** the iframe receives ComfyUI's live theme variables via a `QM_Theme`
+  message and exposes them as `--qm-*` tokens in `src/gui/styles/_variables.scss`; all new UI
+  uses those tokens and the `.qm-btn`/`.qm-badge` classes. No hard-coded colours, no
+  `prefers-color-scheme`, no bundled fonts. Visual reference is ComfyUI's own sidebar tabs
+  and PrimeVue controls.
 - No multi-user support is intended (README "Important"); don't design for it.
 
 # Board
@@ -70,6 +76,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 |----|-----------|--------|------|
 | M1 | Groundwork: green test suite and build | todo | [M1-groundwork.md](PLAN/MILESTONES/M1-groundwork.md) |
 | M7 | Remove the gallery | todo | [M7-remove-gallery.md](PLAN/MILESTONES/M7-remove-gallery.md) |
+| M10 | ComfyUI theme bridge and design system | todo | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
 | M2 | Rich queue cards | todo | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
 | M3 | Queue Card Info node | todo | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
 | M8 | Frontend refactor and a JS test runner | todo | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
@@ -77,10 +84,16 @@ Done when every milestone below is merged into `main` on the fork with a release
 | M4 | Card selection and bulk actions | todo | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
 | M5 | Job priority levels | todo | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
 | M6 | Interactive runs preempt the queue | todo | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
+| M11 | Final visual polish pass | todo | [M11-final-visual-polish.md](PLAN/MILESTONES/M11-final-visual-polish.md) |
 
-Rows are in execution order (IDs are stable; M7–M9 were added after M1–M6 were planned).
+Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 were planned).
 
 # Open questions
+
+- Which ComfyUI instance should be used for the manual verification steps in each gate (path
+  to the install or URL, and how this repo is linked into its `custom_nodes/`)? This workspace
+  has none; until answered the PM can only run the automated checks and must flag the manual
+  steps as unverified in each PR.
 
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the
