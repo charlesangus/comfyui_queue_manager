@@ -132,3 +132,23 @@ end-to-end scenarios in M6.P3.T2 pass.
 - 2026-09-11 — Interrupt goes through `nodes.interrupt_processing()` directly rather than an
   HTTP round-trip to `/api/interrupt`, keeping the preempt bookkeeping and the interrupt under one
   mutex acquisition.
+- 2026-09-13 — M6.P3.T2's manual verification gate found 2 real bugs, not fixed yet (gate does
+  NOT pass, milestone stays `doing`):
+  1. **Critical:** `web/js/functions.js`'s `hookQueuePrompt()` reads `data.partialExecutionTargets`
+     off the wrong argument — the real `ComfyApi.prototype.queuePrompt(e, t, n)` (confirmed against
+     the shipped `comfyui_frontend_package` 1.51.10 bundle) puts `partialExecutionTargets` on the
+     **third** argument (`options`/`n`), not the second (`data`/`t`, which only ever has
+     `{output, workflow}`). `data.partialExecutionTargets` is therefore always `undefined`, so
+     `qm_interactive` is never stamped on any real partial-execution run from the ComfyUI canvas —
+     confirmed live via three captured `/prompt` requests (full run, partial run in "Front of
+     queue", partial run in "Off"), none carrying the stamp despite the partial-execution ones
+     genuinely reaching ComfyUI's own partial-execution path. The entire feature was dead code from
+     the real frontend's perspective; only direct-API-simulated tests exercised it.
+  2. `queue_get`'s pause-bypass check only re-evaluates when the loop iterates; nothing calls
+     `self.pause_lock.notify()` when `queue_put` inserts an interactive-priority row, so a worker
+     thread already parked in `pause_lock.wait()` from before the interactive item arrived does not
+     wake promptly (confirmed stuck 20+ seconds against a live instance, vs. the up-to-1000s
+     timeout) — unlike `toggle_playback`'s unpause path, which does notify. `M6.P2.T3`'s own test
+     didn't catch this because it calls `queue_get` fresh, after the item is already queued, never
+     exercising a worker already blocked in `wait()`.
+  Fixes dispatched to a subagent; gate will be re-run once both are fixed and verified.
