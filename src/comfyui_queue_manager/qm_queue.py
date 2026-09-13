@@ -466,7 +466,10 @@ class QM_Queue:
             if existing is not None and existing[0] == 1:
                 return
 
-            priority = clamp_priority(item[3].pop("qm_priority", 0))
+            mode = item[3]["extra_pnginfo"]["workflow"].pop("qm_interactive", None)
+
+            qm_priority = item[3].pop("qm_priority", 0)
+            priority = PRIORITY_INTERACTIVE if mode in ("front", "interrupt") else clamp_priority(qm_priority)
 
             # Read before the upsert: once the row is written, a resubmission of the
             # prefetched item would be compared against its own new priority.
@@ -499,6 +502,9 @@ class QM_Queue:
             save_static_card(db_row[0], item[2])
 
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
+
+            if mode == "interrupt":
+                self.preempt_running()
 
             if not self.paused and (
                 head_prompt_id is None
@@ -569,6 +575,9 @@ class QM_Queue:
         self.native_queue.queue = []
         self.pull_head_into_heap()
         return True
+
+    def preempt_running(self):
+        pass
 
     def queue_get(self, timeout=None):
         with self.pause_lock:

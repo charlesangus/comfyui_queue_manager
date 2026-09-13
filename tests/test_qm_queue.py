@@ -199,6 +199,36 @@ def test_resubmitting_prefetched_item_with_lower_priority_yields(qm_queue):
     assert dequeued == ["prompt-waiting", "prompt-prefetched-high"]
 
 
+@pytest.mark.parametrize("mode", ["front", "interrupt"])
+def test_queue_put_honours_interactive_stamp(qm_queue, mode):
+    item = _make_item(1, "prompt-interactive", "Workflow A", "wf-a")
+    item[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = mode
+
+    qm_queue.native_queue.put(item)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority, prompt FROM queue WHERE prompt_id = ?",
+        ("prompt-interactive",),
+    )
+    assert row["priority"] == 1000
+    assert "qm_interactive" not in row["prompt"]
+
+    heap_item = qm_queue.native_queue.queue[0]
+    assert "qm_interactive" not in heap_item[3]["extra_pnginfo"]["workflow"]
+
+
+def test_queue_put_calls_preempt_running_on_interrupt_stamp(qm_queue, monkeypatch):
+    calls = []
+    monkeypatch.setattr(qm_queue.qm, "preempt_running", lambda: calls.append(True))
+
+    item = _make_item(1, "prompt-interrupt-stamp", "Workflow A", "wf-a")
+    item[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "interrupt"
+
+    qm_queue.native_queue.put(item)
+
+    assert calls == [True]
+
+
 def test_import_queue_preempts_prefetched_lower_priority_item(qm_queue):
     prefetched = _make_item(1, "prompt-import-prefetched", "Workflow A", "wf-a")
     qm_queue.native_queue.put(prefetched)
