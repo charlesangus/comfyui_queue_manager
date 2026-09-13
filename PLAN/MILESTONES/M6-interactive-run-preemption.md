@@ -43,7 +43,7 @@ handling sees the job.
 
 ## Phase 6.2: Backend
 
-- [ ] M6.P2.T1 — `queue_put` honours the stamp: reserved priority, strip, notify
+- [x] M6.P2.T1 — `queue_put` honours the stamp: reserved priority, strip, notify
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: At the top of the DB branch of `queue_put`, `mode = item[3]["extra_pnginfo"]
     ["workflow"].pop("qm_interactive", None)` (mutating the dict in place is what strips it from

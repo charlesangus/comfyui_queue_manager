@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: M6.P2.T1
-pm_heartbeat: 2026-09-13T19:23:00-04:00
+current: M6.P2.T2
+pm_heartbeat: 2026-09-13T19:33:00-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
