@@ -19,4 +19,3 @@ Runtime thumbnails are stored under `data/cards` while their queue items exist a
 | `value`   | `*`        | Value to display on the queue card               |
 | `index`   | `INT`      | Card position from 1 to 99 (default: 1)          |
 | `label`   | `STRING`   | Caption displayed with the value (default: empty) |
-

@@ -31,7 +31,7 @@ def test_card_image_route_validates_name_and_serves_immutable_file(monkeypatch, 
     missing_name = asyncio.run(qm_server.get_card_image(SimpleNamespace(query={})))
     invalid = asyncio.run(qm_server.get_card_image(SimpleNamespace(query={"name": "../escape.png"})))
     missing = asyncio.run(qm_server.get_card_image(SimpleNamespace(query={"name": "missing_1.png"})))
-    image_path = cards_dir / "existing_1.png"
+    image_path = cards_dir / qm_server.qm_card._card_image_name("existing", 1, "preview", b"png")
     image_path.write_bytes(b"png")
     existing = asyncio.run(qm_server.get_card_image(SimpleNamespace(query={"name": image_path.name})))
 

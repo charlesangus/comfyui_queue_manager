@@ -1,3 +1,6 @@
+import pytest
+
+
 def _make_item(number, prompt_id, workflow_name, workflow_id):
     return [
         number,
@@ -162,6 +165,42 @@ def test_queue_put_exposes_card_metadata_on_pending_item(qm_queue):
     assert pending[0][3]["card"] == [
         {"index": 2, "label": "summary", "kind": "text", "value": "card value"}
     ]
+
+
+@pytest.mark.parametrize("value", [[1, 2], ["literal", "text"], [["nested"], 0], [{"nested": 1}, 0]])
+def test_queue_put_accepts_literal_lists_in_card(qm_queue, value):
+    item = _make_item(100, "literal-card", "Workflow", "wf")
+    item[2] = _card_graph(value)
+
+    qm_queue.native_queue.put(item)
+
+    _, pending = qm_queue.qm.get_current_queue(page_size=20)
+    assert pending[0][3]["card"][0]["value"] == str(value)
+
+
+@pytest.mark.parametrize("status", [0, 3])
+def test_import_queue_extracts_cards_only_for_successfully_inserted_items(qm_queue, status):
+    existing = _make_item(1, "existing", "Workflow", "wf")
+    existing[2] = _card_graph("preserve")
+    qm_queue.native_queue.put(existing)
+    duplicate = _make_item(2, "existing", "Workflow", "wf")
+    duplicate[2] = _card_graph("discard")
+    imported = _make_item(3, "imported", "Workflow", "wf")
+    imported[2] = _card_graph("imported value")
+    repeated = _make_item(4, "imported", "Workflow", "wf")
+    repeated[2] = _card_graph("discard duplicate")
+
+    assert qm_queue.qm.import_queue([duplicate, imported, repeated], client_id="client", status=status) == (1, 3)
+
+    rows = qm_queue.qm_db.read_query("SELECT queue.prompt_id, queue.status, meta.value FROM queue JOIN meta ON meta.item_id = queue.id WHERE meta.key = 'card'")
+    import json
+
+    cards = {row[0]: (row[1], json.loads(row[2])) for row in rows}
+    assert cards["existing"][1][0]["value"] == "preserve"
+    assert cards["imported"] == (status, [{"index": 2, "label": "summary", "kind": "text", "value": "imported value"}])
+    messages = len(qm_queue.server.messages)
+    assert qm_queue.qm.import_queue([duplicate], status=status) == (0, 1)
+    assert len(qm_queue.server.messages) == messages
 
 
 def test_get_current_queue_exposes_card_on_archive_and_completed_items(qm_queue):

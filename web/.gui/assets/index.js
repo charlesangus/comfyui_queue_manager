@@ -19529,14 +19529,19 @@ function OtherTile({ label, value }) {
 function CardInfo({ entries }) {
   if (!entries?.length) return null;
   const sorted = [...entries].sort((a, b) => a.index - b.index);
+  const occurrences = /* @__PURE__ */ new Map();
   return sorted.map((entry) => {
+    const identity2 = JSON.stringify([entry.index, entry.label]);
+    const occurrence = occurrences.get(identity2) ?? 0;
+    occurrences.set(identity2, occurrence + 1);
+    const key = JSON.stringify([entry.index, entry.label, occurrence]);
     if (entry.kind === "image") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, entry.index);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, key);
     }
     if (entry.kind === "text") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, entry.index);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, key);
     }
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, entry.index);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
   });
 }
 const QueueCard = reactExports.memo(

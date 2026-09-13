@@ -1,4 +1,6 @@
 from pathlib import Path
+import hashlib
+import sqlite3
 
 import pytest
 
@@ -24,6 +26,13 @@ def test_extracts_literal_text_and_applies_metadata_defaults():
         {"index": 1, "label": "", "kind": "text", "value": "42"},
         {"index": 3, "label": "7", "kind": "text", "value": "hello"},
     ]
+
+
+@pytest.mark.parametrize("value", [[1, 2], ["literal", "text"], [["nested"], 0], [{"nested": 1}, 0], []])
+def test_extracts_literal_lists_without_treating_them_as_links(value):
+    graph = {"card": {"class_type": "Queue Card Info", "inputs": {"value": value}}}
+
+    assert extract_card_entries(graph) == [{"index": 1, "label": "", "kind": "text", "value": str(value)}]
 
 
 def test_extracts_loadimage_and_loadimagemask_paths_and_annotations():
@@ -137,6 +146,30 @@ def test_merge_entry_appends_unmatched_label_with_stable_index_order(qm_db):
     assert merge_entry("prompt-card", appended) == [same_index_first, appended, later]
 
 
+def test_merge_entry_missing_or_deleted_queue_row_creates_no_metadata(qm_db):
+    db_id = _insert_queue_item(qm_db)
+    qm_db.write_query("DELETE FROM queue WHERE id = ?", (db_id,))
+
+    assert merge_entry("prompt-card", {"index": 1, "label": "", "kind": "text", "value": "gone"}) is None
+    assert qm_db.read_query("SELECT * FROM meta") == []
+
+
+def test_merge_entry_locks_queue_row_until_metadata_is_saved(qm_db, monkeypatch):
+    db_id = _insert_queue_item(qm_db)
+    save = qm_card._save_card
+    with sqlite3.connect(qm_db.DB_PATH, timeout=0) as competing:
+        def save_while_delete_attempts(conn, item_id, entries):
+            with pytest.raises(sqlite3.OperationalError, match="locked"):
+                competing.execute("DELETE FROM queue WHERE id = ?", (db_id,))
+            save(conn, item_id, entries)
+
+        monkeypatch.setattr(qm_card, "_save_card", save_while_delete_attempts)
+        entry = {"index": 1, "label": "", "kind": "text", "value": "saved"}
+        assert merge_entry("prompt-card", entry) == [entry]
+
+    assert load_card(db_id) == [entry]
+
+
 def test_capture_runtime_value_handles_scalars_nested_lists_and_empty_lists():
     assert capture_runtime_value("prompt", 4, "result", [True]) == {
         "index": 4,
@@ -182,6 +215,49 @@ def test_capture_runtime_tensor_saves_thumbnail_with_safe_name(monkeypatch, tmp_
         assert image.size == (256, 128)
         assert image.getpixel((0, 0)) == (127, 127, 127)
     assert Path(filename).name == filename
+
+
+def test_runtime_image_urls_distinguish_labels_and_content_without_overwriting(monkeypatch, tmp_path):
+    torch = pytest.importorskip("torch")
+    monkeypatch.setattr(qm_card, "CARDS_DIR", tmp_path)
+    dark = torch.zeros((1, 2, 2, 3))
+    light = torch.ones((1, 2, 2, 3))
+    created = []
+
+    first = capture_runtime_value("prompt", 1, "first", dark, created_images=created)
+    original = created[0].read_bytes()
+    other_label = capture_runtime_value("prompt", 1, "second", light, created_images=created)
+    replay = capture_runtime_value("prompt", 1, "first", light, created_images=created)
+    repeat = capture_runtime_value("prompt", 1, "first", light, created_images=created)
+
+    assert len({entry["value"]["url"] for entry in [first, other_label, replay]}) == 3
+    assert repeat == replay
+    assert len(created) == 3
+    assert created[0].read_bytes() == original
+    assert qm_card.remove_card_images(["prompt"]) == 3
+
+
+def test_versioned_image_ownership_cannot_alias_a_hashed_unsafe_prompt(monkeypatch, tmp_path):
+    monkeypatch.setattr(qm_card, "CARDS_DIR", tmp_path)
+    unsafe_id = "../prompt"
+    safe_id = hashlib.sha256(unsafe_id.encode()).hexdigest()
+    unsafe = tmp_path / qm_card._card_image_name(unsafe_id, 1)
+    safe = tmp_path / qm_card._card_image_name(safe_id, 1)
+    unsafe.write_bytes(b"unsafe")
+    safe.write_bytes(b"safe")
+
+    assert unsafe != safe
+    assert qm_card.remove_card_images([unsafe_id]) == 1
+    assert safe.read_bytes() == b"safe"
+
+
+def test_removes_legacy_image_names_without_matching_prompt_prefixes(monkeypatch, tmp_path):
+    monkeypatch.setattr(qm_card, "CARDS_DIR", tmp_path)
+    (tmp_path / "job_1_2.png").write_bytes(b"legacy")
+    (tmp_path / "job_1.png").write_bytes(b"other")
+
+    assert qm_card.remove_card_images(["job_1"]) == 1
+    assert (tmp_path / "job_1.png").exists()
 
 
 def test_remove_card_images_matches_complete_encoded_prompt_id(monkeypatch, tmp_path):

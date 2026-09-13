@@ -7,7 +7,7 @@ from server import PromptServer
 import json
 import heapq
 
-from .qm_card import extract_card_entries, load_card_by_prompt_id, remove_card_images, save_card
+from .qm_card import load_card_by_prompt_id, remove_card_images, save_static_card
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -407,10 +407,8 @@ class QM_Queue:
                 ),
             )
 
-            card_entries = extract_card_entries(item[2])
-            if card_entries:
-                db_row = read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))
-                save_card(db_row[0], card_entries)
+            db_row = read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))
+            save_static_card(db_row[0], item[2])
 
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
 
@@ -831,13 +829,19 @@ class QM_Queue:
                     )
                 )
 
-            total = write_many(
-                """
-                    INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                query_params,
-            )
+            total = 0
+            with get_conn() as conn:
+                for item, params in zip(items, query_params):
+                    cursor = conn.execute(
+                        """
+                            INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        params,
+                    )
+                    if cursor.rowcount:
+                        save_static_card(cursor.lastrowid, item[2], conn=conn)
+                        total += 1
 
             if total > 0:
                 theQueue.not_empty.notify()

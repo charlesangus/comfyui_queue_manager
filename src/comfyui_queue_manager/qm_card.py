@@ -1,6 +1,5 @@
-"""Static extraction of Queue Card Info entries from ComfyUI prompt graphs."""
-
 import hashlib
+from io import BytesIO
 import json
 from pathlib import Path
 import re
@@ -12,6 +11,7 @@ from .qm_db import get_conn, read_query, read_single
 CARDS_DIR = Path(__file__).resolve().parents[2] / "data" / "cards"
 CARD_IMAGE_NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]+\.png")
 _CARD_IMAGE_PARTS_PATTERN = re.compile(r"(?P<prompt>[A-Za-z0-9_-]+)_(?P<index>-?\d+)\.png")
+_VERSIONED_IMAGE_PATTERN = re.compile(r"v2-(?P<prompt>[a-f0-9]{64})-[a-f0-9]{64}-[a-f0-9]{64}\.png")
 
 
 def _prompt_component(prompt_id: str) -> str:
@@ -21,8 +21,22 @@ def _prompt_component(prompt_id: str) -> str:
     return prompt_component
 
 
-def _card_image_name(prompt_id: str, index: int) -> str:
-    return f"{_prompt_component(prompt_id)}_{index}.png"
+def _card_image_name(prompt_id: str, index: int, label: str = "", content: bytes = b"") -> str:
+    owner = hashlib.sha256(str(prompt_id).encode()).hexdigest()
+    entry = hashlib.sha256(json.dumps([index, label], ensure_ascii=False).encode()).hexdigest()
+    digest = hashlib.sha256(content).hexdigest()
+    return f"v2-{owner}-{entry}-{digest}.png"
+
+
+def _image_owners(prompt_ids):
+    return {
+        owner
+        for prompt_id in prompt_ids
+        for owner in (
+            ("v2", hashlib.sha256(str(prompt_id).encode()).hexdigest()),
+            ("legacy", _prompt_component(prompt_id)),
+        )
+    }
 
 
 def _card_image_files():
@@ -32,17 +46,21 @@ def _card_image_files():
         return
 
     for path in paths:
-        match = _CARD_IMAGE_PARTS_PATTERN.fullmatch(path.name)
+        match = _VERSIONED_IMAGE_PATTERN.fullmatch(path.name)
+        version = "v2"
+        if match is None:
+            match = _CARD_IMAGE_PARTS_PATTERN.fullmatch(path.name)
+            version = "legacy"
         try:
             is_file = path.is_file()
         except OSError:
             is_file = False
         if match is not None and is_file:
-            yield path, match.group("prompt")
+            yield path, (version, match.group("prompt"))
 
 
 def remove_card_images(prompt_ids) -> int:
-    prompt_components = {_prompt_component(prompt_id) for prompt_id in prompt_ids}
+    prompt_components = _image_owners(prompt_ids)
     removed = 0
     for path, prompt_component in _card_image_files():
         if prompt_component not in prompt_components:
@@ -56,7 +74,7 @@ def remove_card_images(prompt_ids) -> int:
 
 
 def prune_orphans() -> int:
-    prompt_components = {_prompt_component(row[0]) for row in read_query("SELECT prompt_id FROM queue")}
+    prompt_components = _image_owners(row[0] for row in read_query("SELECT prompt_id FROM queue"))
     removed = 0
     for path, prompt_component in _card_image_files():
         if prompt_component in prompt_components:
@@ -69,11 +87,11 @@ def prune_orphans() -> int:
     return removed
 
 
-def capture_runtime_value(prompt_id: str, index: int, label: str, value: Any) -> dict | None:
+def capture_runtime_value(prompt_id: str, index: int, label: str, value: Any, *, created_images: list[Path] | None = None) -> dict | None:
     if isinstance(value, list):
         if not value:
             return None
-        return capture_runtime_value(prompt_id, index, label, value[0])
+        return capture_runtime_value(prompt_id, index, label, value[0], created_images=created_images)
 
     if isinstance(value, (str, int, float, bool)):
         return {"index": index, "label": label, "kind": "text", "value": str(value)}
@@ -96,8 +114,19 @@ def capture_runtime_value(prompt_id: str, index: int, label: str, value: Any) ->
     image.thumbnail((256, 256))
 
     CARDS_DIR.mkdir(parents=True, exist_ok=True)
-    filename = _card_image_name(prompt_id, index)
-    image.save(CARDS_DIR / filename, format="PNG")
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    content = buffer.getvalue()
+    filename = _card_image_name(prompt_id, index, label, content)
+    path = CARDS_DIR / filename
+    try:
+        with path.open("xb") as output:
+            output.write(content)
+    except FileExistsError:
+        pass
+    else:
+        if created_images is not None:
+            created_images.append(path)
     return {
         "index": index,
         "label": label,
@@ -106,13 +135,26 @@ def capture_runtime_value(prompt_id: str, index: int, label: str, value: Any) ->
     }
 
 
+def _save_card(conn, db_id: int, entries: list[dict]) -> None:
+    conn.execute("DELETE FROM meta WHERE item_id = ? AND key = 'card'", (db_id,))
+    conn.execute(
+        "INSERT INTO meta (item_id, key, value) VALUES (?, 'card', ?)",
+        (db_id, json.dumps(entries)),
+    )
+
+
 def save_card(db_id: int, entries: list[dict]) -> None:
     with get_conn() as conn:
-        conn.execute("DELETE FROM meta WHERE item_id = ? AND key = 'card'", (db_id,))
-        conn.execute(
-            "INSERT INTO meta (item_id, key, value) VALUES (?, 'card', ?)",
-            (db_id, json.dumps(entries)),
-        )
+        _save_card(conn, db_id, entries)
+
+
+def save_static_card(db_id: int, prompt_graph: dict, *, conn=None) -> None:
+    entries = extract_card_entries(prompt_graph)
+    if entries:
+        if conn is None:
+            save_card(db_id, entries)
+        else:
+            _save_card(conn, db_id, entries)
 
 
 def load_card(db_id: int) -> list[dict] | None:
@@ -150,28 +192,30 @@ def load_card_by_prompt_id(prompt_id: str) -> list[dict] | None:
 
 
 def merge_entry(prompt_id: str, entry: dict) -> list[dict] | None:
-    row = read_single("SELECT id FROM queue WHERE prompt_id = ?", (prompt_id,))
-    if row is None:
-        return None
+    with get_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute("SELECT id FROM queue WHERE prompt_id = ?", (prompt_id,)).fetchone()
+        if row is None:
+            return None
 
-    db_id = row[0]
-    entries = load_card(db_id) or []
-    exact_matches = [
-        index
-        for index, existing in enumerate(entries)
-        if existing.get("index") == entry.get("index") and existing.get("label") == entry.get("label")
-    ]
-    placeholder_matches = [index for index in exact_matches if entries[index].get("placeholder")]
+        db_id = row[0]
+        entries = load_card(db_id) or []
+        exact_matches = [
+            index
+            for index, existing in enumerate(entries)
+            if existing.get("index") == entry.get("index") and existing.get("label") == entry.get("label")
+        ]
+        placeholder_matches = [index for index in exact_matches if entries[index].get("placeholder")]
 
-    if placeholder_matches:
-        entries[placeholder_matches[0]] = entry
-    elif exact_matches:
-        entries[exact_matches[0]] = entry
-    else:
-        entries.append(entry)
-        entries.sort(key=lambda existing: existing.get("index", 1))
+        if placeholder_matches:
+            entries[placeholder_matches[0]] = entry
+        elif exact_matches:
+            entries[exact_matches[0]] = entry
+        else:
+            entries.append(entry)
+            entries.sort(key=lambda existing: existing.get("index", 1))
 
-    save_card(db_id, entries)
+        _save_card(conn, db_id, entries)
     return entries
 
 
@@ -230,7 +274,12 @@ def extract_card_entries(prompt_graph: dict) -> list[dict]:
             inputs = {}
         index, label = _card_metadata(inputs)
         value = inputs.get("value")
-        if isinstance(value, list) and len(value) == 2:
+        if (
+            isinstance(value, list)
+            and len(value) == 2
+            and isinstance(value[0], str)
+            and isinstance(value[1], (int, float))
+        ):
             source = prompt_graph.get(value[0])
             if not isinstance(source, dict):
                 continue

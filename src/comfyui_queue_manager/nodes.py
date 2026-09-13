@@ -60,6 +60,7 @@ class QueueCardInfo:
 
     RETURN_TYPES = ()
     OUTPUT_NODE = True
+    INPUT_IS_LIST = True
     FUNCTION = "run"
     CATEGORY = "Queue Manager"
 
@@ -68,15 +69,25 @@ class QueueCardInfo:
         return float("nan")
 
     def run(self, value, index, label):
+        index = index[0] if isinstance(index, list) and index else index
+        label = label[0] if isinstance(label, list) and label else label
         running = current_running_item()
         if running is not None:
             from . import qm_card
 
             prompt_id = running[1]
-            entry = qm_card.capture_runtime_value(prompt_id, index, label, value)
+            created_images = []
+            entry = qm_card.capture_runtime_value(prompt_id, index, label, value, created_images=created_images)
             if entry is not None:
-                qm_card.merge_entry(prompt_id, entry)
-                PromptServer.instance.send_sync("queue-manager-queue-updated", {"card": prompt_id})
+                merged = None
+                try:
+                    merged = qm_card.merge_entry(prompt_id, entry)
+                finally:
+                    if merged is None:
+                        for path in created_images:
+                            path.unlink(missing_ok=True)
+                if merged is not None:
+                    PromptServer.instance.send_sync("queue-manager-queue-updated", {"card": prompt_id})
         return {"ui": {}}
 
 
