@@ -10,7 +10,7 @@ this bar.
 
 ## Phase 4.1: Selection state
 
-- [ ] M4.P1.T1 — Selection store
+- [x] M4.P1.T1 — Selection store
   - files: `src/gui/app/stores/selectionStore.js` (new), `src/gui/app/stores/selectionStore.test.js` (new), `src/gui/app/index.jsx`
   - approach: Zustand store `useSelectionStore` with `selected` (a `Set` of `db_id`; use
     `item[1]` prompt_id as the key for items without `db_id`, i.e. external jobs), `anchor`
