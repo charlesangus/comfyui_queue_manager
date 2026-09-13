@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: null
-pm_heartbeat: 2026-09-13T02:10:00-04:00
+current: M8.P1.T1
+pm_heartbeat: 2026-09-13T02:12:00-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -84,7 +84,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 | M10 | ComfyUI theme bridge and design system | done | [M10-comfyui-theme-bridge-and-design-system.md](PLAN/MILESTONES/M10-comfyui-theme-bridge-and-design-system.md) |
 | M2 | Rich queue cards | done | [M2-rich-queue-cards.md](PLAN/MILESTONES/M2-rich-queue-cards.md) |
 | M3 | Queue Card Info node | done | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
-| M8 | Frontend refactor and a JS test runner | todo | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
+| M8 | Frontend refactor and a JS test runner | doing | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
 | M9 | Failed and interrupted jobs are kept | todo | [M9-failed-and-interrupted-jobs.md](PLAN/MILESTONES/M9-failed-and-interrupted-jobs.md) |
 | M4 | Card selection and bulk actions | todo | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
 | M5 | Job priority levels | todo | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
