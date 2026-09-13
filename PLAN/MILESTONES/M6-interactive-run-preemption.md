@@ -95,7 +95,7 @@ handling sees the job.
 
 ## Phase 6.3: Frontend polish, docs, release
 
-- [ ] M6.P3.T1 — Card badges for reserved priorities and changelog/README
+- [x] M6.P3.T1 — Card badges for reserved priorities and changelog/README
   - files: `src/gui/app/components/QueueCard.jsx`, `web/.gui/**`, `README.md`, `CHANGELOG.md`
   - approach: The M5 badge shows `+1000`/`+999` for reserved values; map `1000` → "Interactive"
     and `999` → "Resumed" (with tooltips explaining each). `npm run build`; commit `web/.gui/`.
