@@ -38,7 +38,7 @@ this bar.
     pending cards; thumbnails still open in a new tab; lint passes.
   - size: M
 
-- [ ] M4.P1.T3 — Selection action bar
+- [x] M4.P1.T3 — Selection action bar
   - files: `src/gui/app/components/SelectionBar.jsx` (new), `src/gui/app/index.jsx`, `src/gui/styles/_footer.scss`
   - approach: `SelectionBar` renders above the existing footer only when the selection is
     non-empty: "N selected", **Clear**, and the actions valid for the route and composition:
