@@ -23,7 +23,7 @@ handling sees the job.
 
 ## Phase 6.1: Frontend hook and setting
 
-- [ ] M6.P1.T1 — Setting and `queuePrompt` hook that stamps interactive prompts
+- [x] M6.P1.T1 — Setting and `queuePrompt` hook that stamps interactive prompts
   - files: `web/js/settings.js`, `web/js/functions.js`, `web/queue-manager.js`
   - approach: Add to `settings.js` a combo `QueueManager.Basic.InteractiveRunMode` with options
     `Off`, `Front of queue`, `Interrupt and requeue`, default `Front of queue`, and a tooltip
