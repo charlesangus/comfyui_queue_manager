@@ -76,6 +76,32 @@ const executionTimeLabel = useMemo(() => {
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
 
+    const priorityBadge = useMemo(() => {
+      if (!priority) return null;
+
+      if (priority === 1000) {
+        return {
+          className: "priority-interactive",
+          label: "Interactive",
+          title: "Interactive: this job jumped the queue because it was run directly from the canvas",
+        };
+      }
+
+      if (priority === 999) {
+        return {
+          className: "priority-resumed",
+          label: "Resumed",
+          title: "Resumed: this job was interrupted to let an interactive run through, and will run again next",
+        };
+      }
+
+      return {
+        className: priority > 0 ? "priority-positive" : "priority-negative",
+        label: priority > 0 ? `+${priority}` : `${priority}`,
+        title: `Priority ${priority > 0 ? "+" : ""}${priority}`,
+      };
+    }, [priority]);
+
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
       <article
@@ -103,12 +129,12 @@ const executionTimeLabel = useMemo(() => {
             </div>
           ) : null}
 
-          {priority ? (
+          {priorityBadge ? (
             <span
-              className={`qm-badge priority-badge ${priority > 0 ? "priority-positive" : "priority-negative"}`}
-              title={`Priority ${priority > 0 ? "+" : ""}${priority}`}
+              className={`qm-badge priority-badge ${priorityBadge.className}`}
+              title={priorityBadge.title}
             >
-              {priority > 0 ? `+${priority}` : priority}
+              {priorityBadge.label}
             </span>
           ) : null}
 

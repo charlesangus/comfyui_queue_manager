@@ -114,6 +114,16 @@ header.header {
         background-color: color-mix(in srgb, var(--qm-fg-muted) 55%, var(--qm-primary) 45%);
         color: var(--qm-primary-fg);
       }
+
+      &.priority-interactive {
+        background-color: var(--qm-primary);
+        color: var(--qm-primary-fg);
+      }
+
+      &.priority-resumed {
+        background-color: var(--qm-warning);
+        color: var(--qm-primary-fg);
+      }
     }
   }
 
