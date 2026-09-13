@@ -94,6 +94,12 @@ green; `npm run build`/`npm run lint` green; manual check in ComfyUI that a High
 runs next and that Shift+Run from the archive still puts an item ahead of others at the same
 level; rebuilt `web/.gui/` committed.
 
+Gate passed 2026-09-13: all 6 scripted manual checks against the live ComfyUI instance passed
+(priority-first dequeue order; heap preemption of an already-prefetched lower-priority item,
+proven via a slow blocker workflow rather than a timing race; Shift+Run tie-break within a
+priority tier; Priority menu UI incl. badge colors; persistence through archive→run; rejection
+of out-of-range/reserved values with 422). No deviations found.
+
 ## Decisions
 
 - 2026-09-11 — Integer priority with a small user range (−100…100) instead of a fixed enum: the
