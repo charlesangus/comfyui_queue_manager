@@ -138,3 +138,14 @@ M3.P2.T2 passes in a ComfyUI instance; `web/docs/Queue Card Info.md` present; re
   metadata comparison that checks the actual base SHA against the PR on Python 3.12. The
   upstream action imported the historical base package before comparison and failed on its
   existing ComfyUI-only `execution` dependency, so it could not reach compatibility analysis.
+- 2026-09-13 — Addressed all 8 findings from the Codex milestone review on PR #5 (2 MAJOR, 4
+  MINOR, 2 NIT — runtime image filename aliasing, missing `INPUT_IS_LIST`, unsafe React key,
+  unsafe link-shape detection, `import_queue` skipping static card extraction, an
+  orphaned-image/race window in `merge_entry`, a stale module docstring, a trailing blank
+  line) in one commit (code: `ca553f5` on `milestone/m3-queue-card-info-node`), each with a
+  regression test — including one test (`test_queue_card_info_with_installed_comfyui_executor`)
+  that runs the actual `_async_map_node_over_list` from the local ComfyUI checkout to verify
+  the `INPUT_IS_LIST` fix against real executor behavior rather than a mock. Did not spawn a
+  second review round: every finding has a passing, purpose-built test, `pytest tests/` (74
+  passed against the local venv with torch) and `ruff check .` are green, and the GUI rebuild
+  is a no-op against the updated source.
