@@ -32,3 +32,28 @@ jobs:
       - name: Run Tests
         run: |
           pytest tests/
+
+  gui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/gui
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/gui/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Linting
+        run: npm run lint
+      - name: Run Tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Check built bundle is up to date
+        run: |
+          test -z "$(git status --porcelain --untracked-files=all -- ../../web/.gui)"

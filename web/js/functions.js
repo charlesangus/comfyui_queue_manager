@@ -3,6 +3,7 @@ import {settings} from './settings.js';
 
 import { app } from '../../../scripts/app.js';
 
+// The QM_* message-type strings below (postMessageToIframe callers, handleIframeMessages) are duplicated in src/gui/app/internals/parentBridge.js on the other side of the iframe boundary and must be kept in sync manually.
 function theIframe() {
   return document.querySelector(".comfyui-queue-manager iframe");
 }

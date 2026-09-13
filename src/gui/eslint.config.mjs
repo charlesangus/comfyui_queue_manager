@@ -47,6 +47,24 @@ export default [
   },
 
   {
+    files: ["vite.config.js", "eslint.config.mjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
+  {
+    files: ["app/internals/config.js"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+      },
+    },
+  },
+
+  {
     ignores: ["dist/**", "build/**", "node_modules/**"],
   },
 ];

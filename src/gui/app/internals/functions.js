@@ -44,13 +44,6 @@ export async function apiCall(endpoint, data, method = "POST") {
   }
 }
 
-export const msgLoadWorkflow = (workflow, number) => {
-  window.parent.postMessage(
-    { type: "QM_LoadWorkflow", workflow, number },
-    "*"
-  );
-}
-
 export function compareVersions(a, b) {
   const pa = String(a).split('.').map(x => parseInt(x, 10) || 0);
   const pb = String(b).split('.').map(x => parseInt(x, 10) || 0);

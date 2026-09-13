@@ -1,7 +1,8 @@
 "use client";
 
 import React, { memo, useCallback, useContext, useMemo } from "react";
-import { apiCall, msgLoadWorkflow } from "../internals/functions";
+import { apiCall } from "../internals/functions";
+import { msgLoadWorkflow } from "../internals/parentBridge";
 import { AppContext } from "../internals/app-context";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import { LoaderSpinner } from "../components/LoaderSpinner";
