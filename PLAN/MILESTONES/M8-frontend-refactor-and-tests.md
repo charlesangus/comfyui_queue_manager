@@ -51,9 +51,11 @@ this milestone is a pure move.
   - files: `src/gui/package.json`, `src/gui/vite.config.js`, `src/gui/app/stores/appStore.test.js` (new), `src/gui/app/models/MediaOutputs.test.js` (new), `src/gui/app/internals/functions.test.js` (new)
   - approach: Add `vitest` and `@testing-library/react` + `jsdom` as devDependencies, a
     `"test": "vitest run"` script, and a `test: { environment: "jsdom" }` block in
-    `vite.config.js`. Tests: `appStore` route/filter/shift setters; `MediaOutputs` flattens
-    `images` and `gifs` outputs into files with the right `type`; `compareVersions` and
-    `mediaType` from `internals/functions.js`. Keep `npm run lint` covering test files.
+    `vite.config.js`. Tests: `appStore` route/filter/clientId/shift setters; `MediaOutputs`
+    flattens `images`/`gifs`/`files` outputs into `.files` with the right `filename`/
+    `subfolder`/`type`, and `.total`; `compareVersions` from `internals/functions.js`
+    (`mediaType` no longer exists there — removed with the gallery in M7; dropped from this
+    task, see `## Decisions`). Keep `npm run lint` covering test files.
   - verify: `npm test` passes; `npm run lint` passes.
   - size: S
 
@@ -72,3 +74,17 @@ this milestone is a pure move.
 `web/.gui/` committed (pure move: no visual or behavioural change in a manual pass over all
 three tabs); `pytest tests/` and `ruff check .` green; both CI jobs green on the PR;
 `index.jsx` under ~200 lines.
+
+## Decisions
+
+- 2026-09-13 — Freshness check (§5a) before promoting M8 to `doing`: all files named in every
+  task's `files` list exist and the approach descriptions matched current code, with one
+  exception — `internals/functions.js` no longer exports `mediaType` (removed along with the
+  gallery lightbox in M7, which was its only caller). Dropped it from M8.P2.T1's test list
+  rather than re-adding a helper with no production caller just to test it.
+- 2026-09-13 — `index.jsx` landed at 245 lines after Phase 8.1 (M8.P1.T1-T3), not the ~200
+  the milestone estimated. The remainder is irreducible store wiring, the mount effect, and
+  tab/filter layout that doesn't cleanly fit any of the three extracted components or
+  `useQueue`/`useParentMessages`; forcing a fourth split would fragment closely-related layout
+  code for no reuse benefit. Accepted as close enough to the intent (single-responsibility
+  hooks/components, no god-file) rather than a literal line-count target.
