@@ -57,7 +57,7 @@ this bar.
     selection; lint passes.
   - size: M
 
-- [ ] M4.P1.T4 — Keyboard handling for the selection
+- [x] M4.P1.T4 — Keyboard handling for the selection
   - files: `src/gui/app/index.jsx`, `src/gui/app/components/SelectionBar.jsx`
   - approach: In `index.jsx`'s existing keyboard handling (the `QM_ParentKeypress` relay covers
     keys pressed while the parent page has focus; add a `keydown` listener on the iframe's
@@ -83,3 +83,10 @@ this bar.
 **Verification gate:** `npm run build`/`npm run lint`, `pytest tests/`, `ruff check .` all pass;
 manual check in ComfyUI: every action previously reachable per row (delete, interrupt running,
 load, archive, run, run-at-front) is reachable through selection; rebuilt `web/.gui/` committed.
+
+## Decisions
+
+- 2026-09-13 — M4.P1.T4 extracted delete logic into a new `src/gui/app/internals/deleteUtils.js`
+  (not in the task's original `files` list): the keyboard Delete/Backspace handler in `index.jsx`
+  needed the same running-vs-pending delete logic as `SelectionBar`'s Delete button, and a shared
+  helper was the smaller diff than duplicating it or lifting state.
