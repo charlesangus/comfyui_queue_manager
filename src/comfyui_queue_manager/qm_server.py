@@ -141,6 +141,16 @@ class QM_Server:
             else:
                 return web.json_response({"error": "No item to play"}, status=400)
 
+        # Set priority for POSTed items
+        @PromptServer.instance.routes.post("/queue_manager/priority")
+        async def set_priority(request):
+            json_data = await request.json()
+            if "items" in json_data and "priority" in json_data:
+                updated = self.queue.set_priority(json_data["items"], json_data["priority"])
+                return web.json_response({"updated": updated})
+            else:
+                return web.json_response({"error": "Missing items or priority"}, status=400)
+
         # Endpoint to expose __version__ information
         @PromptServer.instance.routes.get("/queue_manager/version")
         async def get_version(request):

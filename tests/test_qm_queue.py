@@ -2,6 +2,8 @@ import json
 
 import pytest
 
+from src.comfyui_queue_manager.inc.exceptions import BadRouteException
+
 
 def _make_item(number, prompt_id, workflow_name, workflow_id):
     return [
@@ -142,6 +144,57 @@ def test_queue_put_preempts_prefetched_lower_priority_item(qm_queue):
 
     assert qm_queue.native_queue.get()[0][1] == "prompt-urgent"
     assert qm_queue.native_queue.get()[0][1] == "prompt-prefetched"
+
+
+def test_set_priority_rejects_out_of_range_priority(qm_queue):
+    item = _make_item(100, "prompt-priority-oob", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-oob",),
+    )["id"]
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], 101)
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], -101)
+
+
+@pytest.mark.parametrize("reserved", [999, 1000])
+def test_set_priority_rejects_reserved_values(qm_queue, reserved):
+    item = _make_item(100, "prompt-priority-reserved", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-reserved",),
+    )["id"]
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], reserved)
+
+
+def test_set_priority_updates_row_and_reorders_dequeue(qm_queue):
+    low = _make_item(1, "prompt-priority-low", "Workflow A", "wf-a")
+    second = _make_item(2, "prompt-priority-second", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(low)
+    qm_queue.native_queue.put(second)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-second",),
+    )["id"]
+
+    assert qm_queue.qm.set_priority([db_id], 50) == 1
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority FROM queue WHERE id = ?",
+        (db_id,),
+    )
+    assert row["priority"] == 50
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(2)]
+    assert dequeued == ["prompt-priority-second", "prompt-priority-low"]
 
 
 def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):

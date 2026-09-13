@@ -8,6 +8,7 @@ import nodes
 import json
 import heapq
 
+from .inc.exceptions import BadRouteException
 from .qm_card import load_card_by_prompt_id, remove_card_images, save_static_card
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
@@ -721,6 +722,48 @@ class QM_Queue:
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": archived})
 
             return archived
+
+    def set_priority(self, db_ids, priority):
+        """
+        Set priority for pending or archived items in the database
+        """
+        if not isinstance(priority, int) or not (PRIORITY_MIN <= priority <= PRIORITY_MAX):
+            raise BadRouteException("Invalid priority: " + str(priority))
+
+        with self.native_queue.mutex:
+            updated = 0
+            pending_updated = False
+            for db_id in db_ids:
+                row = read_single("SELECT status FROM queue WHERE id = ?", (db_id,))
+                if row is None or row[0] not in (0, 3):
+                    continue
+
+                updated += write_query(
+                    """
+                    UPDATE queue
+                    SET priority = ?
+                    WHERE id = ? AND status IN (0, 3)
+                """,
+                    (priority, db_id),
+                    False,
+                )
+
+                if row[0] == 0:
+                    pending_updated = True
+
+            get_conn().commit()
+
+            if pending_updated and len(self.native_queue.queue) > 0:
+                self.native_queue.queue = []
+                self.pull_head_into_heap()
+                self.native_queue.not_empty.notify()
+
+            if updated > 0:
+                qm_log.info("Queue Item Priority Updated: %d item(s)", updated)
+                PromptServer.instance.send_sync("queue-manager-queue-updated", {"priority": updated})
+                PromptServer.instance.queue_updated()
+
+            return updated
 
     def delete_running_job(self, prompt_id=None):
         with self.native_queue.mutex:
