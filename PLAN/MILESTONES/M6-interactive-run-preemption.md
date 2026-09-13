@@ -169,3 +169,18 @@ end-to-end scenarios in M6.P3.T2 pass.
   queue's interactive bypass now fires within milliseconds of submission instead of racing;
   interrupt→requeue completed end-to-end with zero orphaned `status = 1`/`status = 0` rows. Gate
   passes.
+- 2026-09-13 — PR #10 review round 1 (Codex): 5 findings. Fixed: `task_done`'s requeue branch
+  requeued on any `self.preempted` prompt_id match without confirming the job was actually
+  interrupted (major — `nodes.interrupt_processing()` takes effect asynchronously, so a job could
+  legitimately finish just beforehand; now requires an `execution_interrupted` event in `status`,
+  falling through to normal completion/error handling otherwise, and clears `self.preempted`
+  unconditionally the moment its prompt_id matches rather than only on the requeue path, fixing
+  the second, related minor finding about a stale marker surviving delete-wins); `import_queue`
+  could insert a `priority >= PRIORITY_INTERACTIVE` pending row (round-tripped via `qm_priority`,
+  which `clamp_priority` passes through unclamped for reserved values) without waking a worker
+  parked in `pause_lock.wait()` — same class of bug as the one already fixed for `queue_put`, just
+  missed there (major — factored into a shared `notify_if_paused_interactive()` helper called from
+  both `queue_put` and `import_queue`). Fixed the nit (narrative comment removed). Declined: native
+  ComfyUI history retaining an interrupted-attempt record — `_call_original_task_done` is called
+  identically by every branch of `task_done`, so this is pre-existing behavior, not something this
+  milestone introduced. 2 new regression tests. One round; no second round needed.
