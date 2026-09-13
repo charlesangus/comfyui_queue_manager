@@ -71,7 +71,7 @@ this bar.
 
 ## Phase 4.2: Release
 
-- [ ] M4.P2.T1 — Rebuild, README manual update, changelog
+- [x] M4.P2.T1 — Rebuild, README manual update, changelog
   - files: `web/.gui/**`, `README.md`, `CHANGELOG.md`
   - approach: `npm run build`; commit `web/.gui/`. Rewrite the README "Running and main Queue
     Manager window" and "Archive" sections to describe selecting cards and the action bar
