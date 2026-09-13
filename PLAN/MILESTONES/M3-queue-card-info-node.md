@@ -106,7 +106,7 @@ defined in M2):
     README TOC link resolves.
   - size: S
 
-- [ ] M3.P2.T2 — Release build and end-to-end check
+- [x] M3.P2.T2 — Release build and end-to-end check
   - files: `web/.gui/**`
   - approach: No GUI source change is expected (M2 already renders `item[3].card`, including
     `{url}` images); rebuild anyway so the shipped bundle matches source, and verify end-to-end
