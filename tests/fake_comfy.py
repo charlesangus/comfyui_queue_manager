@@ -66,6 +66,14 @@ class FakePromptServer:
         self.messages.append(("queue_updated",))
 
 
+class FakeNodes:
+    def __init__(self):
+        self.interrupt_calls = []
+
+    def interrupt_processing(self, value=True):
+        self.interrupt_calls.append(value)
+
+
 class FakeFolderPaths:
     def __init__(self, tmp_path):
         self._tmp_path = tmp_path

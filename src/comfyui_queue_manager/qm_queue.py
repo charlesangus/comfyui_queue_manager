@@ -3,6 +3,7 @@ from typing import Optional
 
 from execution import PromptQueue
 from server import PromptServer
+import nodes
 
 import json
 import heapq
@@ -52,6 +53,7 @@ class QM_Queue:
         # ===================================================================
         self.native_queue = PromptServer.instance.prompt_queue
         self.pause_lock = threading.Condition(self.native_queue.mutex)
+        self.pending_delete = set()
 
         # Hijack PromptQueue.get() to get the item marked for execution and mark the item as running in the database
         self.original_get = self.native_queue.get
@@ -109,7 +111,8 @@ class QM_Queue:
 
                     join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
                     join_string += " LEFT JOIN meta as exec_time ON queue.id = exec_time.item_id AND exec_time.key = 'execution_time'"
-                    select_string = f"{select_string}, outputs.value as outputs, exec_time.value as execution_time"
+                    join_string += " LEFT JOIN meta AS error ON queue.id = error.item_id AND error.key = 'error'"
+                    select_string = f"{select_string}, queue.status, outputs.value as outputs, exec_time.value as execution_time, error.value as error"
 
             join_string += """
                 LEFT JOIN meta AS card
@@ -193,6 +196,13 @@ class QM_Queue:
                         else:
                             item[3]["execution_time"] = None
 
+                        item[3]["status"] = row["status"]
+
+                        if row["error"] is not None:
+                            item[3]["error"] = json.loads(row["error"])
+                        else:
+                            item[3]["error"] = None
+
                     pending.append(tuple(item))
 
             # If called without parameters, return all three values
@@ -245,6 +255,12 @@ class QM_Queue:
                 WHERE status = 0 OR status = 1
             """)[0]  # total
 
+    def _call_original_task_done(self, item_id, history_result, status, process_item=None):
+        if (process_item is None) or (not process_item):  # accommodate original method signature
+            self.original_task_done(item_id, history_result, status)
+            return
+        self.original_task_done(item_id, history_result, status, process_item)
+
     def task_done(self, item_id, history_result, status: Optional["PromptQueue.ExecutionStatus"], process_item=None):
         with self.native_queue.mutex:
             # log debug arguments
@@ -260,14 +276,31 @@ class QM_Queue:
             if item is not None:
                 prompt_id = item[1]  # Get the prompt_id from the item
                 # Mark the item as finished in the database
+                final_status = 2
+                if status is not None and len(status) >= 3 and status[0] == "error":
+                    final_status = -1
+
                 write_query(
                     """
                     UPDATE queue
-                    SET status = 2
+                    SET status = ?
                     WHERE prompt_id = ?
                 """,
-                    (prompt_id,),
+                    (final_status, prompt_id),
                 )
+
+                if prompt_id in self.pending_delete:
+                    write_query(
+                        """
+                        DELETE FROM queue
+                        WHERE prompt_id = ?
+                    """,
+                        (prompt_id,),
+                    )
+                    remove_card_images([prompt_id])
+                    self.pending_delete.discard(prompt_id)
+                    self._call_original_task_done(item_id, history_result, status, process_item)
+                    return
 
                 outputs = {}
                 if history_result is not None and "outputs" in history_result:
@@ -352,12 +385,41 @@ class QM_Queue:
                             ),
                         )
 
-                # Call the original task_done method
-                if (process_item is None) or (not process_item):  # accommodate original method signature
-                    self.original_task_done(item_id, history_result, status)
-                    return
+                write_query(
+                    """
+                        DELETE FROM meta
+                        WHERE item_id = ? AND key = 'error'
+                    """,
+                    (db_id,),
+                )
 
-                self.original_task_done(item_id, history_result, status, process_item)
+                if status is not None and len(status) >= 3 and status[0] == "error":
+                    error_meta = None
+                    for event in status[2]:
+                        if event[0] in ("execution_error", "execution_interrupted"):
+                            payload = event[1]
+                            error_meta = {
+                                "kind": "error" if event[0] == "execution_error" else "interrupted",
+                                "message": payload.get("exception_message"),
+                                "node_id": payload.get("node_id"),
+                                "node_type": payload.get("node_type"),
+                                "traceback": payload.get("traceback"),
+                            }
+                            break
+
+                    if error_meta is not None:
+                        write_query(
+                            """
+                                INSERT INTO meta (item_id, key, value)
+                                VALUES (?, 'error', ?)
+                            """,
+                            (
+                                db_id,
+                                json.dumps(error_meta),
+                            ),
+                        )
+
+                self._call_original_task_done(item_id, history_result, status, process_item)
 
     # Put item for execution
     # NOTE: We keep only up to one item in native "pending" queue (to avoid bottleneck for large queues).
@@ -628,7 +690,7 @@ class QM_Queue:
 
             return archived
 
-    def delete_running(self, prompt_id=None):
+    def delete_running_job(self, prompt_id=None):
         with self.native_queue.mutex:
             prompt_ids = [
                 row[0]
@@ -637,16 +699,10 @@ class QM_Queue:
                     (prompt_id, prompt_id),
                 )
             ]
-            # Interrupt the queue
-            deleted = write_query(
-                """
-                DELETE FROM queue
-                WHERE status = 1 AND (? IS NULL OR prompt_id = ?)
-            """,
-                (prompt_id, prompt_id),
-            )
-            remove_card_images(prompt_ids)
-            return deleted
+            self.pending_delete.update(prompt_ids)
+            if prompt_ids:
+                nodes.interrupt_processing()
+            return len(prompt_ids)
 
     def play_items(self, items, front, client_id=None):
         """
@@ -953,6 +1009,6 @@ class QM_Queue:
             case "archive":
                 return "status = 3"
             case "completed":
-                return "status = 2"  # completed
+                return "status IN (2, -1)"  # completed or errored/interrupted
 
         return ""

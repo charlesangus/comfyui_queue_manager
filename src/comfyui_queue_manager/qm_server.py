@@ -244,6 +244,15 @@ class QM_Server:
 
             return web.json_response({"deleted": total})
 
+        # Delete running job
+        @PromptServer.instance.routes.delete("/queue_manager/running")
+        async def delete_running(request):
+            json_data = await requestJson(request)
+            prompt_id = json_data.get("prompt_id")
+            total = self.queue.delete_running_job(prompt_id)
+
+            return web.json_response({"deleted": total})
+
         # Take over client focus
         @PromptServer.instance.routes.get("/queue_manager/takeover")
         async def takeover_focus(request):
@@ -351,18 +360,6 @@ class QM_Server:
                                 self.queue.wipe_queue()
                         if "delete" in json_data:
                             self.queue.delete_items(json_data["delete"])
-                    case "/api/interrupt":
-                        json_data = await requestJson(request)
-                        total = 0
-
-                        if ("prompt_id" in json_data) and (json_data["prompt_id"] is not None):
-                            # delete specific item
-                            total = self.queue.delete_running(json_data["prompt_id"])
-                            # logging.info(f"[Queue Manager] Interrupting item {json_data["prompt_id"]}")
-                        else:
-                            # delete the currently running item
-                            total = self.queue.delete_running()
-                            qm_log.info(f"[Queue Manager] Deleted {total} items from the queue")
 
             return await handler(request)
 

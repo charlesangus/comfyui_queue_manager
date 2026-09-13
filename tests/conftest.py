@@ -4,7 +4,7 @@ import importlib
 import os
 import pytest
 
-from fake_comfy import FakePromptQueue, FakePromptServer, FakeFolderPaths
+from fake_comfy import FakePromptQueue, FakePromptServer, FakeFolderPaths, FakeNodes
 
 class PromptQueue:
     def __init__(self):
@@ -31,6 +31,12 @@ sys.modules["execution"] = stub_execution
 
 stub_folder_paths = ModuleType("folder_paths")
 sys.modules["folder_paths"] = stub_folder_paths
+
+fake_nodes = FakeNodes()
+stub_nodes = ModuleType("nodes")
+stub_nodes.interrupt_processing = fake_nodes.interrupt_processing
+stub_nodes.interrupt_calls = fake_nodes.interrupt_calls
+sys.modules["nodes"] = stub_nodes
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 src_path = os.path.join(repo_root, "src")

@@ -19147,6 +19147,9 @@ async function apiCall(endpoint, data, method = "POST") {
     throw error;
   }
 }
+async function deleteRunningJob(promptId) {
+  return apiCall("queue_manager/running", { prompt_id: promptId }, "DELETE");
+}
 function compareVersions(a, b) {
   const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
   const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
@@ -19475,8 +19478,11 @@ const QueueCard = reactExports.memo(
     const dbId = item?.[3]?.db_id;
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
     const cancelQueueItem = reactExports.useCallback(async () => {
-      const cancelRoute = mode === "running" || mode === "external" ? "interrupt" : "queue";
-      await apiCall(`api/${cancelRoute}`, { delete: [item[1]] });
+      if (mode === "running" || mode === "external") {
+        await deleteRunningJob(item[1]);
+        return;
+      }
+      await apiCall(`api/queue`, { delete: [item[1]] });
     }, [mode, item]);
     const loadQueueItem = reactExports.useCallback(() => {
       if (workflow) {
@@ -19528,27 +19534,44 @@ const QueueCard = reactExports.memo(
     const handleThumbnailClick = reactExports.useCallback((file) => {
       window.open(viewURL(file), "_blank");
     }, []);
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("article", { className: `qm-card${className ? ` ${className}` : ""}`, children: [
+    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("article", { className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}`, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
         loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
         route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+        error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,
         mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-outputs", children: route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-          MediaItem,
-          {
-            file,
-            onClick: () => handleThumbnailClick(file),
-            controls: false,
-            autoplay: false,
-            className: "thumbnail"
-          },
-          idx
-        )) }) })
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
+          route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+            MediaItem,
+            {
+              file,
+              onClick: () => handleThumbnailClick(file),
+              controls: false,
+              autoplay: false,
+              className: "thumbnail"
+            },
+            idx
+          )) }),
+          error ? /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
+              error.kind === "interrupted" ? "Interrupted" : "Error",
+              " details"
+            ] }),
+            error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
+              error.node_type,
+              " #",
+              error.node_id
+            ] }),
+            error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
+          ] }) : null
+        ] })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(

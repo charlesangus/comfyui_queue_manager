@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo, useCallback, useContext, useMemo } from "react";
-import { apiCall } from "../internals/functions";
+import { apiCall, deleteRunningJob } from "../internals/functions";
 import { msgLoadWorkflow } from "../internals/parentBridge";
 import { AppContext } from "../internals/app-context";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
@@ -29,8 +29,11 @@ export const QueueCard = memo(
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
 
     const cancelQueueItem = useCallback(async () => {
-      const cancelRoute = mode === "running" || mode === "external" ? "interrupt" : "queue";
-      await apiCall(`api/${cancelRoute}`, { delete: [item[1]] });
+      if (mode === "running" || mode === "external") {
+        await deleteRunningJob(item[1]);
+        return;
+      }
+      await apiCall(`api/queue`, { delete: [item[1]] });
     }, [mode, item]);
 
     const loadQueueItem = useCallback(() => {
@@ -99,8 +102,10 @@ const executionTimeLabel = useMemo(() => {
       window.open(viewURL(file), "_blank");
     }, []);
 
+    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+
     return (
-      <article className={`qm-card${className ? ` ${className}` : ""}`}>
+      <article className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}`}>
         <div className="card-header">
           <span className="serial">{rowIndex}</span>
           {loader ? <LoaderSpinner /> : null}
@@ -119,6 +124,12 @@ const executionTimeLabel = useMemo(() => {
             <div className="execution-time" title="Execution time">
               {executionTimeLabel}
             </div>
+          ) : null}
+
+          {error ? (
+            <span className="qm-badge qm-badge-danger" title="Job outcome">
+              {error.kind === "interrupted" ? "Interrupted" : "Error"}
+            </span>
           ) : null}
 
           {mediaOutputs.total > 0 ? (
@@ -148,6 +159,17 @@ const executionTimeLabel = useMemo(() => {
                 ))}
               </div>
             )}
+
+            {error ? (
+              <details className="error-details">
+                <summary>{error.kind === "interrupted" ? "Interrupted" : "Error"} details</summary>
+                {error.message ? <p className="error-message">{error.message}</p> : null}
+                <p className="error-node">
+                  {error.node_type} #{error.node_id}
+                </p>
+                {error.traceback ? <pre className="error-traceback">{error.traceback.join("\n")}</pre> : null}
+              </details>
+            ) : null}
           </div>
         </div>
 

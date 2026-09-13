@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 
@@ -154,6 +156,205 @@ def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):
     assert exec_time_count == 1
 
 
+def test_task_done_records_node_error(qm_queue):
+    history_result = {"outputs": {}}
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_error",
+                {
+                    "prompt_id": "prompt-error-1",
+                    "node_id": "7",
+                    "node_type": "KSampler",
+                    "executed": [],
+                    "exception_message": "CUDA out of memory",
+                    "exception_type": "RuntimeError",
+                    "traceback": ["line 1", "line 2"],
+                    "current_inputs": {},
+                    "current_outputs": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-error-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id, status FROM queue WHERE prompt_id = ?",
+        ("prompt-error-1",),
+    )
+    assert row["status"] == -1
+
+    meta_row = qm_queue.qm_db.read_single(
+        "SELECT value FROM meta WHERE item_id = ? AND key = 'error'",
+        (row["id"],),
+    )
+    assert meta_row is not None
+    error_meta = json.loads(meta_row["value"])
+    assert error_meta["kind"] == "error"
+    assert error_meta["message"] == "CUDA out of memory"
+    assert error_meta["node_id"] == "7"
+    assert error_meta["node_type"] == "KSampler"
+    assert error_meta["traceback"] == ["line 1", "line 2"]
+
+
+def test_task_done_records_interruption(qm_queue):
+    history_result = {"outputs": {}}
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_interrupted",
+                {
+                    "prompt_id": "prompt-interrupted-1",
+                    "node_id": "3",
+                    "node_type": "KSampler",
+                    "executed": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-interrupted-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id, status FROM queue WHERE prompt_id = ?",
+        ("prompt-interrupted-1",),
+    )
+    assert row["status"] == -1
+
+    meta_row = qm_queue.qm_db.read_single(
+        "SELECT value FROM meta WHERE item_id = ? AND key = 'error'",
+        (row["id"],),
+    )
+    assert meta_row is not None
+    error_meta = json.loads(meta_row["value"])
+    assert error_meta["kind"] == "interrupted"
+    assert error_meta["node_id"] == "3"
+    assert error_meta["node_type"] == "KSampler"
+    assert error_meta["message"] is None
+    assert error_meta["traceback"] is None
+
+
+def test_get_current_queue_completed_route_includes_errored_job(qm_queue):
+    history_result = {"outputs": {}}
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_error",
+                {
+                    "prompt_id": "prompt-completed-error-1",
+                    "node_id": "7",
+                    "node_type": "KSampler",
+                    "executed": [],
+                    "exception_message": "CUDA out of memory",
+                    "exception_type": "RuntimeError",
+                    "traceback": ["line 1", "line 2"],
+                    "current_inputs": {},
+                    "current_outputs": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-completed-error-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    success_item = _make_item(100, "prompt-completed-success-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(success_item)
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2 WHERE prompt_id = ?", ("prompt-completed-success-1",))
+
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+
+    by_prompt_id = {row[1]: row for row in completed}
+
+    errored = by_prompt_id["prompt-completed-error-1"]
+    assert errored[3]["status"] == -1
+    assert errored[3]["error"]["kind"] == "error"
+    assert errored[3]["error"]["message"] == "CUDA out of memory"
+    assert errored[3]["error"]["node_id"] == "7"
+    assert errored[3]["error"]["node_type"] == "KSampler"
+    assert errored[3]["error"]["traceback"] == ["line 1", "line 2"]
+
+    succeeded = by_prompt_id["prompt-completed-success-1"]
+    assert succeeded[3]["status"] == 2
+    assert succeeded[3]["error"] is None
+
+
+def test_task_done_clears_stale_error_meta_on_successful_resubmission(qm_queue):
+    error_history_result = {"outputs": {}}
+    error_status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_error",
+                {
+                    "prompt_id": "prompt-retry-1",
+                    "node_id": "7",
+                    "node_type": "KSampler",
+                    "executed": [],
+                    "exception_message": "CUDA out of memory",
+                    "exception_type": "RuntimeError",
+                    "traceback": ["line 1", "line 2"],
+                    "current_inputs": {},
+                    "current_outputs": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-retry-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, error_history_result, error_status)
+
+    row = qm_queue.qm_db.read_single("SELECT status FROM queue WHERE prompt_id = ?", ("prompt-retry-1",))
+    assert row["status"] == -1
+
+    success_history_result = {
+        "outputs": {
+            "9": {"images": [{"filename": "out.png", "subfolder": "", "type": "output"}]},
+        }
+    }
+    success_status = (
+        "success",
+        None,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            ("execution_success", {"timestamp": 2000}),
+        ],
+    )
+
+    resubmit = _make_item(50, "prompt-retry-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(resubmit)
+    _, task_id2 = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id2, success_history_result, success_status)
+
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+    by_prompt_id = {row[1]: row for row in completed}
+    retried = by_prompt_id["prompt-retry-1"]
+    assert retried[3]["status"] == 2
+    assert retried[3]["error"] is None
+
+
 def test_queue_put_exposes_card_metadata_on_pending_item(qm_queue):
     item = _make_item(100, "prompt-card-pending", "Workflow Card", "wf-card")
     item[2] = _card_graph()
@@ -273,7 +474,6 @@ def test_deletion_paths_remove_only_their_card_images(qm_queue, monkeypatch, tmp
         ("explicit_1", 0),
         ("explicit", 2),
         ("wipe_pending", 0),
-        ("running_prompt", 1),
         ("archived_prompt", 3),
     ]
     for prompt_id, status in rows:
@@ -289,8 +489,119 @@ def test_deletion_paths_remove_only_their_card_images(qm_queue, monkeypatch, tmp
 
     assert qm_queue.qm.wipe_queue() is None
     assert not (cards_dir / qm_card_module._card_image_name("wipe_pending", 1)).exists()
-    assert qm_queue.qm.delete_running("running_prompt") == 1
-    assert not (cards_dir / qm_card_module._card_image_name("running_prompt", 1)).exists()
     assert qm_queue.qm.delete_from_queue("archive") == 1
     assert not (cards_dir / qm_card_module._card_image_name("archived_prompt", 1)).exists()
     assert (cards_dir / qm_card_module._card_image_name("explicit", 1)).is_file()
+
+
+def test_delete_running_job_marks_pending_delete_and_interrupts(qm_queue):
+    import nodes as nodes_module
+
+    item = _make_item(100, "prompt-delete-running", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    assert qm_queue.qm.delete_running_job("prompt-delete-running") == 1
+    assert "prompt-delete-running" in qm_queue.qm.pending_delete
+    assert len(nodes_module.interrupt_calls) == calls_before + 1
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT status FROM queue WHERE prompt_id = ?",
+        ("prompt-delete-running",),
+    )
+    assert row["status"] == 1
+
+
+def test_delete_running_job_does_not_interrupt_when_no_match(qm_queue):
+    import nodes as nodes_module
+
+    item = _make_item(100, "prompt-already-done", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2 WHERE prompt_id = ?", ("prompt-already-done",))
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    assert qm_queue.qm.delete_running_job("prompt-already-done") == 0
+    assert "prompt-already-done" not in qm_queue.qm.pending_delete
+    assert len(nodes_module.interrupt_calls) == calls_before
+
+    assert qm_queue.qm.delete_running_job("prompt-does-not-exist") == 0
+    assert len(nodes_module.interrupt_calls) == calls_before
+
+
+def test_task_done_pending_delete_forwards_process_item(qm_queue):
+    item = _make_item(100, "prompt-sensitive-delete", "Workflow A", "wf-a")
+    item.append({"api_key_comfy_org": "secret-key"})
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+
+    native_item = qm_queue.native_queue.currently_running[task_id]
+    assert len(native_item) == 6
+    assert native_item[5] == {"api_key_comfy_org": "secret-key"}
+
+    assert qm_queue.qm.delete_running_job("prompt-sensitive-delete") == 1
+
+    captured = {}
+
+    def spy_original_task_done(item_id, history_result, status, process_item=None):
+        captured["item_id"] = item_id
+        captured["process_item"] = process_item
+        if process_item is not None:
+            captured["stripped"] = process_item(native_item)
+
+    qm_queue.qm.original_task_done = spy_original_task_done
+
+    def remove_sensitive(prompt):
+        return prompt[:5] + prompt[6:]
+
+    qm_queue.qm.task_done(task_id, {"outputs": {}}, None, remove_sensitive)
+
+    assert captured["item_id"] == task_id
+    assert captured["process_item"] is remove_sensitive
+    assert captured["stripped"] == native_item[:5]
+    assert "api_key_comfy_org" not in json.dumps(captured["stripped"])
+
+
+def test_task_done_deletes_row_for_job_marked_pending_delete(qm_queue, monkeypatch, tmp_path):
+    import src.comfyui_queue_manager.qm_card as qm_card_module
+
+    cards_dir = tmp_path / "cards"
+    cards_dir.mkdir()
+    monkeypatch.setattr(qm_card_module, "CARDS_DIR", cards_dir)
+
+    item = _make_item(100, "prompt-delete-flow", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    (cards_dir / qm_card_module._card_image_name("prompt-delete-flow", 1)).write_bytes(b"png")
+    _, task_id = qm_queue.native_queue.get()
+
+    assert qm_queue.qm.delete_running_job("prompt-delete-flow") == 1
+
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_interrupted",
+                {
+                    "prompt_id": "prompt-delete-flow",
+                    "node_id": "3",
+                    "node_type": "KSampler",
+                    "executed": [],
+                },
+            ),
+        ],
+    )
+    qm_queue.qm.task_done(task_id, {"outputs": {}}, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-delete-flow",),
+    )
+    assert row is None
+    assert "prompt-delete-flow" not in qm_queue.qm.pending_delete
+    assert not (cards_dir / qm_card_module._card_image_name("prompt-delete-flow", 1)).exists()
+    assert task_id not in qm_queue.native_queue.currently_running
