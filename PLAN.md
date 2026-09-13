@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
-status: running
+status: paused
 current: null
-pm_heartbeat: 2026-09-13T21:40:00-04:00
+pm_heartbeat: 2026-09-13T21:55:00-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -95,6 +95,10 @@ Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 w
 
 # Open questions
 
+- Paused 2026-09-13 at the user's request, after M6 shipped. M4/M5/M6 all merged this session.
+  Only M11 (Final visual polish pass) remains `todo`; it's a stub (not yet elaborated) — read
+  `PLAN/MILESTONES/M11-final-visual-polish.md`'s `Blocked on:` line before starting it. Resume by
+  promoting M11 per the usual `/cat-pm` flow.
 - Found during M4's PR review (not caused by M4, pre-existing): `qm_queue.py`'s
   `delete_running_job` (~line 693) only matches DB rows with `status = 1`
   (`SELECT prompt_id FROM queue WHERE status = 1 AND prompt_id = ?`). External jobs are
