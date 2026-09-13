@@ -23,7 +23,7 @@ this bar.
     toggle / range / retain; `npm test` and `npm run lint` pass.
   - size: S
 
-- [ ] M4.P1.T2 — Make cards selectable and remove per-card action buttons
+- [x] M4.P1.T2 — Make cards selectable and remove per-card action buttons
   - files: `src/gui/app/components/QueueCard.jsx`, `src/gui/app/components/Queue.jsx`, `src/gui/styles/_queue.scss`
   - approach: `Queue.jsx` computes `orderedKeys` for `running + pending` and passes each card an
     `isSelected` boolean and an `onSelect(event)` handler that maps modifier keys to the store
