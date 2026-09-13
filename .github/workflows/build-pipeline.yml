@@ -55,4 +55,5 @@ jobs:
       - name: Build
         run: npm run build
       - name: Check built bundle is up to date
-        run: git diff --quiet -- ../../web/.gui
+        run: |
+          test -z "$(git status --porcelain --untracked-files=all -- ../../web/.gui)"

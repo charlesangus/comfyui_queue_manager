@@ -48,6 +48,7 @@ export const MediaItem = memo(function MediaItem({file, onClick, autoplay, class
       {(ext === 'mp4' || ext === 'webm')
         ? (
           <>
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption -- generated output previews have no caption data */}
             <video
               ref={videoRef}
               className="comfy-video-main galleria-image"
@@ -58,7 +59,6 @@ export const MediaItem = memo(function MediaItem({file, onClick, autoplay, class
               onClick={toggle}
             >
               <source src={src} type={`video/${ext}`} />
-              <track kind="captions" />
             </video>
           </>
         )

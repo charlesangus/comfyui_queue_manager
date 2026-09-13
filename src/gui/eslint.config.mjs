@@ -16,7 +16,6 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2021,
-        process: "readonly",
       },
       parserOptions: {
         ecmaFeatures: {
@@ -52,6 +51,15 @@ export default [
     languageOptions: {
       globals: {
         ...globals.node,
+      },
+    },
+  },
+
+  {
+    files: ["app/internals/config.js"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
       },
     },
   },
