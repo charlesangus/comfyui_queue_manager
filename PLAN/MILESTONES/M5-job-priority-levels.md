@@ -42,7 +42,7 @@ the user range are reserved for M6 (`PRIORITY_INTERACTIVE = 1000`, `PRIORITY_PRE
   - verify: `pytest tests/test_qm_queue.py` passes; `ruff check .` passes.
   - size: M
 
-- [ ] M5.P1.T3 — `POST /queue_manager/priority` endpoint
+- [x] M5.P1.T3 — `POST /queue_manager/priority` endpoint
   - files: `src/comfyui_queue_manager/qm_server.py`, `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: `QM_Queue.set_priority(db_ids, priority)`: validate `priority` is an int in
     `[PRIORITY_MIN, PRIORITY_MAX]` (raise `BadRouteException` from `inc/exceptions.py` so the
