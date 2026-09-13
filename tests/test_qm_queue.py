@@ -229,6 +229,112 @@ def test_queue_put_calls_preempt_running_on_interrupt_stamp(qm_queue, monkeypatc
     assert calls == [True]
 
 
+def _interrupted_status(prompt_id):
+    return (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_interrupted",
+                {"prompt_id": prompt_id, "node_id": "3", "node_type": "KSampler", "executed": []},
+            ),
+        ],
+    )
+
+
+def test_interactive_interrupt_requeues_running_job_behind_itself(qm_queue):
+    import nodes as nodes_module
+
+    background = _make_item(1, "prompt-background", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(background)
+    _, task_id = qm_queue.native_queue.get()
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    interactive = _make_item(2, "prompt-interactive-run", "Workflow A", "wf-a")
+    interactive[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "interrupt"
+    qm_queue.native_queue.put(interactive)
+
+    assert len(nodes_module.interrupt_calls) == calls_before + 1
+    assert qm_queue.qm.preempted["prompt_id"] == "prompt-background"
+
+    history_result = {"outputs": {"9": {"images": [{"filename": "out.png", "subfolder": "", "type": "output"}]}}}
+    qm_queue.qm.task_done(task_id, history_result, _interrupted_status("prompt-background"))
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id, status, number, priority FROM queue WHERE prompt_id = ?",
+        ("prompt-background",),
+    )
+    assert row["status"] == 0
+    assert row["priority"] == 999
+    assert row["number"] < 0
+    assert qm_queue.qm.preempted is None
+    assert task_id not in qm_queue.native_queue.currently_running
+
+    meta_count = qm_queue.qm_db.read_single(
+        "SELECT COUNT(*) as count FROM meta WHERE item_id = ? AND key IN ('outputs', 'execution_time', 'error')",
+        (row["id"],),
+    )["count"]
+    assert meta_count == 0
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(2)]
+    assert dequeued == ["prompt-interactive-run", "prompt-background"]
+
+
+def test_task_done_delete_wins_over_requeue(qm_queue):
+    background = _make_item(1, "prompt-delete-over-requeue", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(background)
+    _, task_id = qm_queue.native_queue.get()
+
+    interactive = _make_item(2, "prompt-interactive-over-delete", "Workflow A", "wf-a")
+    interactive[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "interrupt"
+    qm_queue.native_queue.put(interactive)
+
+    assert qm_queue.qm.delete_running_job("prompt-delete-over-requeue") == 1
+
+    qm_queue.qm.task_done(task_id, {"outputs": {}}, _interrupted_status("prompt-delete-over-requeue"))
+
+    assert (
+        qm_queue.qm_db.read_single(
+            "SELECT id FROM queue WHERE prompt_id = ?",
+            ("prompt-delete-over-requeue",),
+        )
+        is None
+    )
+
+
+def test_preempt_running_without_running_item_does_nothing(qm_queue):
+    import nodes as nodes_module
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    qm_queue.qm.preempt_running()
+
+    assert qm_queue.qm.preempted is None
+    assert len(nodes_module.interrupt_calls) == calls_before
+
+
+@pytest.mark.parametrize("reserved", [999, 1000])
+def test_preempt_running_spares_reserved_priority_job(qm_queue, reserved):
+    import nodes as nodes_module
+
+    item = _make_item(1, "prompt-reserved-running", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+    qm_queue.qm_db.write_query(
+        "UPDATE queue SET priority = ? WHERE prompt_id = ?",
+        (reserved, "prompt-reserved-running"),
+    )
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    qm_queue.qm.preempt_running()
+
+    assert qm_queue.qm.preempted is None
+    assert len(nodes_module.interrupt_calls) == calls_before
+
+
 def test_import_queue_preempts_prefetched_lower_priority_item(qm_queue):
     prefetched = _make_item(1, "prompt-import-prefetched", "Workflow A", "wf-a")
     qm_queue.native_queue.put(prefetched)
@@ -402,6 +508,44 @@ def test_archived_item_priority_survives_replay(qm_queue):
     )
     assert row_played["status"] == 0
     assert row_played["priority"] == 2
+
+
+@pytest.mark.parametrize("reserved", [999, 1000])
+def test_play_items_resets_reserved_priority(qm_queue, reserved):
+    item = _make_item(100, "prompt-replay-reserved", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-replay-reserved",),
+    )["id"]
+    assert qm_queue.qm.archive_items([db_id]) == 1
+    qm_queue.qm_db.write_query("UPDATE queue SET priority = ? WHERE id = ?", (reserved, db_id))
+
+    assert qm_queue.qm.play_items([db_id], front=False) == 1
+
+    row = qm_queue.qm_db.read_single("SELECT status, priority FROM queue WHERE id = ?", (db_id,))
+    assert row["status"] == 0
+    assert row["priority"] == 0
+
+
+@pytest.mark.parametrize("reserved", [999, 1000])
+def test_play_archive_resets_reserved_priority(qm_queue, reserved):
+    item = _make_item(100, "prompt-archive-replay-reserved", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-archive-replay-reserved",),
+    )["id"]
+    assert qm_queue.qm.archive_items([db_id]) == 1
+    qm_queue.qm_db.write_query("UPDATE queue SET priority = ? WHERE id = ?", (reserved, db_id))
+
+    assert qm_queue.qm.play_archive(front=False) == 1
+
+    row = qm_queue.qm_db.read_single("SELECT status, priority FROM queue WHERE id = ?", (db_id,))
+    assert row["status"] == 0
+    assert row["priority"] == 0
 
 
 def test_export_import_round_trip_preserves_priority(qm_queue):
