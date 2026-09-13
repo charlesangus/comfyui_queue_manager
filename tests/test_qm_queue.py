@@ -197,6 +197,52 @@ def test_set_priority_updates_row_and_reorders_dequeue(qm_queue):
     assert dequeued == ["prompt-priority-second", "prompt-priority-low"]
 
 
+def test_archived_item_priority_survives_replay(qm_queue):
+    item = _make_item(100, "prompt-priority-archive", "Workflow A", "wf-a")
+    item[3]["qm_priority"] = 2
+    qm_queue.native_queue.put(item)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-archive",),
+    )["id"]
+
+    assert qm_queue.qm.archive_items([db_id]) == 1
+    row_archived = qm_queue.qm_db.read_single(
+        "SELECT status, priority FROM queue WHERE id = ?",
+        (db_id,),
+    )
+    assert row_archived["status"] == 3
+    assert row_archived["priority"] == 2
+
+    assert qm_queue.qm.play_items([db_id], front=False) == 1
+    row_played = qm_queue.qm_db.read_single(
+        "SELECT status, priority FROM queue WHERE id = ?",
+        (db_id,),
+    )
+    assert row_played["status"] == 0
+    assert row_played["priority"] == 2
+
+
+def test_export_import_round_trip_preserves_priority(qm_queue):
+    item = _make_item(100, "prompt-priority-export", "Workflow A", "wf-a")
+    item[3]["qm_priority"] = 5
+    qm_queue.native_queue.put(item)
+
+    exported = qm_queue.qm.get_full_queue("queue")
+    assert len(exported) == 1
+    assert exported[0][3]["qm_priority"] == 5
+
+    exported[0][1] = "prompt-priority-imported"
+    assert qm_queue.qm.import_queue(exported) == (1, 1)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-imported",),
+    )
+    assert row["priority"] == 5
+
+
 def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):
     history_result = {
         "outputs": {

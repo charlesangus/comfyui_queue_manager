@@ -240,7 +240,7 @@ class QM_Queue:
 
             rows = read_query(
                 f"""
-                SELECT id, prompt
+                SELECT id, prompt, priority
                 FROM queue
                 WHERE {where_string}
                 ORDER BY created_at DESC
@@ -252,6 +252,7 @@ class QM_Queue:
             prompts = []
             for row in rows:
                 item = json.loads(row[1])
+                item[3]["qm_priority"] = row[2]
                 # Convert the item to a tuple
                 # item = tuple(item)
                 # Add the item to the pending list
@@ -948,6 +949,8 @@ class QM_Queue:
                         item.append({})
                     item[5] = {"api_key_comfy_org": api_key_comfy_org} if api_key_comfy_org is not None else {}
 
+                priority = clamp_priority(item[3].pop("qm_priority", 0))
+
                 PromptServer.instance.number += 1
                 query_params.append(
                     (
@@ -957,6 +960,7 @@ class QM_Queue:
                         item[3]["extra_pnginfo"]["workflow"]["id"],
                         json.dumps(item),
                         status,
+                        priority,
                     )
                 )
 
@@ -965,8 +969,8 @@ class QM_Queue:
                 for item, params in zip(items, query_params):
                     cursor = conn.execute(
                         """
-                            INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status)
-                            VALUES (?, ?, ?, ?, ?, ?)
+                            INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status, priority)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
                         """,
                         params,
                     )
