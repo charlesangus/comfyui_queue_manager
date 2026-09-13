@@ -9,7 +9,7 @@ states. No new features.
 
 ## Phase 11.1: Audit
 
-- [ ] M11.P1.T1 — Visual audit checklist with findings
+- [x] M11.P1.T1 — Visual audit checklist with findings
   - files: this milestone file only (findings appended under `## Decisions`); no code
   - approach: In a ComfyUI instance with a few pending, one running, several completed
     (including one errored and one interrupted) and some archived jobs, walk every state at
@@ -68,3 +68,92 @@ states. No new features.
 check .` green; every audit finding under `## Decisions` is marked closed; manual pass in Dark and
 Light palettes at both widths shows no regressions in any feature from M2–M9; rebuilt
 `web/.gui/` committed.
+
+## Decisions
+
+Audit performed against a live ComfyUI v0.35.1 instance (`.local/ComfyUI`) via Playwright, walking
+the Queue/Archive/Completed tabs at ~320px and ~600px sidebar widths in both Dark and Light
+(`Comfy.ColorPalette`) palettes. Data mix used: ~774 pre-existing completed jobs from prior manual
+QA sessions (including real `qa-error-test` / Error and `qa-interrupt-test` / `qa-slow-test` /
+Interrupted jobs, and `manual-verify-check*-interactive` / `-resumed` priority jobs), plus
+newly-submitted jobs for a 6-entry mixed image+text card-info tile, a long workflow name
+(`extra_pnginfo.workflow.workflow_name` patched directly in `data/qm-queue.db` for one job to force
+truncation, since the live app's workflow-name field isn't writable via the public app API), an
+8-image `SaveImage` batch (patched to `priority=1000` for badge-adjacency), and several
+`EmptyImage`→chained-`ImageBlur`→`PreviewImage` jobs used purely to keep the queue busy long enough
+to capture running/pending states and archive a couple of pending jobs live through the UI. Could
+not reproduce a *new* errored/interrupted job through the UI within the session (ComfyUI's own
+client-side node validation rejects out-of-range `ImageBlur` params before submission, so a bad-param
+attempt never reaches the DB); the real historical error/interrupted jobs already in the DB were
+used instead and give full coverage of the error-block states.
+
+- Selection: `.qm-card.selected`'s `box-shadow: inset 0 0 0 2px var(--qm-primary)` computes
+  correctly (verified via `getComputedStyle`) but is fully hidden behind the opaque
+  `.card-header` background on any card whose body is empty (all pending cards, running cards,
+  and archived cards with no card-info/outputs) — selecting a card produces no visible highlight
+  at all in either palette → paint the selection indicator somewhere that isn't occluded by
+  `.card-header` (e.g. a border/outline on the header itself, or restructure so the ring paints
+  above children).
+- Card header badges: the execution-time badge (bordered box, `padding: 2px 8px`, no fixed
+  height) sits next to `.qm-badge` pills (priority/danger/output-count, `height: 1.25rem`) and is
+  visibly taller than them, so badges in the same header row don't share a baseline → give the
+  execution-time badge the same `.qm-badge` sizing.
+- Card header badges: the plain `.qm-badge` (used for the output-count pill) pairs
+  `--qm-fg-muted` text on `--qm-surface-hover` background; measured contrast in the Light palette
+  is 4.34:1, under the WCAG AA 4.5:1 minimum for normal text (Dark palette measures 5.58:1, fine)
+  → use `--qm-fg` or a higher-contrast background for that badge.
+- Running card progress bar: `.qm-card.running:after` fills with `background-color:
+  var(--qm-primary)` at `opacity: 0.2`; pixel-sampled against both palettes this is a barely
+  perceptible tint (Dark: rgb(48,48,48)→rgb(57,71,88); Light: rgb(238,238,238)→rgb(201,216,239))
+  — hard to gauge run progress at a glance → raise the fill opacity and/or add a full-opacity
+  accent line at the progress edge.
+- Keyboard focus: `.tabs .tab` sets `outline: none` with no `:focus-visible` replacement, so
+  Tabbing to the Queue/Archive/Completed tabs shows no visible focus indicator at all (confirmed
+  by tabbing through and screenshotting each stop) → add a `.tab:focus-visible` ring matching
+  `.qm-btn:focus-visible`.
+- Keyboard focus: elements with no explicit `:focus-visible` rule (e.g. the workflow-name
+  `.name-cell button.plain`) fall back to the browser's native outline, which looks visibly
+  different from the app's custom blue `.qm-btn:focus-visible` ring — focus styling is
+  inconsistent across the panel → apply one shared focus-visible treatment everywhere instead of
+  only on `.qm-btn`.
+- Priority menu: the dropdown (Low/Normal/High + Custom/Apply) opens anchored below the
+  selection bar's "Priority" button and, at 600px width with a short card list, overlaps the
+  sticky footer's action buttons below it (the footer's red-bordered delete button is visible
+  showing through underneath the open menu) → make the menu flip upward or otherwise avoid the
+  sticky footer.
+- Card-info tiles: `.card-info` is `display:flex; flex-wrap:wrap` with the default
+  `align-items: stretch`, so a short text tile (e.g. a "Seed" tile with a short numeric value)
+  sharing a row with a taller multi-line text tile or an image tile gets stretched to match the
+  tallest sibling, leaving a large empty gap under its own content → set
+  `align-items: flex-start` on `.card-info`.
+- Selection bar / footer actions: `margin-left: auto` on the danger button
+  (`.selection-bar .delete`, `.footer .actions button.delete`) makes it wrap onto its own line at
+  ~320px width, isolated with a large gap from the button group above it (confirmed in both the
+  selection bar with 3 selected and the Queue-tab footer at 320px) → drop the auto-margin once
+  buttons wrap, or lay out the wrapped group as a plain left-aligned row.
+- Splash screen: the "Queue Manager Manual" / "Changelog" / "Issues" links use a hardcoded
+  `color: dodgerblue` instead of `var(--qm-primary)`, so they don't exactly match the app's
+  primary blue and won't track future token changes → replace with `var(--qm-primary)`.
+
+### Structural (M11.P2.T1)
+- Selection: `.qm-card.selected` box-shadow ring invisible behind opaque `.card-header` on
+  empty-bodied cards → repaint the selection indicator so it isn't occluded.
+- Priority menu overlaps/collides with the sticky footer at 600px width → collision-aware
+  positioning (flip upward).
+- Card-info tiles stretch short text tiles to match taller siblings, leaving unwanted empty
+  space → `align-items: flex-start` on `.card-info`.
+- Selection bar / footer action buttons isolate the danger button on its own line at 320px width
+  due to `margin-left: auto` → fix wrap behavior.
+
+### Cosmetic (M11.P2.T2)
+- Card header badges (execution-time vs. `.qm-badge` pills) don't share a consistent height/
+  baseline → unify badge sizing.
+- Default `.qm-badge` (output-count) fails WCAG AA contrast (4.34:1) in the Light palette →
+  higher-contrast text/background pairing.
+- Running-card progress fill (`opacity: 0.2`) is barely visible in both palettes → raise opacity
+  / add an accent line.
+- `.tabs .tab` has no `:focus-visible` ring at all → add one matching `.qm-btn`.
+- Focus ring styling is inconsistent (custom ring on `.qm-btn`, native browser outline
+  elsewhere) → apply one shared focus-visible treatment app-wide.
+- Splash-screen links use hardcoded `dodgerblue` instead of `var(--qm-primary)` → swap to the
+  token.
