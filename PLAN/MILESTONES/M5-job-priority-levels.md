@@ -9,7 +9,7 @@ the user range are reserved for M6 (`PRIORITY_INTERACTIVE = 1000`, `PRIORITY_PRE
 
 ## Phase 5.1: Backend
 
-- [ ] M5.P1.T1 — Schema migration: `queue.priority`
+- [x] M5.P1.T1 — Schema migration: `queue.priority`
   - files: `src/comfyui_queue_manager/qm_db.py`, `tests/test_qm_db.py`
   - approach: In `init_schema()`, after the `CREATE TABLE IF NOT EXISTS queue`, run a guarded
     migration: if `PRAGMA table_info(queue)` lacks `priority`, `ALTER TABLE queue ADD COLUMN
