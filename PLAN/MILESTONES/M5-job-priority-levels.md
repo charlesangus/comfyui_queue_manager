@@ -99,6 +99,24 @@ Gate passed 2026-09-13: all 6 scripted manual checks against the live ComfyUI in
 proven via a slow blocker workflow rather than a timing race; Shift+Run tie-break within a
 priority tier; Priority menu UI incl. badge colors; persistence through archive→run; rejection
 of out-of-range/reserved values with 422). No deviations found.
+- 2026-09-13 — PR #9 review round 1 (Codex): 6 findings, all in this milestone's own new
+  heap-preemption logic (not pre-existing). Fixed: `set_priority` could permanently discard an
+  external/native-only heap head (major — now checked via a new shared
+  `preempt_heap_head_if_stale()` helper, which only clears+refills when the DB's current best
+  pending row actually differs from the heap head, and never touches a head with no DB row);
+  `queue_put`'s self-upsert of the already-prefetched item could never outrank itself since the
+  DB write happened before the comparison (major — now always clears+refills when the upsert
+  target *is* the captured pre-write heap head); `import_queue`/`play_items`/`play_archive`
+  never triggered heap preemption at all, only an immediacy gap since ordinary ordering would
+  eventually pick up the item (major — now call the same shared helper); a running job's
+  priority badge disappeared on the frontend since `get_current_queue`'s `currently_running`
+  copy was never stamped with `.priority` (minor — fixed); `restore_queue` computed its
+  tie-break number against the globally best pending row across all tiers instead of per the
+  restored row's own priority tier (minor — now grouped by priority); `isinstance(priority,
+  int)` accepted JSON booleans (trivial — switched to `type(priority) is int`). Declined: a nit
+  about a route comment in `qm_server.py` that matches the file's existing one-line-per-route
+  convention — not a policy violation. 8 new regression tests added. One round; no second round
+  needed.
 
 ## Decisions
 
