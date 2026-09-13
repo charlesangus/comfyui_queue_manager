@@ -255,6 +255,12 @@ class QM_Queue:
                 WHERE status = 0 OR status = 1
             """)[0]  # total
 
+    def _call_original_task_done(self, item_id, history_result, status, process_item=None):
+        if (process_item is None) or (not process_item):  # accommodate original method signature
+            self.original_task_done(item_id, history_result, status)
+            return
+        self.original_task_done(item_id, history_result, status, process_item)
+
     def task_done(self, item_id, history_result, status: Optional["PromptQueue.ExecutionStatus"], process_item=None):
         with self.native_queue.mutex:
             # log debug arguments
@@ -271,8 +277,6 @@ class QM_Queue:
                 prompt_id = item[1]  # Get the prompt_id from the item
                 # Mark the item as finished in the database
                 final_status = 2
-                # M6 inserts a preemption check immediately before this branch, to tell a
-                # preempted-and-requeued job apart from a genuine failure.
                 if status is not None and len(status) >= 3 and status[0] == "error":
                     final_status = -1
 
@@ -295,7 +299,7 @@ class QM_Queue:
                     )
                     remove_card_images([prompt_id])
                     self.pending_delete.discard(prompt_id)
-                    self.original_task_done(item_id, history_result, status)
+                    self._call_original_task_done(item_id, history_result, status, process_item)
                     return
 
                 outputs = {}
@@ -381,6 +385,14 @@ class QM_Queue:
                             ),
                         )
 
+                write_query(
+                    """
+                        DELETE FROM meta
+                        WHERE item_id = ? AND key = 'error'
+                    """,
+                    (db_id,),
+                )
+
                 if status is not None and len(status) >= 3 and status[0] == "error":
                     error_meta = None
                     for event in status[2]:
@@ -398,13 +410,6 @@ class QM_Queue:
                     if error_meta is not None:
                         write_query(
                             """
-                                DELETE FROM meta
-                                WHERE item_id = ? AND key = 'error'
-                            """,
-                            (db_id,),
-                        )
-                        write_query(
-                            """
                                 INSERT INTO meta (item_id, key, value)
                                 VALUES (?, 'error', ?)
                             """,
@@ -414,12 +419,7 @@ class QM_Queue:
                             ),
                         )
 
-                # Call the original task_done method
-                if (process_item is None) or (not process_item):  # accommodate original method signature
-                    self.original_task_done(item_id, history_result, status)
-                    return
-
-                self.original_task_done(item_id, history_result, status, process_item)
+                self._call_original_task_done(item_id, history_result, status, process_item)
 
     # Put item for execution
     # NOTE: We keep only up to one item in native "pending" queue (to avoid bottleneck for large queues).
@@ -700,7 +700,8 @@ class QM_Queue:
                 )
             ]
             self.pending_delete.update(prompt_ids)
-            nodes.interrupt_processing()
+            if prompt_ids:
+                nodes.interrupt_processing()
             return len(prompt_ids)
 
     def play_items(self, items, front, client_id=None):

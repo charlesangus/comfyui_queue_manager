@@ -102,7 +102,7 @@ const executionTimeLabel = useMemo(() => {
       window.open(viewURL(file), "_blank");
     }, []);
 
-    const error = item?.[3]?.error;
+    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
 
     return (
       <article className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}`}>

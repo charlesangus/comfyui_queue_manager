@@ -297,6 +297,64 @@ def test_get_current_queue_completed_route_includes_errored_job(qm_queue):
     assert succeeded[3]["error"] is None
 
 
+def test_task_done_clears_stale_error_meta_on_successful_resubmission(qm_queue):
+    error_history_result = {"outputs": {}}
+    error_status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_error",
+                {
+                    "prompt_id": "prompt-retry-1",
+                    "node_id": "7",
+                    "node_type": "KSampler",
+                    "executed": [],
+                    "exception_message": "CUDA out of memory",
+                    "exception_type": "RuntimeError",
+                    "traceback": ["line 1", "line 2"],
+                    "current_inputs": {},
+                    "current_outputs": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-retry-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, error_history_result, error_status)
+
+    row = qm_queue.qm_db.read_single("SELECT status FROM queue WHERE prompt_id = ?", ("prompt-retry-1",))
+    assert row["status"] == -1
+
+    success_history_result = {
+        "outputs": {
+            "9": {"images": [{"filename": "out.png", "subfolder": "", "type": "output"}]},
+        }
+    }
+    success_status = (
+        "success",
+        None,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            ("execution_success", {"timestamp": 2000}),
+        ],
+    )
+
+    resubmit = _make_item(50, "prompt-retry-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(resubmit)
+    _, task_id2 = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id2, success_history_result, success_status)
+
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+    by_prompt_id = {row[1]: row for row in completed}
+    retried = by_prompt_id["prompt-retry-1"]
+    assert retried[3]["status"] == 2
+    assert retried[3]["error"] is None
+
+
 def test_queue_put_exposes_card_metadata_on_pending_item(qm_queue):
     item = _make_item(100, "prompt-card-pending", "Workflow Card", "wf-card")
     item[2] = _card_graph()
@@ -454,6 +512,57 @@ def test_delete_running_job_marks_pending_delete_and_interrupts(qm_queue):
         ("prompt-delete-running",),
     )
     assert row["status"] == 1
+
+
+def test_delete_running_job_does_not_interrupt_when_no_match(qm_queue):
+    import nodes as nodes_module
+
+    item = _make_item(100, "prompt-already-done", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2 WHERE prompt_id = ?", ("prompt-already-done",))
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    assert qm_queue.qm.delete_running_job("prompt-already-done") == 0
+    assert "prompt-already-done" not in qm_queue.qm.pending_delete
+    assert len(nodes_module.interrupt_calls) == calls_before
+
+    assert qm_queue.qm.delete_running_job("prompt-does-not-exist") == 0
+    assert len(nodes_module.interrupt_calls) == calls_before
+
+
+def test_task_done_pending_delete_forwards_process_item(qm_queue):
+    item = _make_item(100, "prompt-sensitive-delete", "Workflow A", "wf-a")
+    item.append({"api_key_comfy_org": "secret-key"})
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+
+    native_item = qm_queue.native_queue.currently_running[task_id]
+    assert len(native_item) == 6
+    assert native_item[5] == {"api_key_comfy_org": "secret-key"}
+
+    assert qm_queue.qm.delete_running_job("prompt-sensitive-delete") == 1
+
+    captured = {}
+
+    def spy_original_task_done(item_id, history_result, status, process_item=None):
+        captured["item_id"] = item_id
+        captured["process_item"] = process_item
+        if process_item is not None:
+            captured["stripped"] = process_item(native_item)
+
+    qm_queue.qm.original_task_done = spy_original_task_done
+
+    def remove_sensitive(prompt):
+        return prompt[:5] + prompt[6:]
+
+    qm_queue.qm.task_done(task_id, {"outputs": {}}, None, remove_sensitive)
+
+    assert captured["item_id"] == task_id
+    assert captured["process_item"] is remove_sensitive
+    assert captured["stripped"] == native_item[:5]
+    assert "api_key_comfy_org" not in json.dumps(captured["stripped"])
 
 
 def test_task_done_deletes_row_for_job_marked_pending_delete(qm_queue, monkeypatch, tmp_path):

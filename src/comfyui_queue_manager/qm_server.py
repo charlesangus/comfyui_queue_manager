@@ -244,7 +244,7 @@ class QM_Server:
 
             return web.json_response({"deleted": total})
 
-        # Explicitly delete the currently running (or a specific) job
+        # Delete running job
         @PromptServer.instance.routes.delete("/queue_manager/running")
         async def delete_running(request):
             json_data = await requestJson(request)
