@@ -254,6 +254,10 @@ header.header {
     border-color: var(--qm-danger);
   }
 
+  .qm-card.selected {
+    box-shadow: inset 0 0 0 2px var(--qm-primary);
+  }
+
   .error-details {
     margin: 0.5rem 0.75rem;
     padding: 0.4rem 0.6rem;

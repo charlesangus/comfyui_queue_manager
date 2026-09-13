@@ -1,12 +1,8 @@
 "use client";
 
 import React, { memo, useCallback, useContext, useMemo } from "react";
-import { apiCall, deleteRunningJob } from "../internals/functions";
-import { msgLoadWorkflow } from "../internals/parentBridge";
 import { AppContext } from "../internals/app-context";
-import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import { LoaderSpinner } from "../components/LoaderSpinner";
-import {useAppStore} from "@/app/stores/appStore";
 import { MediaItem, viewURL } from "./MediaItem";
 import { MediaOutputs } from "../models/MediaOutputs";
 import { CardInfo } from "./CardInfo";
@@ -22,41 +18,15 @@ export const QueueCard = memo(
 
     route,
     filters,
+    isSelected,
+    onSelect,
   }) {
     const { fetchQueueItems } = useContext(AppContext);
 
-    const dbId = item?.[3]?.db_id;
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
 
-    const cancelQueueItem = useCallback(async () => {
-      if (mode === "running" || mode === "external") {
-        await deleteRunningJob(item[1]);
-        return;
-      }
-      await apiCall(`api/queue`, { delete: [item[1]] });
-    }, [mode, item]);
-
-    const loadQueueItem = useCallback(() => {
-      if (workflow) {
-        msgLoadWorkflow(workflow, item[0]);
-      }
-    }, [workflow, item]);
-
-    const archiveQueueItem = useCallback(async () => {
-      await apiCall(`queue_manager/archive`, { archive: [dbId] });
-    }, [dbId]);
-
-    const playItem = useCallback(async () => {
-      const { shiftDown, clientId } = useAppStore.getState();
-
-      await apiCall(`queue_manager/play`, {
-        items: [dbId],
-        front: shiftDown === true,
-        clientId,
-      });
-    }, [dbId]);
-
-    const filterByWorkflow = useCallback(() => {
+    const filterByWorkflow = useCallback((event) => {
+      event.stopPropagation();
       if (!workflow?.id) return;
 
       fetchQueueItems({
@@ -105,7 +75,12 @@ const executionTimeLabel = useMemo(() => {
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
 
     return (
-      <article className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}`}>
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
+      <article
+        className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`}
+        aria-selected={isSelected}
+        onClick={onSelect}
+      >
         <div className="card-header">
           <span className="serial">{rowIndex}</span>
           {loader ? <LoaderSpinner /> : null}
@@ -151,7 +126,10 @@ const executionTimeLabel = useMemo(() => {
                   <MediaItem
                     key={idx}
                     file={file}
-                    onClick={() => handleThumbnailClick(file)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleThumbnailClick(file);
+                    }}
                     controls={false}
                     autoplay={false}
                     className="thumbnail"
@@ -161,7 +139,8 @@ const executionTimeLabel = useMemo(() => {
             )}
 
             {error ? (
-              <details className="error-details">
+              // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
+              <details className="error-details" onClick={(event) => event.stopPropagation()}>
                 <summary>{error.kind === "interrupted" ? "Interrupted" : "Error"} details</summary>
                 {error.message ? <p className="error-message">{error.message}</p> : null}
                 <p className="error-node">
@@ -169,49 +148,6 @@ const executionTimeLabel = useMemo(() => {
                 </p>
                 {error.traceback ? <pre className="error-traceback">{error.traceback.join("\n")}</pre> : null}
               </details>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="card-actions">
-          <div style={{ justifyContent: "flex-end" }} className="buttons">
-            <button
-              className="delete qm-btn qm-btn-danger"
-              onClick={cancelQueueItem}
-              title="Delete workflow from queue"
-            >
-              Delete
-            </button>
-
-            {mode !== "external" ? (
-              <button
-                className="load qm-btn qm-btn-primary"
-                onClick={loadQueueItem}
-                title="Load workflow"
-              >
-                Load
-              </button>
-            ) : null}
-
-            {route === "queue" && mode !== "running" ? (
-              <button
-                className="archive qm-btn"
-                onClick={archiveQueueItem}
-                title="Move to the archive"
-              >
-                Archive
-              </button>
-            ) : null}
-
-            {route === "archive" ? (
-              <button
-                className="run qm-btn qm-btn-primary"
-                onClick={playItem}
-                title="Move to queue"
-              >
-                <PlayArrowOutlinedIcon fontSize="small" />
-                Run
-              </button>
             ) : null}
           </div>
         </div>
@@ -229,6 +165,7 @@ const executionTimeLabel = useMemo(() => {
       prev.mode === next.mode &&
       prev.route === next.route &&
       prev.filters === next.filters &&
+      prev.isSelected === next.isSelected &&
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size &&
       prev.item?.[3]?.card === next.item?.[3]?.card
