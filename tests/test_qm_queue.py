@@ -111,6 +111,39 @@ def test_queue_put_ignores_resubmission_of_running_item(qm_queue):
     assert row_after["number"] == row_running["number"]
 
 
+def test_higher_priority_item_dequeues_before_earlier_queued_items(qm_queue):
+    for number, prompt_id, priority in ((1, "prompt-low-1", 0), (2, "prompt-high", 1), (3, "prompt-low-2", 0)):
+        item = _make_item(number, prompt_id, "Workflow A", "wf-a")
+        item[3]["qm_priority"] = priority
+        qm_queue.native_queue.put(item)
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(3)]
+
+    assert dequeued == ["prompt-high", "prompt-low-1", "prompt-low-2"]
+
+
+def test_queue_put_preempts_prefetched_lower_priority_item(qm_queue):
+    prefetched = _make_item(10, "prompt-prefetched", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(prefetched)
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-prefetched"]
+
+    urgent = _make_item(11, "prompt-urgent", "Workflow A", "wf-a")
+    urgent[3]["qm_priority"] = 1
+    qm_queue.native_queue.put(urgent)
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-urgent"]
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority, prompt FROM queue WHERE prompt_id = ?",
+        ("prompt-urgent",),
+    )
+    assert row["priority"] == 1
+    assert "qm_priority" not in row["prompt"]
+
+    assert qm_queue.native_queue.get()[0][1] == "prompt-urgent"
+    assert qm_queue.native_queue.get()[0][1] == "prompt-prefetched"
+
+
 def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):
     history_result = {
         "outputs": {

@@ -12,6 +12,18 @@ from .qm_card import load_card_by_prompt_id, remove_card_images, save_static_car
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
+PRIORITY_MIN = -100
+PRIORITY_MAX = 100
+PRIORITY_PREEMPTED = 999
+PRIORITY_INTERACTIVE = 1000
+PRIORITY_RESERVED = (PRIORITY_PREEMPTED, PRIORITY_INTERACTIVE)
+
+
+def clamp_priority(priority):
+    if priority in PRIORITY_RESERVED:
+        return priority
+    return max(PRIORITY_MIN, min(PRIORITY_MAX, priority))
+
 
 class QM_Queue:
     def __init__(self, queue_manager):
@@ -88,7 +100,7 @@ class QM_Queue:
             pending = []
             total_rows = 0
             last_page = 0
-            order_string = "ORDER BY number"
+            order_string = "ORDER BY priority DESC, number"
             join_string = ""
             select_string = "SELECT queue.id as id, prompt, number"
 
@@ -448,17 +460,20 @@ class QM_Queue:
             if existing is not None and existing[0] == 1:
                 return
 
+            priority = clamp_priority(item[3].pop("qm_priority", 0))
+
             # Add the item to the database
             write_query(
                 """
-                INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status)
-                VALUES (?, ?, ?, ?, ?, 0)
+                INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status, priority)
+                VALUES (?, ?, ?, ?, ?, 0, ?)
                 ON CONFLICT(prompt_id) DO UPDATE SET
                     number = excluded.number,
                     name = excluded.name,
                     workflow_id = excluded.workflow_id,
                     prompt = excluded.prompt,
-                    status = 0
+                    status = 0,
+                    priority = excluded.priority
             """,
                 (
                     item[1],
@@ -466,6 +481,7 @@ class QM_Queue:
                     item[3]["extra_pnginfo"]["workflow"]["workflow_name"],
                     item[3]["extra_pnginfo"]["workflow"]["id"],
                     json.dumps(item),
+                    priority,
                 ),
             )
 
@@ -474,31 +490,47 @@ class QM_Queue:
 
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
 
-            # Is there's no pending item in the native heap nd we are not paused then add item with highest priority (could be this one)
-            if len(self.native_queue.queue) == 0 and not self.paused:
-                # get item from database which has highest priority and higher than this
-                item = read_single(
-                    """
-                    SELECT number, prompt
-                    FROM queue
-                    WHERE status = 0 AND number <= ?
-                    ORDER BY number
-                    LIMIT 1
-                """,
-                    (item[0],),
-                )
-
-                if item is not None:
-                    # Convert the item to a tuple
-                    item = tuple(json.loads(item[1]))
-
-                    # Backwards compatibility: if item[5] does not exist, create it with empty dict
-                    if len(item) < 6:
-                        item = item + ({},)
-
-                    self.original_put(item)
+            if not self.paused and (len(self.native_queue.queue) == 0 or self.outranks_heap_head(priority, item[0])):
+                self.native_queue.queue = []
+                self.pull_head_into_heap()
             else:  # just notify frontend that we have a new item
                 PromptServer.instance.queue_updated()
+
+    def pull_head_into_heap(self):
+        row = read_single("""
+            SELECT prompt
+            FROM queue
+            WHERE status = 0
+            ORDER BY priority DESC, number
+            LIMIT 1
+        """)
+
+        if row is None:
+            return
+
+        item = tuple(json.loads(row[0]))
+
+        # Backwards compatibility: if item[5] does not exist, create it with empty dict
+        if len(item) < 6:
+            item = item + ({},)
+
+        self.original_put(item)
+
+    # Callers must check heap emptiness themselves; an empty heap has no head to outrank.
+    def outranks_heap_head(self, priority, number):
+        if len(self.native_queue.queue) == 0:
+            return False
+
+        head_row = read_single(
+            "SELECT priority, number FROM queue WHERE prompt_id = ?",
+            (self.native_queue.queue[0][1],),
+        )
+        # A head with no row was queued straight through original_put, so the database
+        # cannot restore it if we drop it from the heap.
+        if head_row is None:
+            return False
+
+        return (priority, -number) > (head_row[0], -head_row[1])
 
     def queue_get(self, timeout=None):
         with self.pause_lock:
@@ -518,7 +550,7 @@ class QM_Queue:
                     SELECT number, prompt, updated_at
                     FROM queue
                     WHERE status = 0
-                    ORDER BY number
+                    ORDER BY priority DESC, number
                     LIMIT 1
                 """)
 
@@ -929,7 +961,7 @@ class QM_Queue:
                     SELECT number
                     FROM queue
                     WHERE status = 0
-                    ORDER BY number
+                    ORDER BY priority DESC, number
                     LIMIT 1
                 """)
 
