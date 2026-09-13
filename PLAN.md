@@ -95,6 +95,15 @@ Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 w
 
 # Open questions
 
+- Found during M4's PR review (not caused by M4, pre-existing): `qm_queue.py`'s
+  `delete_running_job` (~line 693) only matches DB rows with `status = 1`
+  (`SELECT prompt_id FROM queue WHERE status = 1 AND prompt_id = ?`). External jobs are
+  deliberately never inserted into the DB, so a `DELETE queue_manager/running` call for an
+  external job's `prompt_id` matches nothing, interrupts nothing, and returns success anyway —
+  the frontend's `deleteRunningJob` (used by M4's bulk Delete, and by the old per-card Delete
+  before it) can't actually cancel an external job. Needs `delete_running_job` to also match
+  against `native_queue.currently_running`, not just the DB. Not blocking M4 (same limitation
+  existed before this milestone); worth a fix.
 - Found during M4's manual verification (not caused by M4, pre-existing): with `paused: true`
   (`qm_queue.py`/`/queue_manager/playback`) held for an extended session of repeated
   archive/run/delete mutations, a batch of still-pending items — including some submitted
