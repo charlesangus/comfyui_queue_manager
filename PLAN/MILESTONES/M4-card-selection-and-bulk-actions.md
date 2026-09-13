@@ -95,3 +95,15 @@ load, archive, run, run-at-front) is reachable through selection; rebuilt `web/.
   is not a bug — it matches this milestone's own spec (`## Phase 4.1` intro: "Shift-click for a
   range" using `anchor` = last clicked key, per `selectionStore.js`'s design in M4.P1.T1); the
   verification checklist's wording was imprecise, not the implementation. Gate passes.
+- 2026-09-13 — PR #8 review round 1 (Codex): 5 findings. Fixed in-scope: stale `onSelect`
+  closure on `QueueCard`'s memo comparator after a queue refresh (major — `Queue.jsx`'s
+  `handleSelect` is now a stable `useCallback` reading `orderedKeys` via a ref, and the
+  comparator now checks `onSelect`/`itemKey`), the selection bar's Load button silently
+  no-op'ing for a running item with `extra_pnginfo` but no `.workflow` (minor —
+  `canLoad` now checks the workflow directly), the Ctrl+A/Delete keyboard guard missing
+  contentEditable descendants (minor — switched to `event.target.isContentEditable`), and a
+  leftover dead `.card-actions` CSS block. Declined as out-of-scope, logged instead as a project
+  open question: `qm_queue.py`'s `delete_running_job` only matches DB `status = 1` rows, so it
+  can't actually interrupt an external job (pre-existing since before this milestone; M4's bulk
+  Delete inherits it from the same helper the old per-card Delete used). One round; no second
+  round needed.
