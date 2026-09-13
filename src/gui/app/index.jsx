@@ -25,6 +25,7 @@ import {MenuItem, Pagination, Select} from "@mui/material";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
 import {useComfyTheme} from "./hooks/useComfyTheme";
 import {useParentMessages} from "./hooks/useParentMessages";
+import {useQueue} from "./hooks/useQueue";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -39,13 +40,6 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 export default function Home({ onDarkChange }) {
-  const [appStatus, setAppStatus] = useState({
-    loading: true,
-    reloading: false,
-    error: null,
-    queue: null,
-  });
-
   const options = useOptionsStore((state) => state);
   const pageSize = useOptionsStore((state) => state.Basic.PageSize);
   const previousPageSizeRef = useRef(pageSize);
@@ -57,24 +51,11 @@ export default function Home({ onDarkChange }) {
   const route = useAppStore((state) => state.route);
   const shiftDown = useAppStore((state) => state.shiftDown);
 
-  const setFilters = useAppStore((state) => state.setFilters);
-  const setRoute = useAppStore((state) => state.setRoute);
   const setShiftDown = useAppStore((state) => state.setShiftDown);
-
-  const [currentJob, setProgress] = useState({
-    id: null,
-    nodes: {
-      // [node_id]: string|boolean - true executed, node id - not executed
-    },
-    integrity: true, // false if events about workflow execution are received before the workflow data is loaded
-    progress: 0.0,
-  });
 
   const [showSplash, setShowSplash] = useState(false);
 
   useComfyTheme(onDarkChange);
-
-  const fetchIdRef = useRef(0);
 
   const queryKey = useMemo(() => {
     const f = filters ? JSON.stringify(filters) : "";
@@ -82,34 +63,6 @@ export default function Home({ onDarkChange }) {
     return `${route}|${f}|${order}`;
   }, [route, filters, completedListOrder]);
   const lastQueryKeyRef = useRef(null);
-
-
-  const isFilterOn = useCallback(() => {
-    return filters && Object.keys(filters).length > 0;
-  }, [filters]);
-
-  const appendFilters = useCallback((queryArgs, _filters) => {
-    if (!_filters) {
-      _filters = filters;
-    }
-
-    if (_filters && Object.keys(_filters).length > 0) {
-      queryArgs += (queryArgs ? '&filters=' : '?filters=') + encodeURIComponent(JSON.stringify(_filters));
-    }
-    return queryArgs;
-  }, [filters]);
-
-
-  const appendRoute = useCallback((queryArgs, _route) => {
-    if (!_route) {
-      _route = route;
-    }
-
-    if (_route) {
-      queryArgs += (queryArgs ? '&route=' : '?route=') + _route;
-    }
-    return queryArgs;
-  }, [route]);
 
   const fetchOptions = useCallback(async () => {
     const newOptions = await apiCall(`queue_manager/options`, null, "GET");
@@ -125,63 +78,18 @@ export default function Home({ onDarkChange }) {
     }
   }, [setAllOptions]);
 
-  const fetchQueueItems = useCallback(async ({page, route: requestedRoute, filters, reload = false} = {}) => {
-
-    const fetchId = ++fetchIdRef.current;
-
-    let queryArgs = "";
-    if (page !== undefined && page !== null) queryArgs = `?page=${page}`;
-
-    queryArgs = appendFilters(queryArgs, filters);
-    queryArgs = appendRoute(queryArgs, requestedRoute);
-    // Use the live value; ComfyUI may still be saving the setting on the server.
-    if (pageSize !== undefined) {
-      queryArgs += `${queryArgs ? '&' : '?'}page_size=${encodeURIComponent(pageSize)}`;
-    }
-    if ((requestedRoute || route) === "completed") {
-      const order = completedListOrder === "Oldest first" ? "asc" : "desc";
-      queryArgs += `${queryArgs ? '&' : '?'}order=${order}`;
-    }
-
-    setAppStatus((prev) => ({ ...prev, loading: true, error: null, reloading: reload }));
-
-    try {
-      const response = await fetch(`${baseURL}queue_manager/queue${queryArgs}`);
-      if (!response.ok) throw new Error("Network response was not ok");
-
-      const queue = await response.json();
-
-      // If a newer fetch started after this one, ignore this response
-      if (fetchId !== fetchIdRef.current) return;
-
-      if (requestedRoute) {
-        setRoute(requestedRoute);
-
-        if (requestedRoute === "completed") {
-          setTimeout(() => {
-            fetchOptions();
-          });
-        }
-      }
-
-      if (filters) {
-        setFilters(filters);
-      }
-
-      setAppStatus((prev) => ({ ...prev, loading: false, error: null, queue, reloading: false }));
-    } catch (error) {
-      if (fetchId !== fetchIdRef.current) return;
-
-      setAppStatus((prev) => ({
-        ...prev,
-        loading: false,
-        reloading: false,
-        error: error?.message ?? String(error),
-        queue: null,
-      }));
-      console.error(`Error fetching ${requestedRoute || route} items:`, error);
-    }
-  }, [appendFilters, appendRoute, fetchOptions, setFilters, setRoute, pageSize, completedListOrder, route]);
+  const {
+    data: queueData,
+    isLoading: queueIsLoading,
+    isReloading: queueIsReloading,
+    error: queueError,
+    progress: queueProgress,
+    fetchQueueItems,
+    isFilterOn,
+    appendFilters,
+    appendRoute,
+    onQueueStatusUpdated,
+  } = useQueue({ fetchOptions });
 
   useEffect(() => {
     const pageSizeChanged = pageSize !== previousPageSizeRef.current;
@@ -194,39 +102,6 @@ export default function Home({ onDarkChange }) {
       fetchQueueItems({page: 0, reload: true});
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);
-
-  function getNodeIDs(nodes) {
-    const nodeIDs = {};
-    for (const node of nodes) {
-      if (node.id) {
-        nodeIDs[node.id] = node.id;
-      }
-    }
-
-    return nodeIDs;
-  }
-
-  function getTheJob(jobID, queue) {
-    if (!queue) {
-      return null;
-    }
-
-    // check if the job is running
-    for (const item of queue.running) {
-      if (item[1] === jobID) {
-        return item;
-      }
-    }
-
-    // check if the job is in the queue
-    for (const item of queue.pending) {
-      if (item[1] === jobID) {
-        return item;
-      }
-    }
-
-    return null;
-  }
 
   async function archiveAll() {
     try {
@@ -271,85 +146,6 @@ export default function Home({ onDarkChange }) {
       } catch (error) {
         console.error("Error fetching queue items:", error);
       }
-  }
-
-  const onQueueStatusUpdated = (event) => {
-
-    switch (event.data.message.name) {
-      case "status":
-        if (route === 'queue' || route === 'completed') {
-          fetchQueueItems((appStatus.queue && appStatus.queue.info) ? appStatus.queue.info.page : 0);
-        }
-        break;
-      case "execution_start": {
-          const {prompt_id} = event.data.message.detail;
-
-          const theJob = getTheJob(prompt_id, appStatus.queue);
-
-          if (theJob) {
-            const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
-            // set the current job
-            setProgress(prev => ({
-              ...prev,
-              id: prompt_id,
-              nodes: nodeIDs,
-              integrity: true
-            }));
-
-            break;
-          }
-
-          // set the current job with the prompt id and false integrity flag
-          // we don't have the workflow data yet, so set integrity to false so we can pick up progress later when we get the workflow data
-          setProgress(prev => ({...prev, id: prompt_id, integrity: false, nodes: {}}));
-        }
-        break;
-
-      case 'execution_cached': {
-          // set cached node ids as executed
-          const {nodes} = event.data.message.detail; // array of node id strings
-
-          if (!nodes || nodes.length === 0) {
-            return;
-          }
-
-          const newNodes = {};
-          for (const node of nodes) {
-            newNodes[node] = true;
-          }
-
-
-          setProgress(prev => ({
-            ...prev,
-            nodes: {
-              ...prev.nodes,
-              ...newNodes
-            }
-          }));
-        }
-        break;
-
-      case "executing": {
-          // set executed node id as executed
-          const node_id = event.data.message.detail;
-          if (!node_id) {
-            return;
-          }
-
-          setProgress(prev => ({
-            ...prev,
-            nodes: {
-              ...prev.nodes,
-              [node_id]: true
-            }
-          }));
-        }
-        break;
-
-      case "queue-manager-queue-updated":
-        fetchQueueItems()
-        break;
-    }
   }
 
   useParentMessages({ onQueueStatusUpdated });
@@ -412,55 +208,10 @@ export default function Home({ onDarkChange }) {
     }
   })
 
-  // when progress data is updated
-  useEffect(() => {
-    const progress =
-      Object.values(currentJob.nodes).length > 0 ?
-        Math.round(
-          Math.max(
-            (Object.values(currentJob.nodes).filter(v => typeof v === 'boolean').length - 1),
-            0
-          ) / Object.values(currentJob.nodes).length * 100,
-          2
-        )
-        :
-        0;
-
-    setProgress(prev => ({
-      ...prev,
-      progress: progress
-    }));
-
-  }, [currentJob.nodes]);
-
-  // when new queue items are added to the queue
-  useEffect(() => {
-    // Are we already tracking a job but have not saved the workflow data yet?
-    if (currentJob.id && currentJob.integrity === false) {
-      const theJob = getTheJob(currentJob.id, appStatus.queue);
-      if (theJob) {
-        const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
-
-        // if we already marked some nodes as executed do not overwrite them
-        for (const nodeID in currentJob.nodes) {
-          if (currentJob.nodes[nodeID] === true) {
-            nodeIDs[nodeID] = true;
-          }
-        }
-
-        // set the current job
-        setProgress(prev => ({
-          ...prev,
-          nodes: nodeIDs,
-          integrity: true
-        }));
-      }
-    }
-  }, [appStatus.queue, currentJob.id, currentJob.integrity, currentJob.nodes]);
-
   // on mount get the queue items from the server
   useEffect(() => {
     fetchQueueItems({route: "queue"});
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchOptions sets state only after its internal await; the fetch itself must fire on mount
     fetchOptions();
 
     window.addEventListener('keydown', e => {
@@ -476,10 +227,10 @@ export default function Home({ onDarkChange }) {
   }, []);
 
   return (
-    <div className={`route-${route} qm-container` + (appStatus.loading ? ' loading' : '') + (appStatus.reloading ? ' reloading' : '')}>
+    <div className={`route-${route} qm-container` + (queueIsLoading ? ' loading' : '') + (queueIsReloading ? ' reloading' : '')}>
       <header className="px-2 py-1 text-sm header font-bold">
         Queue Manager
-        {appStatus.loading &&
+        {queueIsLoading &&
           <LoaderSpinner />
         }
       </header>
@@ -577,10 +328,10 @@ export default function Home({ onDarkChange }) {
         *
         */}
         <div className={'queue-table'}>
-          <Queue data={appStatus.queue}
-                 error={appStatus.error}
-                 isLoading={appStatus.loading}
-                 progress={currentJob.progress}
+          <Queue data={queueData}
+                 error={queueError}
+                 isLoading={queueIsLoading}
+                 progress={queueProgress}
                  route={route}
           />
         </div>
@@ -592,7 +343,7 @@ export default function Home({ onDarkChange }) {
         */}
         <footer className={"footer"}>
           {/* Paging */}
-          {appStatus.queue && appStatus.queue.info && (appStatus.queue.info.last_page > 0) &&
+          {queueData && queueData.info && (queueData.info.last_page > 0) &&
             <>
               <div className={"pagination"}>
                 <Pagination
@@ -600,24 +351,24 @@ export default function Home({ onDarkChange }) {
                   variant="outlined"
                   boundaryCount={2}
                   siblingCount={2}
-                  page={appStatus.queue.info.page + 1}
+                  page={queueData.info.page + 1}
                   onChange={(event, value) => {
                     fetchQueueItems({page:value -1, reload: true});
                   }}
-                  count={appStatus.queue.info.last_page + 1}></Pagination>
+                  count={queueData.info.last_page + 1}></Pagination>
 
                 {/* If more than 11 pages show page selector */}
-                {appStatus.queue.info.last_page > 10 &&
+                {queueData.info.last_page > 10 &&
                   <div className="page-selector">
                     <Select
-                      value={appStatus.queue.info.page}
+                      value={queueData.info.page}
                       onChange={(event) => {
                         const pageNum = event.target.value;
                         fetchQueueItems({page:pageNum, reload: true});
                       }}
                       size="small"
                     >
-                      {[...Array(appStatus.queue.info.last_page + 1).keys()].map((pageNum) => (
+                      {[...Array(queueData.info.last_page + 1).keys()].map((pageNum) => (
                         <MenuItem
                           key={pageNum}
                           value={pageNum}
@@ -638,7 +389,7 @@ export default function Home({ onDarkChange }) {
           {/* Footer Actions */}
           <div className="p-2 flex actions">
             <Stack direction="row" spacing={1} className={'min-w-full buttons'}>
-              {appStatus.queue && (appStatus.queue.running.length > 0 || appStatus.queue.pending.length > 0) &&
+              {queueData && (queueData.running.length > 0 || queueData.pending.length > 0) &&
                 <>
 
 

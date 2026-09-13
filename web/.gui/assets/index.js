@@ -27220,54 +27220,51 @@ function useParentMessages({ onQueueStatusUpdated, onSettingChanged, onHello } =
     return () => window.removeEventListener("message", handleMessage);
   }, [handleMessage]);
 }
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1
-});
-function Home({ onDarkChange }) {
+function getNodeIDs(nodes) {
+  const nodeIDs = {};
+  for (const node2 of nodes) {
+    if (node2.id) {
+      nodeIDs[node2.id] = node2.id;
+    }
+  }
+  return nodeIDs;
+}
+function getTheJob(jobID, queue) {
+  if (!queue) {
+    return null;
+  }
+  for (const item of queue.running) {
+    if (item[1] === jobID) {
+      return item;
+    }
+  }
+  for (const item of queue.pending) {
+    if (item[1] === jobID) {
+      return item;
+    }
+  }
+  return null;
+}
+function useQueue({ fetchOptions } = {}) {
   const [appStatus, setAppStatus] = reactExports.useState({
     loading: true,
     reloading: false,
     error: null,
     queue: null
   });
-  const options = useOptionsStore((state) => state);
   const pageSize = useOptionsStore((state) => state.Basic.PageSize);
-  const previousPageSizeRef = reactExports.useRef(pageSize);
   const completedListOrder = useOptionsStore((state) => state.Completed.ListOrder);
-  const previousListOrderRef = reactExports.useRef(completedListOrder);
-  const setAllOptions = useOptionsStore((state) => state.setAllOptions);
   const filters = useAppStore((state) => state.filters);
   const route = useAppStore((state) => state.route);
-  const shiftDown = useAppStore((state) => state.shiftDown);
   const setFilters = useAppStore((state) => state.setFilters);
   const setRoute = useAppStore((state) => state.setRoute);
-  const setShiftDown = useAppStore((state) => state.setShiftDown);
   const [currentJob, setProgress] = reactExports.useState({
     id: null,
-    nodes: {
-      // [node_id]: string|boolean - true executed, node id - not executed
-    },
+    nodes: {},
     integrity: true,
-    // false if events about workflow execution are received before the workflow data is loaded
     progress: 0
   });
-  const [showSplash, setShowSplash] = reactExports.useState(false);
-  useComfyTheme(onDarkChange);
   const fetchIdRef = reactExports.useRef(0);
-  reactExports.useMemo(() => {
-    const f = filters ? JSON.stringify(filters) : "";
-    const order = route === "completed" ? String(completedListOrder ?? "") : "";
-    return `${route}|${f}|${order}`;
-  }, [route, filters, completedListOrder]);
-  reactExports.useRef(null);
   const isFilterOn = reactExports.useCallback(() => {
     return filters && Object.keys(filters).length > 0;
   }, [filters]);
@@ -27289,17 +27286,6 @@ function Home({ onDarkChange }) {
     }
     return queryArgs;
   }, [route]);
-  const fetchOptions = reactExports.useCallback(async () => {
-    const newOptions = await apiCall(`queue_manager/options`, null, "GET");
-    if (newOptions) {
-      setAllOptions({ ...newOptions });
-      if (compareVersions(newOptions.splash_screen, newOptions.__version__) < 0) {
-        setShowSplash(true);
-      }
-    } else {
-      console.error("Failed to fetch options");
-    }
-  }, [setAllOptions]);
   const fetchQueueItems = reactExports.useCallback(async ({ page, route: requestedRoute, filters: filters2, reload = false } = {}) => {
     const fetchId = ++fetchIdRef.current;
     let queryArgs = "";
@@ -27323,7 +27309,7 @@ function Home({ onDarkChange }) {
         setRoute(requestedRoute);
         if (requestedRoute === "completed") {
           setTimeout(() => {
-            fetchOptions();
+            fetchOptions?.();
           });
         }
       }
@@ -27343,78 +27329,6 @@ function Home({ onDarkChange }) {
       console.error(`Error fetching ${requestedRoute || route} items:`, error);
     }
   }, [appendFilters, appendRoute, fetchOptions, setFilters, setRoute, pageSize, completedListOrder, route]);
-  reactExports.useEffect(() => {
-    const pageSizeChanged = pageSize !== previousPageSizeRef.current;
-    const listOrderChanged = completedListOrder !== previousListOrderRef.current;
-    previousPageSizeRef.current = pageSize;
-    previousListOrderRef.current = completedListOrder;
-    if (pageSizeChanged || route === "completed" && listOrderChanged) {
-      fetchQueueItems({ page: 0, reload: true });
-    }
-  }, [pageSize, completedListOrder, route, fetchQueueItems]);
-  function getNodeIDs(nodes) {
-    const nodeIDs = {};
-    for (const node2 of nodes) {
-      if (node2.id) {
-        nodeIDs[node2.id] = node2.id;
-      }
-    }
-    return nodeIDs;
-  }
-  function getTheJob(jobID, queue) {
-    if (!queue) {
-      return null;
-    }
-    for (const item of queue.running) {
-      if (item[1] === jobID) {
-        return item;
-      }
-    }
-    for (const item of queue.pending) {
-      if (item[1] === jobID) {
-        return item;
-      }
-    }
-    return null;
-  }
-  async function archiveAll() {
-    try {
-      let queryArgs = appendFilters("");
-      const response = await fetch(`${baseURL}queue_manager/archive-queue${queryArgs}`);
-    } catch (error) {
-      console.error("Error fetching queue items:", error);
-    }
-  }
-  async function playAllArchive() {
-    await apiCall("queue_manager/play-archive", {
-      client_id: useAppStore.getState().clientId,
-      filters: isFilterOn() ? filters : null,
-      front: useAppStore.getState().shiftDown === true
-    });
-  }
-  async function deleteFromQueue() {
-    let queryArgs = appendFilters("?route=" + route);
-    try {
-      const response = await fetch(`${baseURL}queue_manager/queue${queryArgs}`, {
-        method: "DELETE"
-      });
-    } catch (error) {
-      console.error(`Error deleting items from ${route}:`, error);
-    }
-  }
-  async function clearPending() {
-    try {
-      const response = await fetch(`${baseURL}api/queue`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ clear: true })
-      });
-    } catch (error) {
-      console.error("Error fetching queue items:", error);
-    }
-  }
   const onQueueStatusUpdated = (event) => {
     switch (event.data.message.name) {
       case "status":
@@ -27478,6 +27392,150 @@ function Home({ onDarkChange }) {
         break;
     }
   };
+  reactExports.useEffect(() => {
+    const progress = Object.values(currentJob.nodes).length > 0 ? Math.round(
+      Math.max(
+        Object.values(currentJob.nodes).filter((v) => typeof v === "boolean").length - 1,
+        0
+      ) / Object.values(currentJob.nodes).length * 100,
+      2
+    ) : 0;
+    setProgress((prev2) => ({
+      ...prev2,
+      progress
+    }));
+  }, [currentJob.nodes]);
+  reactExports.useEffect(() => {
+    if (currentJob.id && currentJob.integrity === false) {
+      const theJob = getTheJob(currentJob.id, appStatus.queue);
+      if (theJob) {
+        const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
+        for (const nodeID in currentJob.nodes) {
+          if (currentJob.nodes[nodeID] === true) {
+            nodeIDs[nodeID] = true;
+          }
+        }
+        setProgress((prev2) => ({
+          ...prev2,
+          nodes: nodeIDs,
+          integrity: true
+        }));
+      }
+    }
+  }, [appStatus.queue, currentJob.id, currentJob.integrity, currentJob.nodes]);
+  return {
+    data: appStatus.queue,
+    isLoading: appStatus.loading,
+    isReloading: appStatus.reloading,
+    error: appStatus.error,
+    progress: currentJob.progress,
+    fetchQueueItems,
+    isFilterOn,
+    appendFilters,
+    appendRoute,
+    onQueueStatusUpdated
+  };
+}
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1
+});
+function Home({ onDarkChange }) {
+  const options = useOptionsStore((state) => state);
+  const pageSize = useOptionsStore((state) => state.Basic.PageSize);
+  const previousPageSizeRef = reactExports.useRef(pageSize);
+  const completedListOrder = useOptionsStore((state) => state.Completed.ListOrder);
+  const previousListOrderRef = reactExports.useRef(completedListOrder);
+  const setAllOptions = useOptionsStore((state) => state.setAllOptions);
+  const filters = useAppStore((state) => state.filters);
+  const route = useAppStore((state) => state.route);
+  const shiftDown = useAppStore((state) => state.shiftDown);
+  const setShiftDown = useAppStore((state) => state.setShiftDown);
+  const [showSplash, setShowSplash] = reactExports.useState(false);
+  useComfyTheme(onDarkChange);
+  reactExports.useMemo(() => {
+    const f = filters ? JSON.stringify(filters) : "";
+    const order = route === "completed" ? String(completedListOrder ?? "") : "";
+    return `${route}|${f}|${order}`;
+  }, [route, filters, completedListOrder]);
+  reactExports.useRef(null);
+  const fetchOptions = reactExports.useCallback(async () => {
+    const newOptions = await apiCall(`queue_manager/options`, null, "GET");
+    if (newOptions) {
+      setAllOptions({ ...newOptions });
+      if (compareVersions(newOptions.splash_screen, newOptions.__version__) < 0) {
+        setShowSplash(true);
+      }
+    } else {
+      console.error("Failed to fetch options");
+    }
+  }, [setAllOptions]);
+  const {
+    data: queueData,
+    isLoading: queueIsLoading,
+    isReloading: queueIsReloading,
+    error: queueError,
+    progress: queueProgress,
+    fetchQueueItems,
+    isFilterOn,
+    appendFilters,
+    appendRoute,
+    onQueueStatusUpdated
+  } = useQueue({ fetchOptions });
+  reactExports.useEffect(() => {
+    const pageSizeChanged = pageSize !== previousPageSizeRef.current;
+    const listOrderChanged = completedListOrder !== previousListOrderRef.current;
+    previousPageSizeRef.current = pageSize;
+    previousListOrderRef.current = completedListOrder;
+    if (pageSizeChanged || route === "completed" && listOrderChanged) {
+      fetchQueueItems({ page: 0, reload: true });
+    }
+  }, [pageSize, completedListOrder, route, fetchQueueItems]);
+  async function archiveAll() {
+    try {
+      let queryArgs = appendFilters("");
+      const response = await fetch(`${baseURL}queue_manager/archive-queue${queryArgs}`);
+    } catch (error) {
+      console.error("Error fetching queue items:", error);
+    }
+  }
+  async function playAllArchive() {
+    await apiCall("queue_manager/play-archive", {
+      client_id: useAppStore.getState().clientId,
+      filters: isFilterOn() ? filters : null,
+      front: useAppStore.getState().shiftDown === true
+    });
+  }
+  async function deleteFromQueue() {
+    let queryArgs = appendFilters("?route=" + route);
+    try {
+      const response = await fetch(`${baseURL}queue_manager/queue${queryArgs}`, {
+        method: "DELETE"
+      });
+    } catch (error) {
+      console.error(`Error deleting items from ${route}:`, error);
+    }
+  }
+  async function clearPending() {
+    try {
+      const response = await fetch(`${baseURL}api/queue`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ clear: true })
+      });
+    } catch (error) {
+      console.error("Error fetching queue items:", error);
+    }
+  }
   useParentMessages({ onQueueStatusUpdated });
   const uploadQueue = useEvent(async (e) => {
     if (!e.target.files || !e.target.files.length === 0) {
@@ -27522,37 +27580,6 @@ function Home({ onDarkChange }) {
     }
   });
   reactExports.useEffect(() => {
-    const progress = Object.values(currentJob.nodes).length > 0 ? Math.round(
-      Math.max(
-        Object.values(currentJob.nodes).filter((v) => typeof v === "boolean").length - 1,
-        0
-      ) / Object.values(currentJob.nodes).length * 100,
-      2
-    ) : 0;
-    setProgress((prev2) => ({
-      ...prev2,
-      progress
-    }));
-  }, [currentJob.nodes]);
-  reactExports.useEffect(() => {
-    if (currentJob.id && currentJob.integrity === false) {
-      const theJob = getTheJob(currentJob.id, appStatus.queue);
-      if (theJob) {
-        const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
-        for (const nodeID in currentJob.nodes) {
-          if (currentJob.nodes[nodeID] === true) {
-            nodeIDs[nodeID] = true;
-          }
-        }
-        setProgress((prev2) => ({
-          ...prev2,
-          nodes: nodeIDs,
-          integrity: true
-        }));
-      }
-    }
-  }, [appStatus.queue, currentJob.id, currentJob.integrity, currentJob.nodes]);
-  reactExports.useEffect(() => {
     fetchQueueItems({ route: "queue" });
     fetchOptions();
     window.addEventListener("keydown", (e) => {
@@ -27566,10 +27593,10 @@ function Home({ onDarkChange }) {
       }
     });
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `route-${route} qm-container` + (appStatus.loading ? " loading" : "") + (appStatus.reloading ? " reloading" : ""), children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `route-${route} qm-container` + (queueIsLoading ? " loading" : "") + (queueIsReloading ? " reloading" : ""), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "px-2 py-1 text-sm header font-bold", children: [
       "Queue Manager",
-      appStatus.loading && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {})
+      queueIsLoading && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {})
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(AppContext.Provider, { value: appContextValue, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(TopMenu, {}),
@@ -27676,15 +27703,15 @@ function Home({ onDarkChange }) {
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "queue-table", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
         Queue,
         {
-          data: appStatus.queue,
-          error: appStatus.error,
-          isLoading: appStatus.loading,
-          progress: currentJob.progress,
+          data: queueData,
+          error: queueError,
+          isLoading: queueIsLoading,
+          progress: queueProgress,
           route
         }
       ) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "footer", children: [
-        appStatus.queue && appStatus.queue.info && appStatus.queue.info.last_page > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pagination", children: [
+        queueData && queueData.info && queueData.info.last_page > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pagination", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             Pagination,
             {
@@ -27692,23 +27719,23 @@ function Home({ onDarkChange }) {
               variant: "outlined",
               boundaryCount: 2,
               siblingCount: 2,
-              page: appStatus.queue.info.page + 1,
+              page: queueData.info.page + 1,
               onChange: (event, value) => {
                 fetchQueueItems({ page: value - 1, reload: true });
               },
-              count: appStatus.queue.info.last_page + 1
+              count: queueData.info.last_page + 1
             }
           ),
-          appStatus.queue.info.last_page > 10 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "page-selector", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          queueData.info.last_page > 10 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "page-selector", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             Select,
             {
-              value: appStatus.queue.info.page,
+              value: queueData.info.page,
               onChange: (event) => {
                 const pageNum = event.target.value;
                 fetchQueueItems({ page: pageNum, reload: true });
               },
               size: "small",
-              children: [...Array(appStatus.queue.info.last_page + 1).keys()].map((pageNum) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+              children: [...Array(queueData.info.last_page + 1).keys()].map((pageNum) => /* @__PURE__ */ jsxRuntimeExports.jsx(
                 MenuItem,
                 {
                   value: pageNum,
@@ -27720,7 +27747,7 @@ function Home({ onDarkChange }) {
           ) })
         ] }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 flex actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Stack, { direction: "row", spacing: 1, className: "min-w-full buttons", children: [
-          appStatus.queue && (appStatus.queue.running.length > 0 || appStatus.queue.pending.length > 0) && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          queueData && (queueData.running.length > 0 || queueData.pending.length > 0) && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
             route === "queue" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: archiveAll, className: "qm-btn", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Inventory2SharpIcon, {}),
