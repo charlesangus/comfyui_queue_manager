@@ -58,6 +58,7 @@ export const MediaItem = memo(function MediaItem({file, onClick, autoplay, class
               onClick={toggle}
             >
               <source src={src} type={`video/${ext}`} />
+              <track kind="captions" />
             </video>
           </>
         )

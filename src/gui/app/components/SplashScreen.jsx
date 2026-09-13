@@ -11,7 +11,7 @@ export function SplashScreen({onClick}) {
         <h1>ComfyUI Queue Manager</h1>
         <h4 className={"sub"}>Version: v0.2.0</h4>
         <h4 className={"sub"}>Released: 12<sup>th</sup> September 2026</h4>
-        <h2>What's new?</h2>
+        <h2>What&apos;s new?</h2>
         <h3>Output thumbnails</h3>
         <p>The lightbox view is gone. Completed jobs now show a row of output thumbnails; click one to open the full file in a new browser tab.</p>
         <p><br/>

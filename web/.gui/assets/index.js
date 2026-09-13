@@ -19362,7 +19362,7 @@ const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autopla
       });
     }
   }, [src, isVideo, autoplay]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: className + " media-item " + (isVideo ? "video" : "image"), title, onClick, children: ext === "mp4" || ext === "webm" ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: className + " media-item " + (isVideo ? "video" : "image"), title, onClick, children: ext === "mp4" || ext === "webm" ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "video",
     {
       ref: videoRef,
@@ -19372,7 +19372,10 @@ const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autopla
       muted: autoplay,
       loop: autoplay,
       onClick: toggle,
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx("source", { src, type: `video/${ext}` })
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("source", { src, type: `video/${ext}` }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("track", { kind: "captions" })
+      ]
     }
   ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     "img",

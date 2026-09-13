@@ -16,6 +16,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2021,
+        process: "readonly",
       },
       parserOptions: {
         ecmaFeatures: {
@@ -43,6 +44,15 @@ export default [
       "react/prop-types":"off",
       "jsx-a11y/no-static-element-interactions":"off",
       "jsx-a11y/click-events-have-key-events":"off",
+    },
+  },
+
+  {
+    files: ["vite.config.js", "eslint.config.mjs"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
     },
   },
 
