@@ -67,6 +67,7 @@ class QM_Queue:
         self.native_queue = PromptServer.instance.prompt_queue
         self.pause_lock = threading.Condition(self.native_queue.mutex)
         self.pending_delete = set()
+        self.preempted = None
 
         # Hijack PromptQueue.get() to get the item marked for execution and mark the item as running in the database
         self.original_get = self.native_queue.get
@@ -293,6 +294,37 @@ class QM_Queue:
             item = self.native_queue.currently_running.get(item_id, None)
             if item is not None:
                 prompt_id = item[1]  # Get the prompt_id from the item
+
+                if self.preempted is not None and self.preempted["prompt_id"] == prompt_id:
+                    preempted_number = self.preempted["number"]
+                    self.preempted = None
+
+                    # interrupt_processing() only takes effect at the executor's next
+                    # between-node check, so the job may have completed on its own in the
+                    # meantime; that result is real and must not be thrown away.
+                    interrupted = (
+                        status is not None
+                        and len(status) >= 3
+                        and any(event[0] == "execution_interrupted" for event in status[2])
+                    )
+
+                    # A job the user deleted while it ran must stay deleted, so the pending
+                    # delete below outranks the requeue of the job we interrupted for it.
+                    if interrupted and prompt_id not in self.pending_delete:
+                        write_query(
+                            """
+                            UPDATE queue
+                            SET status = 0, number = ?, priority = ?
+                            WHERE prompt_id = ?
+                        """,
+                            (preempted_number, PRIORITY_PREEMPTED, prompt_id),
+                        )
+                        qm_log.info("Requeued preempted job: %s", prompt_id)
+                        PromptServer.instance.send_sync("queue-manager-queue-updated", {"requeued": prompt_id})
+                        PromptServer.instance.queue_updated()
+                        self._call_original_task_done(item_id, history_result, status, process_item)
+                        return
+
                 # Mark the item as finished in the database
                 final_status = 2
                 if status is not None and len(status) >= 3 and status[0] == "error":
@@ -466,7 +498,10 @@ class QM_Queue:
             if existing is not None and existing[0] == 1:
                 return
 
-            priority = clamp_priority(item[3].pop("qm_priority", 0))
+            mode = item[3]["extra_pnginfo"]["workflow"].pop("qm_interactive", None)
+
+            qm_priority = item[3].pop("qm_priority", 0)
+            priority = PRIORITY_INTERACTIVE if mode in ("front", "interrupt") else clamp_priority(qm_priority)
 
             # Read before the upsert: once the row is written, a resubmission of the
             # prefetched item would be compared against its own new priority.
@@ -499,6 +534,11 @@ class QM_Queue:
             save_static_card(db_row[0], item[2])
 
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
+
+            if mode == "interrupt":
+                self.preempt_running()
+
+            self.notify_if_paused_interactive(priority)
 
             if not self.paused and (
                 head_prompt_id is None
@@ -570,11 +610,38 @@ class QM_Queue:
         self.pull_head_into_heap()
         return True
 
+    def preempt_running(self):
+        running = next(iter(self.native_queue.currently_running.values()), None)
+        if running is None:
+            return
+
+        prompt_id = running[1]
+        row = read_single("SELECT priority FROM queue WHERE prompt_id = ?", (prompt_id,))
+        # A running job with no row was queued straight through original_put, so the
+        # database cannot bring it back once we interrupt it.
+        if row is None or row[0] >= PRIORITY_PREEMPTED:
+            return
+
+        PromptServer.instance.number += 1
+        self.preempted = {"prompt_id": prompt_id, "number": -PromptServer.instance.number}
+
+        qm_log.info("Interrupting running job for interactive run: %s", prompt_id)
+        nodes.interrupt_processing()
+
+    # Callers must already hold the native queue mutex that pause_lock wraps.
+    def notify_if_paused_interactive(self, priority):
+        # A worker already parked in queue_get's pause wait only re-tests the
+        # interactive bypass after it wakes, so inserting the row is not enough.
+        if self.paused and priority >= PRIORITY_INTERACTIVE:
+            self.pause_lock.notify()
+
     def queue_get(self, timeout=None):
         with self.pause_lock:
             while self.paused:
-                self.pause_lock.wait(timeout=timeout)
-                if timeout is not None and self.paused:  # if timed out and we are still paused
+                if read_single("SELECT 1 FROM queue WHERE status = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
+                    break
+                notified = self.pause_lock.wait(timeout=timeout)
+                if timeout is not None and not notified:
                     return None  # give up
 
             # if no pending item in the native queue then we get the one from the database
@@ -852,9 +919,10 @@ class QM_Queue:
                     prompt.append({})
 
                 moved += write_query(
-                    """
+                    f"""
                     UPDATE queue
-                    SET status = 0, number = ?, prompt = ?
+                    SET status = 0, number = ?, prompt = ?,
+                        priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                     WHERE id = ?
                 """,
                     # Ensure correct priority
@@ -926,9 +994,10 @@ class QM_Queue:
 
             # Update the items in the database
             moved = write_many(
-                """
+                f"""
                 UPDATE queue
-                SET status = 0, number = ?, prompt = ?
+                SET status = 0, number = ?, prompt = ?,
+                    priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                 WHERE id = ?
             """,
                 parameters,
@@ -1004,6 +1073,7 @@ class QM_Queue:
                 )
 
             total = 0
+            top_priority = PRIORITY_MIN
             with get_conn() as conn:
                 for item, params in zip(items, query_params):
                     cursor = conn.execute(
@@ -1016,10 +1086,12 @@ class QM_Queue:
                     if cursor.rowcount:
                         save_static_card(cursor.lastrowid, item[2], conn=conn)
                         total += 1
+                        top_priority = max(top_priority, params[6])
 
             if total > 0:
                 if status == 0:
                     self.preempt_heap_head_if_stale()
+                    self.notify_if_paused_interactive(top_priority)
                 theQueue.not_empty.notify()
                 if status == 0:
                     theServer.queue_updated()

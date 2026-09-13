@@ -1,5 +1,13 @@
 # Release Notes
 
+## v0.7.0
+_Sep 13, 2026_
+### New features and enhancements
+- Added the `QueueManager.Basic.InteractiveRunMode` setting (**ComfyUI Menu → Settings → Queue Manager**), with three modes for how running a single node or partial workflow from the canvas interacts with the queue: **Off** (no special handling), **Front of queue** (default — jumps ahead of pending jobs and starts next, even while the queue is paused), and **Interrupt and requeue** (additionally interrupts the currently running job so the interactive prompt runs immediately, automatically requeuing the interrupted job right behind it).
+- Cards for interactive runs and jobs interrupted-and-requeued by one now show dedicated **Interactive** and **Resumed** badges, distinct from the ordinary priority badges.
+
+---
+
 ## v0.6.0
 _Sep 13, 2026_
 ### New features and enhancements

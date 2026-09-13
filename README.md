@@ -14,6 +14,7 @@ An extension supporting more streamlined prompt queue management.
   - [Running and main Queue Manager window](#running-and-main-queue-manager-window)
   - [Archive](#archive)
   - [Priority](#priority)
+  - [Interactive runs](#interactive-runs)
   - [Export and Import](#export-and-import)
   - [Filter by workflow](#filter-by-workflow)
   - [Restore client focus](#restore-client-focus)
@@ -136,6 +137,15 @@ Select one or more items and click **Priority** on the selection action bar to s
 Jobs with equal priority run in the existing order, so **Run at front of the queue** (holding Shift, see above) still works as a tie-break within a priority level: it moves the selection to the front of its own priority tier, not necessarily to the very front of the whole queue if higher-priority jobs are ahead of it.
 
 Priority is shown as a small badge on the card (green for a positive value, muted blue-grey for negative) and is preserved when a job is archived and later run again, and when the queue is exported and imported.
+
+### Interactive runs
+Running a single node or a partial workflow directly from the canvas (rather than the full graph) is treated as an **interactive run**. How it interacts with the queue is controlled by the `QueueManager.Basic.InteractiveRunMode` setting under **ComfyUI Menu → Settings → Queue Manager**:
+
+- **Front of queue** (default): the interactive run jumps ahead of pending background jobs and starts as soon as the currently running job finishes. It also runs even while the queue is paused.
+- **Interrupt and requeue**: on top of the above, it also interrupts whatever job is currently running so the interactive prompt starts immediately. The interrupted job is automatically requeued right behind it, shown with a **Resumed** badge on its card. The interrupted job loses its in-flight progress, though ComfyUI's node cache typically lets it skip already-completed nodes when it re-runs.
+- **Off**: no special handling — the interactive run waits its normal turn in the queue like any other job.
+
+An interactive run's own card shows an **Interactive** badge, distinct from the ordinary priority badges described above.
 
 ### Export and Import
 

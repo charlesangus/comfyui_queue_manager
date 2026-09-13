@@ -19510,6 +19510,28 @@ const QueueCard = reactExports.memo(
     }, []);
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
+    const priorityBadge = reactExports.useMemo(() => {
+      if (!priority) return null;
+      if (priority === 1e3) {
+        return {
+          className: "priority-interactive",
+          label: "Interactive",
+          title: "Interactive: this job jumped the queue because it was run directly from the canvas"
+        };
+      }
+      if (priority === 999) {
+        return {
+          className: "priority-resumed",
+          label: "Resumed",
+          title: "Resumed: this job was interrupted to let an interactive run through, and will run again next"
+        };
+      }
+      return {
+        className: priority > 0 ? "priority-positive" : "priority-negative",
+        label: priority > 0 ? `+${priority}` : `${priority}`,
+        title: `Priority ${priority > 0 ? "+" : ""}${priority}`
+      };
+    }, [priority]);
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -19524,12 +19546,12 @@ const QueueCard = reactExports.memo(
               loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
               route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
-              priority ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+              priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
                 {
-                  className: `qm-badge priority-badge ${priority > 0 ? "priority-positive" : "priority-negative"}`,
-                  title: `Priority ${priority > 0 ? "+" : ""}${priority}`,
-                  children: priority > 0 ? `+${priority}` : priority
+                  className: `qm-badge priority-badge ${priorityBadge.className}`,
+                  title: priorityBadge.title,
+                  children: priorityBadge.label
                 }
               ) : null,
               error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,

@@ -4,7 +4,7 @@ import {
   handleKeyboardEvents,
   handleIframeMessages,
   registerSidebar,
-  injectWorkflowName,
+  hookQueuePrompt,
   extensionSettings,
   setupThemeObserver
 } from './js/functions.js';
@@ -30,7 +30,7 @@ app.registerExtension({
 
     registerSidebar();
 
-    injectWorkflowName();
+    hookQueuePrompt();
   },
 
   settings:extensionSettings()
