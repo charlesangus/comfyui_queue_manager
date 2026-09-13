@@ -5,8 +5,9 @@ import UploadSharpIcon from "@mui/icons-material/UploadSharp";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import Inventory2SharpIcon from "@mui/icons-material/Inventory2Sharp";
 
-import { apiCall, deleteRunningJob } from "../internals/functions";
+import { apiCall } from "../internals/functions";
 import { msgLoadWorkflow } from "../internals/parentBridge";
+import { performDelete } from "../internals/deleteUtils";
 import { useAppStore } from "../stores/appStore";
 import { useSelectionStore } from "../stores/selectionStore";
 
@@ -33,12 +34,7 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   };
 
   const handleDelete = async () => {
-    // running/external jobs are interrupted one at a time; only queued rows can be batch-deleted
-    await Promise.all(selectedRunning.map((item) => deleteRunningJob(item[1])));
-    if (selectedPending.length > 0) {
-      await apiCall("api/queue", { delete: selectedPending.map((item) => item[1]) });
-    }
-    await finish();
+    await performDelete(selectedRunning, selectedPending, fetchQueueItems);
   };
 
   const handleLoad = async () => {

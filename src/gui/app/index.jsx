@@ -13,6 +13,7 @@ import {AppContext} from "./internals/app-context";
 import {SplashScreen} from "./components/SplashScreen";
 
 import {compareVersions} from "./internals/functions";
+import {performDelete} from "./internals/deleteUtils";
 import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
 import {useSelectionStore} from "./stores/selectionStore";
@@ -20,6 +21,8 @@ import {LoaderSpinner} from "@/app/components/LoaderSpinner";
 import {useComfyTheme} from "./hooks/useComfyTheme";
 import {useParentMessages} from "./hooks/useParentMessages";
 import {useQueue} from "./hooks/useQueue";
+
+const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
 
 export default function Home({ onDarkChange }) {
   const options = useOptionsStore((state) => state);
@@ -113,6 +116,49 @@ export default function Home({ onDarkChange }) {
       apiCall('queue_manager/options', {key:"splash_screen", value: true}, 'POST');
     }
   })
+
+  useEffect(() => {
+    if (!queueData) return;
+
+    const handleKeyDown = (event) => {
+      const isInputLike =
+        event.target.tagName === 'INPUT' ||
+        event.target.tagName === 'TEXTAREA' ||
+        event.target.contentEditable === 'true';
+
+      if (event.key === 'Escape') {
+        useSelectionStore.getState().clear();
+      } else if ((event.ctrlKey || event.metaKey) && (event.key === 'a' || event.key === 'A')) {
+        if (!isInputLike) {
+          event.preventDefault();
+          const items = [...(queueData.running ?? []), ...(queueData.pending ?? [])];
+          const orderedKeys = items.map(itemKey);
+          useSelectionStore.getState().selectAll(orderedKeys);
+        }
+      } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        if (!isInputLike) {
+          const selectedSize = useSelectionStore.getState().selected.size;
+          if (selectedSize > 0) {
+            let shouldDelete = true;
+            if (selectedSize > 5) {
+              shouldDelete = window.confirm(`Delete ${selectedSize} items?`);
+            }
+            if (shouldDelete) {
+              const running = queueData?.running ?? [];
+              const pending = queueData?.pending ?? [];
+              const selected = useSelectionStore.getState().selected;
+              const selectedRunning = running.filter((item) => selected.has(itemKey(item)));
+              const selectedPending = pending.filter((item) => selected.has(itemKey(item)));
+              performDelete(selectedRunning, selectedPending, fetchQueueItems);
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [queueData, fetchQueueItems]);
 
   // on mount get the queue items from the server
   useEffect(() => {
