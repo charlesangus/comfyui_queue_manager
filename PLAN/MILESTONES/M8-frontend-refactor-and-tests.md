@@ -47,6 +47,19 @@ this milestone is a pure move.
 
 ## Phase 8.2: Tests
 
+- [x] M8.P2.T3 — Fix pre-existing lint errors blocking the milestone gate
+  - files: `src/gui/eslint.config.mjs`, `src/gui/app/components/MediaItem.jsx`, `src/gui/app/components/SplashScreen.jsx`
+  - approach: `npm run lint` currently fails with 4 errors that predate M8 entirely (trace to
+    M2/M7/pre-fork commits, confirmed via `git log`/`git stash`): a missing `<track>` on a
+    media element in `MediaItem.jsx`, an unescaped apostrophe in `SplashScreen.jsx`, and
+    `process`/`__dirname` `no-undef` in `app/internals/config.js`/`vite.config.js` because
+    `eslint.config.mjs` applies only `globals.browser` everywhere. Fix each at its root cause
+    (add a `<track kind="captions" />`, escape the apostrophe, scope Node globals to
+    Node-context config files in `eslint.config.mjs`) rather than suppressing. Do not touch the
+    7 pre-existing warnings — out of scope.
+  - verify: `npm run lint` exits 0 with 0 errors; `npm test` and `npm run build` still pass.
+  - size: S
+
 - [ ] M8.P2.T1 — Add Vitest and tests for stores, models and helpers
   - files: `src/gui/package.json`, `src/gui/vite.config.js`, `src/gui/app/stores/appStore.test.js` (new), `src/gui/app/models/MediaOutputs.test.js` (new), `src/gui/app/internals/functions.test.js` (new)
   - approach: Add `vitest` and `@testing-library/react` + `jsdom` as devDependencies, a
@@ -88,3 +101,10 @@ three tabs); `pytest tests/` and `ruff check .` green; both CI jobs green on the
   `useQueue`/`useParentMessages`; forcing a fourth split would fragment closely-related layout
   code for no reuse benefit. Accepted as close enough to the intent (single-responsibility
   hooks/components, no god-file) rather than a literal line-count target.
+- 2026-09-13 — At M8.P2.T1 start, found `npm run lint` already failing with 4 errors
+  pre-dating M8 (M2/M7/pre-fork), which would break M8.P2.T2's new CI job and the milestone's
+  own verification gate. User decided (asked via AskUserQuestion) to fix now rather than
+  relax the gate; added M8.P2.T3 to cover it. Also found the uncommitted-but-not-yet-landed
+  M8.P2.T1 work (test files + vitest config) already present in the working tree from a prior
+  session, pinning `vitest@^2.0.0` which doesn't support Vite 7 as a peer — bumped to `^3.2.7`
+  as part of completing T1.
