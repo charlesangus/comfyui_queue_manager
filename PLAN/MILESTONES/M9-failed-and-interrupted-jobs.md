@@ -39,7 +39,7 @@ interrupt route.
   - verify: `pytest tests/` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M9.P1.T3 — Completed route includes failed jobs and exposes the error
+- [x] M9.P1.T3 — Completed route includes failed jobs and exposes the error
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: `get_route_query("completed")` → `status IN (2, -1)` (both `include_running`
     variants); in `get_current_queue`'s `completed` branch add `LEFT JOIN meta AS error ON
