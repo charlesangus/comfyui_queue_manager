@@ -7,7 +7,20 @@ from datetime import datetime, timezone
 
 from .helpers import sanitize_filename, requestJson
 from .inc.exceptions import BadRouteException
+from . import qm_card
 from .qm_log import qm_log
+
+
+async def get_card_image(request):
+    name = request.query.get("name")
+    if not isinstance(name, str) or qm_card.CARD_IMAGE_NAME_PATTERN.fullmatch(name) is None:
+        return web.Response(text="Invalid card image name", status=400)
+
+    path = qm_card.CARDS_DIR / name
+    if not path.is_file():
+        return web.Response(text="Card image not found", status=404)
+
+    return web.FileResponse(path, headers={"Cache-Control": "max-age=31536000"})
 
 
 class QM_Server:
@@ -16,6 +29,10 @@ class QM_Server:
         self.queue = queue_manager.queue
         self.user_manager = PromptServer.instance.user_manager
         self.__version__ = __version__
+
+        @PromptServer.instance.routes.get("/queue_manager/card-image")
+        async def card_image(request):
+            return await get_card_image(request)
 
         # Get queue items
         @PromptServer.instance.routes.get("/queue_manager/queue")

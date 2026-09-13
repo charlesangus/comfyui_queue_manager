@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from inspect import cleandoc
 from typing import Any, Dict
+
 from server import PromptServer
+
+class AnyType(str):
+    def __ne__(self, __value: object) -> bool:
+        return False
+
+
+def current_running_item():
+    return next(iter(PromptServer.instance.prompt_queue.currently_running.values()), None)
 
 
 class WorkflowName:
@@ -22,7 +31,7 @@ class WorkflowName:
     DESCRIPTION = cleandoc(__doc__)  # node tooltip
 
     def run(self):
-        running = next(iter(PromptServer.instance.prompt_queue.currently_running.values()), None)
+        running = current_running_item()
 
         if running is not None:
             wf_name = (
@@ -38,7 +47,52 @@ class WorkflowName:
         return ("",)
 
 
+class QueueCardInfo:
+    @classmethod
+    def INPUT_TYPES(cls) -> Dict[str, Any]:
+        return {
+            "required": {
+                "value": (AnyType("*"), {}),
+                "index": ("INT", {"default": 1, "min": 1, "max": 99}),
+                "label": ("STRING", {"default": ""}),
+            }
+        }
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    INPUT_IS_LIST = True
+    FUNCTION = "run"
+    CATEGORY = "Queue Manager"
+
+    @classmethod
+    def IS_CHANGED(cls, *args, **kwargs):
+        return float("nan")
+
+    def run(self, value, index, label):
+        index = index[0] if isinstance(index, list) and index else index
+        label = label[0] if isinstance(label, list) and label else label
+        running = current_running_item()
+        if running is not None:
+            from . import qm_card
+
+            prompt_id = running[1]
+            created_images = []
+            entry = qm_card.capture_runtime_value(prompt_id, index, label, value, created_images=created_images)
+            if entry is not None:
+                merged = None
+                try:
+                    merged = qm_card.merge_entry(prompt_id, entry)
+                finally:
+                    if merged is None:
+                        for path in created_images:
+                            path.unlink(missing_ok=True)
+                if merged is not None:
+                    PromptServer.instance.send_sync("queue-manager-queue-updated", {"card": prompt_id})
+        return {"ui": {}}
+
+
 NODE_CLASS_MAPPINGS = {
+    "Queue Card Info": QueueCardInfo,
     "Workflow Name": WorkflowName,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {}

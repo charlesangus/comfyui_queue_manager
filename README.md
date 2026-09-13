@@ -17,6 +17,7 @@ An extension supporting more streamlined prompt queue management.
   - [Filter by workflow](#filter-by-workflow)
   - [Restore client focus](#restore-client-focus)
   - [Workflow Name node](#workflow-name-node)
+  - [Queue Card Info node](#queue-card-info-node)
   - [External jobs](#external-jobs)
   - [Comfy API / Partner Nodes](#comfy-api--partner-nodes)
   - [Output thumbnails](#output-thumbnails)
@@ -144,6 +145,11 @@ You can use the Workflow Name node to get the name of the currently running work
 Typical use case is to connect the `workflow_name` output to a node that accepts a string input, like **Save Image**'s `filename_prefix`, to have output images saved with the workflow's name as a prefix.
 
 ![workflow_name_use_case.png](web/docs/workflow_name_use_case.png)
+
+### Queue Card Info node
+Use the Queue Card Info node to display values from a workflow on its Queue Manager card. Connect a value to `value`, then optionally set its `index` and `label`.
+
+The card shows a preview as soon as the job is queued. During execution, image values become thumbnails and scalar values become text; lists use their first element. If a runtime value cannot be displayed, the queued preview remains.
 
 ### External jobs
 - Some third parties that queue through API don't supply full ComfyUI workflow context (i.e. ComfyUI plugin for Krita).

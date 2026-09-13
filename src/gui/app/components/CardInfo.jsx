@@ -58,14 +58,19 @@ export function CardInfo({ entries }) {
   if (!entries?.length) return null;
 
   const sorted = [...entries].sort((a, b) => a.index - b.index);
+  const occurrences = new Map();
 
   return sorted.map((entry) => {
+    const identity = JSON.stringify([entry.index, entry.label]);
+    const occurrence = occurrences.get(identity) ?? 0;
+    occurrences.set(identity, occurrence + 1);
+    const key = JSON.stringify([entry.index, entry.label, occurrence]);
     if (entry.kind === "image") {
-      return <ImageTile key={entry.index} label={entry.label} value={entry.value} />;
+      return <ImageTile key={key} label={entry.label} value={entry.value} />;
     }
     if (entry.kind === "text") {
-      return <TextTile key={entry.index} label={entry.label} value={entry.value} />;
+      return <TextTile key={key} label={entry.label} value={entry.value} />;
     }
-    return <OtherTile key={entry.index} label={entry.label} value={entry.value} />;
+    return <OtherTile key={key} label={entry.label} value={entry.value} />;
   });
 }

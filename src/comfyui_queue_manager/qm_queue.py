@@ -7,6 +7,7 @@ from server import PromptServer
 import json
 import heapq
 
+from .qm_card import load_card_by_prompt_id, remove_card_images, save_static_card
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -91,7 +92,13 @@ class QM_Queue:
 
             match route:
                 case "queue":
-                    running.extend(self.native_queue.currently_running.values())
+                    for native_item in self.native_queue.currently_running.values():
+                        item = list(native_item)
+                        item[3] = item[3].copy()
+                        card = load_card_by_prompt_id(item[1])
+                        if card is not None:
+                            item[3]["card"] = card
+                        running.append(tuple(item))
                 case "archive":
                     order_string = "ORDER BY queue.updated_at, number"
                 case "completed":
@@ -103,6 +110,18 @@ class QM_Queue:
                     join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
                     join_string += " LEFT JOIN meta as exec_time ON queue.id = exec_time.item_id AND exec_time.key = 'execution_time'"
                     select_string = f"{select_string}, outputs.value as outputs, exec_time.value as execution_time"
+
+            join_string += """
+                LEFT JOIN meta AS card
+                    ON queue.id = card.item_id
+                    AND card.key = 'card'
+                    AND card.id = (
+                        SELECT MAX(candidate.id)
+                        FROM meta AS candidate
+                        WHERE candidate.item_id = queue.id AND candidate.key = 'card'
+                    )
+            """
+            select_string = f"{select_string}, card.value AS card"
 
             where_clauses = [self.get_route_query(route)]
 
@@ -139,6 +158,8 @@ class QM_Queue:
                     item = json.loads(row["prompt"])
                     # Add db_id to the item
                     item[3]["db_id"] = row["id"]
+                    if row["card"] is not None:
+                        item[3]["card"] = json.loads(row["card"])
 
                     if route == "queue":
                         item[0] = row["number"]  # set the number to the one from the database
@@ -386,6 +407,9 @@ class QM_Queue:
                 ),
             )
 
+            db_row = read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))
+            save_static_card(db_row[0], item[2])
+
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
 
             # Is there's no pending item in the native heap nd we are not paused then add item with highest priority (could be this one)
@@ -516,8 +540,12 @@ class QM_Queue:
             qm_log.info("Deleting items from queue: %s", items)
             # Delete the item from the database
 
+            prompt_ids = []
             deleted = 0
             for item in items:
+                row = read_single("SELECT prompt_id FROM queue WHERE prompt_id = ?", (item,))
+                if row is not None:
+                    prompt_ids.append(row[0])
                 deleted += write_query(
                     """
                     DELETE FROM queue
@@ -528,6 +556,7 @@ class QM_Queue:
                 )
 
             get_conn().commit()
+            remove_card_images(prompt_ids)
 
             if deleted > 0:
                 PromptServer.instance.queue_updated()
@@ -535,11 +564,13 @@ class QM_Queue:
 
     def wipe_queue(self):
         with self.native_queue.mutex:
+            prompt_ids = [row[0] for row in read_query("SELECT prompt_id FROM queue WHERE status = 0")]
             # Wipe the queue from the database
             write_query("""
                 DELETE FROM queue
                 WHERE status = 0
             """)
+            remove_card_images(prompt_ids)
 
     # Set status of pending and running items to 3 (archived)
     def archive_queue(self, filters=None):
@@ -599,14 +630,23 @@ class QM_Queue:
 
     def delete_running(self, prompt_id=None):
         with self.native_queue.mutex:
+            prompt_ids = [
+                row[0]
+                for row in read_query(
+                    "SELECT prompt_id FROM queue WHERE status = 1 AND (? IS NULL OR prompt_id = ?)",
+                    (prompt_id, prompt_id),
+                )
+            ]
             # Interrupt the queue
-            return write_query(
+            deleted = write_query(
                 """
                 DELETE FROM queue
                 WHERE status = 1 AND (? IS NULL OR prompt_id = ?)
             """,
                 (prompt_id, prompt_id),
             )
+            remove_card_images(prompt_ids)
+            return deleted
 
     def play_items(self, items, front, client_id=None):
         """
@@ -738,6 +778,7 @@ class QM_Queue:
     def delete_from_queue(self, route="queue", filters=None):
         with self.native_queue.mutex:
             where_string, params = self.get_filters(filters, [self.get_route_query(route)])
+            prompt_ids = [row[0] for row in read_query(f"SELECT prompt_id FROM queue WHERE {where_string}", params)]
             # Delete the archive from the database
             deleted = write_query(
                 f"""
@@ -746,6 +787,7 @@ class QM_Queue:
             """,
                 params,
             )
+            remove_card_images(prompt_ids)
 
             if route == "queue":
                 PromptServer.instance.queue_updated()
@@ -787,13 +829,19 @@ class QM_Queue:
                     )
                 )
 
-            total = write_many(
-                """
-                    INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                query_params,
-            )
+            total = 0
+            with get_conn() as conn:
+                for item, params in zip(items, query_params):
+                    cursor = conn.execute(
+                        """
+                            INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        params,
+                    )
+                    if cursor.rowcount:
+                        save_static_card(cursor.lastrowid, item[2], conn=conn)
+                        total += 1
 
             if total > 0:
                 theQueue.not_empty.notify()
@@ -908,4 +956,3 @@ class QM_Queue:
                 return "status = 2"  # completed
 
         return ""
-
