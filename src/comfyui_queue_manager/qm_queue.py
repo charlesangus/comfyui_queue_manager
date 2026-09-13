@@ -260,13 +260,19 @@ class QM_Queue:
             if item is not None:
                 prompt_id = item[1]  # Get the prompt_id from the item
                 # Mark the item as finished in the database
+                final_status = 2
+                # M6 inserts a preemption check immediately before this branch, to tell a
+                # preempted-and-requeued job apart from a genuine failure.
+                if status is not None and len(status) >= 3 and status[0] == "error":
+                    final_status = -1
+
                 write_query(
                     """
                     UPDATE queue
-                    SET status = 2
+                    SET status = ?
                     WHERE prompt_id = ?
                 """,
-                    (prompt_id,),
+                    (final_status, prompt_id),
                 )
 
                 outputs = {}
@@ -349,6 +355,39 @@ class QM_Queue:
                             (
                                 db_id,
                                 str(exec_time),
+                            ),
+                        )
+
+                if status is not None and len(status) >= 3 and status[0] == "error":
+                    error_meta = None
+                    for event in status[2]:
+                        if event[0] in ("execution_error", "execution_interrupted"):
+                            payload = event[1]
+                            error_meta = {
+                                "kind": "error" if event[0] == "execution_error" else "interrupted",
+                                "message": payload.get("exception_message"),
+                                "node_id": payload.get("node_id"),
+                                "node_type": payload.get("node_type"),
+                                "traceback": payload.get("traceback"),
+                            }
+                            break
+
+                    if error_meta is not None:
+                        write_query(
+                            """
+                                DELETE FROM meta
+                                WHERE item_id = ? AND key = 'error'
+                            """,
+                            (db_id,),
+                        )
+                        write_query(
+                            """
+                                INSERT INTO meta (item_id, key, value)
+                                VALUES (?, 'error', ?)
+                            """,
+                            (
+                                db_id,
+                                json.dumps(error_meta),
                             ),
                         )
 

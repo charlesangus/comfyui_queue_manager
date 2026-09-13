@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 
@@ -152,6 +154,97 @@ def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):
 
     assert outputs_count == 1
     assert exec_time_count == 1
+
+
+def test_task_done_records_node_error(qm_queue):
+    history_result = {"outputs": {}}
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_error",
+                {
+                    "prompt_id": "prompt-error-1",
+                    "node_id": "7",
+                    "node_type": "KSampler",
+                    "executed": [],
+                    "exception_message": "CUDA out of memory",
+                    "exception_type": "RuntimeError",
+                    "traceback": ["line 1", "line 2"],
+                    "current_inputs": {},
+                    "current_outputs": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-error-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id, status FROM queue WHERE prompt_id = ?",
+        ("prompt-error-1",),
+    )
+    assert row["status"] == -1
+
+    meta_row = qm_queue.qm_db.read_single(
+        "SELECT value FROM meta WHERE item_id = ? AND key = 'error'",
+        (row["id"],),
+    )
+    assert meta_row is not None
+    error_meta = json.loads(meta_row["value"])
+    assert error_meta["kind"] == "error"
+    assert error_meta["message"] == "CUDA out of memory"
+    assert error_meta["node_id"] == "7"
+    assert error_meta["node_type"] == "KSampler"
+    assert error_meta["traceback"] == ["line 1", "line 2"]
+
+
+def test_task_done_records_interruption(qm_queue):
+    history_result = {"outputs": {}}
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_interrupted",
+                {
+                    "prompt_id": "prompt-interrupted-1",
+                    "node_id": "3",
+                    "node_type": "KSampler",
+                    "executed": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-interrupted-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id, status FROM queue WHERE prompt_id = ?",
+        ("prompt-interrupted-1",),
+    )
+    assert row["status"] == -1
+
+    meta_row = qm_queue.qm_db.read_single(
+        "SELECT value FROM meta WHERE item_id = ? AND key = 'error'",
+        (row["id"],),
+    )
+    assert meta_row is not None
+    error_meta = json.loads(meta_row["value"])
+    assert error_meta["kind"] == "interrupted"
+    assert error_meta["node_id"] == "3"
+    assert error_meta["node_type"] == "KSampler"
+    assert error_meta["message"] is None
+    assert error_meta["traceback"] is None
 
 
 def test_queue_put_exposes_card_metadata_on_pending_item(qm_queue):
