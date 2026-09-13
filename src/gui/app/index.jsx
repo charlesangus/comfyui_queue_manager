@@ -24,6 +24,7 @@ import {useAppStore} from "./stores/appStore";
 import {MenuItem, Pagination, Select} from "@mui/material";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
 import {useComfyTheme} from "./hooks/useComfyTheme";
+import {useParentMessages} from "./hooks/useParentMessages";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -51,7 +52,6 @@ export default function Home({ onDarkChange }) {
   const completedListOrder = useOptionsStore((state) => state.Completed.ListOrder);
   const previousListOrderRef = useRef(completedListOrder);
   const setAllOptions = useOptionsStore((state) => state.setAllOptions);
-  const setOption = useOptionsStore((state) => state.setOption);
 
   const filters = useAppStore((state) => state.filters);
   const route = useAppStore((state) => state.route);
@@ -352,55 +352,7 @@ export default function Home({ onDarkChange }) {
     }
   }
 
-  const onParentKeypress = (keypress) => {
-    if (!keypress) {
-      return;
-    }
-
-    if (keypress.key === "Shift") {
-      setShiftDown(keypress.isDown);
-    }
-  }
-
-  const handleMessage = useEvent((event) => {
-    // In production must be same origin, in development as set in config.js
-    if (event.origin !== (baseURL === '/' ? window.location.protocol + "//" + window.location.host : baseURL.replace(/\/+$/, ""))) {
-      return;
-    }
-
-    switch (event.data.type) {
-      case "QM_queueStatusUpdated":
-        onQueueStatusUpdated(event);
-        break;
-      case "QM_ParentKeypress":
-        onParentKeypress(event.data.message);
-        break;
-      case "QM_QueueManager_Hello":
-        useAppStore.getState().setClientId(event.data.clientId);
-        setAllOptions({...event.data.settings});
-        break;
-      case "QM_Setting_Changed": {
-          const settingPath = event.data.message.setting.split('.');
-          let current = options;
-          let exists = true;
-          for (const segment of settingPath) {
-            if (Object.prototype.hasOwnProperty.call(current, segment)) {
-              current = current[segment];
-            } else {
-              exists = false;
-            }
-          }
-
-          const CategorySlug = settingPath[0];
-          const SettingKey = settingPath[1];
-
-          if (exists) {
-            setOption(CategorySlug, SettingKey, event.data.message.newValue);
-          }
-        }
-        break;
-    }
-  });
+  useParentMessages({ onQueueStatusUpdated });
 
   const uploadQueue = useEvent( async (e) => {
     // if empty value then bounce
@@ -511,8 +463,6 @@ export default function Home({ onDarkChange }) {
     fetchQueueItems({route: "queue"});
     fetchOptions();
 
-    window.addEventListener("message", handleMessage);
-
     window.addEventListener('keydown', e => {
       if (e.key === "Shift") {
         setShiftDown(true);
@@ -523,13 +473,6 @@ export default function Home({ onDarkChange }) {
         setShiftDown(false);
       }
     });
-
-    window.parent.postMessage(
-      { type: "QM_QueueManager_Hello" },
-      "*"
-    );
-
-    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   return (

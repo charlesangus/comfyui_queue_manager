@@ -19239,12 +19239,6 @@ async function apiCall(endpoint, data, method = "POST") {
     throw error;
   }
 }
-const msgLoadWorkflow = (workflow, number) => {
-  window.parent.postMessage(
-    { type: "QM_LoadWorkflow", workflow, number },
-    "*"
-  );
-};
 function compareVersions(a, b) {
   const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
   const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
@@ -19409,6 +19403,17 @@ function LoaderSpinner() {
     }
   ) });
 }
+const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";
+const QM_PARENT_KEYPRESS = "QM_ParentKeypress";
+const QM_QUEUE_MANAGER_HELLO = "QM_QueueManager_Hello";
+const QM_SETTING_CHANGED = "QM_Setting_Changed";
+const QM_LOAD_WORKFLOW = "QM_LoadWorkflow";
+const msgLoadWorkflow = (workflow, number) => {
+  window.parent.postMessage(
+    { type: QM_LOAD_WORKFLOW, workflow, number },
+    "*"
+  );
+};
 function viewURL(file) {
   const { filename, subfolder, type } = file;
   const params = new URLSearchParams({
@@ -27158,6 +27163,63 @@ function useComfyTheme(onDarkChange) {
     return () => window.removeEventListener("message", handleMessage);
   }, [onDarkChange]);
 }
+function useParentMessages({ onQueueStatusUpdated, onSettingChanged, onHello } = {}) {
+  const setShiftDown = useAppStore((state) => state.setShiftDown);
+  const options = useOptionsStore((state) => state);
+  const setAllOptions = useOptionsStore((state) => state.setAllOptions);
+  const setOption = useOptionsStore((state) => state.setOption);
+  const handleMessage = useEvent((event) => {
+    if (event.origin !== window.location.protocol + "//" + window.location.host) {
+      return;
+    }
+    switch (event.data.type) {
+      case QM_QUEUE_STATUS_UPDATED:
+        onQueueStatusUpdated?.(event);
+        break;
+      case QM_PARENT_KEYPRESS:
+        {
+          const keypress = event.data.message;
+          if (keypress && keypress.key === "Shift") {
+            setShiftDown(keypress.isDown);
+          }
+        }
+        break;
+      case QM_QUEUE_MANAGER_HELLO:
+        useAppStore.getState().setClientId(event.data.clientId);
+        setAllOptions({ ...event.data.settings });
+        onHello?.(event);
+        break;
+      case QM_SETTING_CHANGED:
+        {
+          const settingPath = event.data.message.setting.split(".");
+          let current = options;
+          let exists = true;
+          for (const segment of settingPath) {
+            if (Object.prototype.hasOwnProperty.call(current, segment)) {
+              current = current[segment];
+            } else {
+              exists = false;
+            }
+          }
+          const CategorySlug = settingPath[0];
+          const SettingKey = settingPath[1];
+          if (exists) {
+            setOption(CategorySlug, SettingKey, event.data.message.newValue);
+          }
+          onSettingChanged?.(event);
+        }
+        break;
+    }
+  });
+  reactExports.useEffect(() => {
+    window.addEventListener("message", handleMessage);
+    window.parent.postMessage(
+      { type: QM_QUEUE_MANAGER_HELLO },
+      "*"
+    );
+    return () => window.removeEventListener("message", handleMessage);
+  }, [handleMessage]);
+}
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
@@ -27182,7 +27244,6 @@ function Home({ onDarkChange }) {
   const completedListOrder = useOptionsStore((state) => state.Completed.ListOrder);
   const previousListOrderRef = reactExports.useRef(completedListOrder);
   const setAllOptions = useOptionsStore((state) => state.setAllOptions);
-  const setOption = useOptionsStore((state) => state.setOption);
   const filters = useAppStore((state) => state.filters);
   const route = useAppStore((state) => state.route);
   const shiftDown = useAppStore((state) => state.shiftDown);
@@ -27417,50 +27478,7 @@ function Home({ onDarkChange }) {
         break;
     }
   };
-  const onParentKeypress = (keypress) => {
-    if (!keypress) {
-      return;
-    }
-    if (keypress.key === "Shift") {
-      setShiftDown(keypress.isDown);
-    }
-  };
-  const handleMessage = useEvent((event) => {
-    if (event.origin !== window.location.protocol + "//" + window.location.host) {
-      return;
-    }
-    switch (event.data.type) {
-      case "QM_queueStatusUpdated":
-        onQueueStatusUpdated(event);
-        break;
-      case "QM_ParentKeypress":
-        onParentKeypress(event.data.message);
-        break;
-      case "QM_QueueManager_Hello":
-        useAppStore.getState().setClientId(event.data.clientId);
-        setAllOptions({ ...event.data.settings });
-        break;
-      case "QM_Setting_Changed":
-        {
-          const settingPath = event.data.message.setting.split(".");
-          let current = options;
-          let exists = true;
-          for (const segment of settingPath) {
-            if (Object.prototype.hasOwnProperty.call(current, segment)) {
-              current = current[segment];
-            } else {
-              exists = false;
-            }
-          }
-          const CategorySlug = settingPath[0];
-          const SettingKey = settingPath[1];
-          if (exists) {
-            setOption(CategorySlug, SettingKey, event.data.message.newValue);
-          }
-        }
-        break;
-    }
-  });
+  useParentMessages({ onQueueStatusUpdated });
   const uploadQueue = useEvent(async (e) => {
     if (!e.target.files || !e.target.files.length === 0) {
       return;
@@ -27537,7 +27555,6 @@ function Home({ onDarkChange }) {
   reactExports.useEffect(() => {
     fetchQueueItems({ route: "queue" });
     fetchOptions();
-    window.addEventListener("message", handleMessage);
     window.addEventListener("keydown", (e) => {
       if (e.key === "Shift") {
         setShiftDown(true);
@@ -27548,11 +27565,6 @@ function Home({ onDarkChange }) {
         setShiftDown(false);
       }
     });
-    window.parent.postMessage(
-      { type: "QM_QueueManager_Hello" },
-      "*"
-    );
-    return () => window.removeEventListener("message", handleMessage);
   }, []);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `route-${route} qm-container` + (appStatus.loading ? " loading" : "") + (appStatus.reloading ? " reloading" : ""), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "px-2 py-1 text-sm header font-bold", children: [
