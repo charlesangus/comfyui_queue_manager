@@ -229,6 +229,23 @@ def test_queue_put_calls_preempt_running_on_interrupt_stamp(qm_queue, monkeypatc
     assert calls == [True]
 
 
+def test_queue_get_lets_interactive_item_bypass_pause(qm_queue):
+    qm_queue.qm.paused = True
+
+    ordinary = _make_item(1, "prompt-ordinary-paused", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(ordinary)
+
+    interactive = _make_item(2, "prompt-interactive-paused", "Workflow A", "wf-a")
+    interactive[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "front"
+    qm_queue.native_queue.put(interactive)
+
+    result = qm_queue.native_queue.get(timeout=0.2)
+    assert result is not None
+    assert result[0][1] == "prompt-interactive-paused"
+
+    assert qm_queue.native_queue.get(timeout=0.2) is None
+
+
 def _interrupted_status(prompt_id):
     return (
         "error",

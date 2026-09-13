@@ -617,6 +617,8 @@ class QM_Queue:
     def queue_get(self, timeout=None):
         with self.pause_lock:
             while self.paused:
+                if read_single("SELECT 1 FROM queue WHERE status = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
+                    break
                 self.pause_lock.wait(timeout=timeout)
                 if timeout is not None and self.paused:  # if timed out and we are still paused
                     return None  # give up
