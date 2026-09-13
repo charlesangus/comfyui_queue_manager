@@ -1,5 +1,26 @@
 @use '../styles/variables' as *;
 
+.selection-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--qm-border);
+  background-color: var(--qm-bg);
+
+  .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 1px;
+    margin-left: auto;
+  }
+}
+
 footer.footer {
   position: sticky;
   bottom: 0;

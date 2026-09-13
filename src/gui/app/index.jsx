@@ -5,6 +5,7 @@ import UploadSharpIcon from '@mui/icons-material/UploadSharp';
 import TopMenu from "./components/TopMenu";
 import {Queue} from "./components/Queue";
 import {Footer} from "./components/Footer";
+import {SelectionBar} from "./components/SelectionBar";
 import { useEffect, useState, useCallback, useMemo, useRef} from "react";
 import {apiCall} from "./internals/functions";
 import useEvent from "react-use-event-hook";
@@ -240,6 +241,12 @@ export default function Home({ onDarkChange }) {
                  route={route}
           />
         </div>
+
+        <SelectionBar
+          route={route}
+          queueData={queueData}
+          fetchQueueItems={fetchQueueItems}
+        />
 
         <Footer
           route={route}
