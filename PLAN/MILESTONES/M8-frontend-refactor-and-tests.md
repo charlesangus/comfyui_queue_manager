@@ -34,7 +34,7 @@ this milestone is a pure move.
     behave as before in `npm run dev`.
   - size: M
 
-- [ ] M8.P1.T3 — Extract the footer, pagination and import/export into components
+- [x] M8.P1.T3 — Extract the footer, pagination and import/export into components
   - files: `src/gui/app/components/Footer.jsx` (new), `src/gui/app/components/Pagination.jsx` (new), `src/gui/app/components/ImportExport.jsx` (new), `src/gui/app/index.jsx`
   - approach: Move the footer JSX (Archive All / Delete All / Run All / Export per route, the
     `*` filtered-view marker, the front-of-queue indicator), the pagination controls, and
