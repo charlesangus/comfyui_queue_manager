@@ -60,7 +60,7 @@ this milestone is a pure move.
   - verify: `npm run lint` exits 0 with 0 errors; `npm test` and `npm run build` still pass.
   - size: S
 
-- [ ] M8.P2.T1 — Add Vitest and tests for stores, models and helpers
+- [x] M8.P2.T1 — Add Vitest and tests for stores, models and helpers
   - files: `src/gui/package.json`, `src/gui/vite.config.js`, `src/gui/app/stores/appStore.test.js` (new), `src/gui/app/models/MediaOutputs.test.js` (new), `src/gui/app/internals/functions.test.js` (new)
   - approach: Add `vitest` and `@testing-library/react` + `jsdom` as devDependencies, a
     `"test": "vitest run"` script, and a `test: { environment: "jsdom" }` block in
@@ -108,3 +108,7 @@ three tabs); `pytest tests/` and `ruff check .` green; both CI jobs green on the
   M8.P2.T1 work (test files + vitest config) already present in the working tree from a prior
   session, pinning `vitest@^2.0.0` which doesn't support Vite 7 as a peer — bumped to `^3.2.7`
   as part of completing T1.
+- 2026-09-13 — M8.P2.T1 landed without `@testing-library/react`: the tests written cover
+  `appStore` (Zustand setters), `MediaOutputs` (pure model), and `compareVersions`
+  (pure helper) — none render a component, so the dependency wasn't needed. Dropped it
+  rather than adding an unused devDependency.
