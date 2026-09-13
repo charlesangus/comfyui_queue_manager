@@ -295,23 +295,35 @@ class QM_Queue:
             if item is not None:
                 prompt_id = item[1]  # Get the prompt_id from the item
 
-                # A job the user deleted while it ran must stay deleted, so the pending
-                # delete below outranks the requeue of the job we interrupted for it.
-                if self.preempted is not None and self.preempted["prompt_id"] == prompt_id and prompt_id not in self.pending_delete:
-                    write_query(
-                        """
-                        UPDATE queue
-                        SET status = 0, number = ?, priority = ?
-                        WHERE prompt_id = ?
-                    """,
-                        (self.preempted["number"], PRIORITY_PREEMPTED, prompt_id),
-                    )
+                if self.preempted is not None and self.preempted["prompt_id"] == prompt_id:
+                    preempted_number = self.preempted["number"]
                     self.preempted = None
-                    qm_log.info("Requeued preempted job: %s", prompt_id)
-                    PromptServer.instance.send_sync("queue-manager-queue-updated", {"requeued": prompt_id})
-                    PromptServer.instance.queue_updated()
-                    self._call_original_task_done(item_id, history_result, status, process_item)
-                    return
+
+                    # interrupt_processing() only takes effect at the executor's next
+                    # between-node check, so the job may have completed on its own in the
+                    # meantime; that result is real and must not be thrown away.
+                    interrupted = (
+                        status is not None
+                        and len(status) >= 3
+                        and any(event[0] == "execution_interrupted" for event in status[2])
+                    )
+
+                    # A job the user deleted while it ran must stay deleted, so the pending
+                    # delete below outranks the requeue of the job we interrupted for it.
+                    if interrupted and prompt_id not in self.pending_delete:
+                        write_query(
+                            """
+                            UPDATE queue
+                            SET status = 0, number = ?, priority = ?
+                            WHERE prompt_id = ?
+                        """,
+                            (preempted_number, PRIORITY_PREEMPTED, prompt_id),
+                        )
+                        qm_log.info("Requeued preempted job: %s", prompt_id)
+                        PromptServer.instance.send_sync("queue-manager-queue-updated", {"requeued": prompt_id})
+                        PromptServer.instance.queue_updated()
+                        self._call_original_task_done(item_id, history_result, status, process_item)
+                        return
 
                 # Mark the item as finished in the database
                 final_status = 2
@@ -526,10 +538,7 @@ class QM_Queue:
             if mode == "interrupt":
                 self.preempt_running()
 
-            # A worker already parked in queue_get's pause wait only re-tests the
-            # interactive bypass after it wakes, so inserting the row is not enough.
-            if self.paused and priority >= PRIORITY_INTERACTIVE:
-                self.pause_lock.notify()
+            self.notify_if_paused_interactive(priority)
 
             if not self.paused and (
                 head_prompt_id is None
@@ -619,13 +628,20 @@ class QM_Queue:
         qm_log.info("Interrupting running job for interactive run: %s", prompt_id)
         nodes.interrupt_processing()
 
+    # Callers must already hold the native queue mutex that pause_lock wraps.
+    def notify_if_paused_interactive(self, priority):
+        # A worker already parked in queue_get's pause wait only re-tests the
+        # interactive bypass after it wakes, so inserting the row is not enough.
+        if self.paused and priority >= PRIORITY_INTERACTIVE:
+            self.pause_lock.notify()
+
     def queue_get(self, timeout=None):
         with self.pause_lock:
             while self.paused:
                 if read_single("SELECT 1 FROM queue WHERE status = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
                     break
                 notified = self.pause_lock.wait(timeout=timeout)
-                if timeout is not None and not notified:  # if timed out rather than woken
+                if timeout is not None and not notified:
                     return None  # give up
 
             # if no pending item in the native queue then we get the one from the database
@@ -1057,6 +1073,7 @@ class QM_Queue:
                 )
 
             total = 0
+            top_priority = PRIORITY_MIN
             with get_conn() as conn:
                 for item, params in zip(items, query_params):
                     cursor = conn.execute(
@@ -1069,10 +1086,12 @@ class QM_Queue:
                     if cursor.rowcount:
                         save_static_card(cursor.lastrowid, item[2], conn=conn)
                         total += 1
+                        top_priority = max(top_priority, params[6])
 
             if total > 0:
                 if status == 0:
                     self.preempt_heap_head_if_stale()
+                    self.notify_if_paused_interactive(top_priority)
                 theQueue.not_empty.notify()
                 if status == 0:
                     theServer.queue_updated()

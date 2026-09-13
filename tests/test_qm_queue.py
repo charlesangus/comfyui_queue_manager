@@ -279,6 +279,38 @@ def test_queue_put_notifies_worker_waiting_on_pause(qm_queue, monkeypatch):
     assert result["item"][0][1] == "prompt-interactive-notify"
 
 
+def test_import_queue_notifies_worker_waiting_on_pause(qm_queue, monkeypatch):
+    qm_queue.qm.paused = True
+
+    waiting = threading.Event()
+    original_wait = qm_queue.qm.pause_lock.wait
+
+    def tracked_wait(timeout=None):
+        waiting.set()
+        return original_wait(timeout)
+
+    monkeypatch.setattr(qm_queue.qm.pause_lock, "wait", tracked_wait)
+
+    result = {}
+
+    def worker():
+        result["item"] = qm_queue.native_queue.get(timeout=5)
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+
+    assert waiting.wait(timeout=2)
+
+    imported = _make_item(1, "prompt-import-interactive-notify", "Workflow A", "wf-a")
+    imported[3]["qm_priority"] = 1000
+    assert qm_queue.qm.import_queue([imported]) == (1, 1)
+
+    thread.join(timeout=2)
+    assert not thread.is_alive()
+    assert result["item"] is not None
+    assert result["item"][0][1] == "prompt-import-interactive-notify"
+
+
 def _interrupted_status(prompt_id):
     return (
         "error",
@@ -352,6 +384,46 @@ def test_task_done_delete_wins_over_requeue(qm_queue):
         )
         is None
     )
+    assert qm_queue.qm.preempted is None
+
+
+def test_task_done_keeps_successful_completion_that_beat_the_interrupt(qm_queue):
+    background = _make_item(1, "prompt-beat-the-interrupt", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(background)
+    _, task_id = qm_queue.native_queue.get()
+
+    interactive = _make_item(2, "prompt-interactive-too-late", "Workflow A", "wf-a")
+    interactive[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "interrupt"
+    qm_queue.native_queue.put(interactive)
+
+    assert qm_queue.qm.preempted["prompt_id"] == "prompt-beat-the-interrupt"
+
+    history_result = {"outputs": {"9": {"images": [{"filename": "out.png", "subfolder": "", "type": "output"}]}}}
+    status = (
+        "success",
+        None,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            ("execution_success", {"timestamp": 2000}),
+        ],
+    )
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id, status, priority FROM queue WHERE prompt_id = ?",
+        ("prompt-beat-the-interrupt",),
+    )
+    assert row["status"] == 2
+    assert row["priority"] == 0
+    assert qm_queue.qm.preempted is None
+    assert task_id not in qm_queue.native_queue.currently_running
+
+    outputs = qm_queue.qm_db.read_single(
+        "SELECT value FROM meta WHERE item_id = ? AND key = 'outputs'",
+        (row["id"],),
+    )
+    assert outputs is not None
+    assert json.loads(outputs["value"])["9"]["images"][0]["filename"] == "out.png"
 
 
 def test_preempt_running_without_running_item_does_nothing(qm_queue):
