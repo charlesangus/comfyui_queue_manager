@@ -42,7 +42,8 @@ def init_schema():
             name       TEXT,
             workflow_id   VARCHAR(255),
             prompt    TEXT,
-            status     INTEGER DEFAULT 0 -- 0: pending, 1: running, 2: finished, 3: archive, TODO: -1: error, -2: bin
+            status     INTEGER DEFAULT 0, -- 0: pending, 1: running, 2: finished, 3: archive, TODO: -1: error, -2: bin
+            priority   INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS options (
@@ -63,9 +64,6 @@ def init_schema():
                 REFERENCES queue(id)
                 ON DELETE CASCADE
         );
-
-        CREATE INDEX IF NOT EXISTS idx_queue_status_number
-            ON queue(status, number);
 
         CREATE INDEX IF NOT EXISTS idx_meta_queue_id ON meta(item_id);
 
@@ -101,6 +99,18 @@ def init_schema():
           WHERE  rowid = NEW.rowid;
         END;
     """)
+
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(queue)")
+    columns = {row[1] for row in cursor.fetchall()}
+
+    if "priority" not in columns:
+        conn.execute("ALTER TABLE queue ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+
+    conn.execute("DROP INDEX IF EXISTS idx_queue_status_number")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_queue_status_priority_number ON queue(status, priority DESC, number)")
+    conn.commit()
 
 
 # Helper functions to read and write to the database
