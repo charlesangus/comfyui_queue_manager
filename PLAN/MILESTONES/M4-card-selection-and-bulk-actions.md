@@ -90,3 +90,8 @@ load, archive, run, run-at-front) is reachable through selection; rebuilt `web/.
   (not in the task's original `files` list): the keyboard Delete/Backspace handler in `index.jsx`
   needed the same running-vs-pending delete logic as `SelectionBar`'s Delete button, and a shared
   helper was the smaller diff than duplicating it or lifting state.
+- 2026-09-13 — Manual verification gate: 10/11 scripted checks passed as specified. The one
+  "deviation" (shift-range using the last-clicked card as anchor rather than the first-clicked)
+  is not a bug — it matches this milestone's own spec (`## Phase 4.1` intro: "Shift-click for a
+  range" using `anchor` = last clicked key, per `selectionStore.js`'s design in M4.P1.T1); the
+  verification checklist's wording was imprecise, not the implementation. Gate passes.

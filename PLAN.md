@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: M4-gate
-pm_heartbeat: 2026-09-13T14:03:00-04:00
+current: null
+pm_heartbeat: 2026-09-13T14:15:00-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -86,7 +86,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 | M3 | Queue Card Info node | done | [M3-queue-card-info-node.md](PLAN/MILESTONES/M3-queue-card-info-node.md) |
 | M8 | Frontend refactor and a JS test runner | done | [M8-frontend-refactor-and-tests.md](PLAN/MILESTONES/M8-frontend-refactor-and-tests.md) |
 | M9 | Failed and interrupted jobs are kept | done | [M9-failed-and-interrupted-jobs.md](PLAN/MILESTONES/M9-failed-and-interrupted-jobs.md) |
-| M4 | Card selection and bulk actions | doing | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
+| M4 | Card selection and bulk actions | done | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
 | M5 | Job priority levels | todo | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
 | M6 | Interactive runs preempt the queue | todo | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
 | M11 | Final visual polish pass | todo | [M11-final-visual-polish.md](PLAN/MILESTONES/M11-final-visual-polish.md) |
@@ -95,6 +95,13 @@ Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 w
 
 # Open questions
 
+- Found during M4's manual verification (not caused by M4, pre-existing): with `paused: true`
+  (`qm_queue.py`/`/queue_manager/playback`) held for an extended session of repeated
+  archive/run/delete mutations, a batch of still-pending items — including some submitted
+  seconds earlier — transitioned to `completed` in the DB within ~2s with no corresponding
+  "Executing workflow"/"Prompt executed" log lines, i.e. "paused" did not reliably gate
+  execution under repeated queue mutation. Not root-caused; worth a maintainer look. Not
+  blocking any current milestone.
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the
   fork will be published to the Comfy registry under its own name; left untouched until answered.
