@@ -10,7 +10,7 @@ interrupt route.
 
 ## Phase 9.1: Backend
 
-- [ ] M9.P1.T1 — `task_done` records error/interrupted outcomes
+- [x] M9.P1.T1 — `task_done` records error/interrupted outcomes
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: In `task_done`, before the
     `UPDATE … SET status = 2`, inspect `status` (`ExecutionStatus(status_str, completed,
