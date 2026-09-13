@@ -23,7 +23,7 @@ this milestone is a pure move.
     populates `clientId` and settings, Shift still shows the "front of queue" indicator.
   - size: M
 
-- [ ] M8.P1.T2 — Extract queue fetching and progress into `useQueue`
+- [x] M8.P1.T2 — Extract queue fetching and progress into `useQueue`
   - files: `src/gui/app/hooks/useQueue.js` (new), `src/gui/app/index.jsx`
   - approach: Move `appStatus`, `currentJob`/progress, `fetchQueueItems`, `appendFilters`,
     `appendRoute`, `isFilterOn`, `onQueueStatusUpdated` and the node-progress bookkeeping into
