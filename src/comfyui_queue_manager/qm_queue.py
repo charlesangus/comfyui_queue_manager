@@ -110,6 +110,9 @@ class QM_Queue:
                     for native_item in self.native_queue.currently_running.values():
                         item = list(native_item)
                         item[3] = item[3].copy()
+                        priority_row = read_single("SELECT priority FROM queue WHERE prompt_id = ?", (item[1],))
+                        if priority_row is not None:
+                            item[3]["priority"] = priority_row[0]
                         card = load_card_by_prompt_id(item[1])
                         if card is not None:
                             item[3]["card"] = card
@@ -465,6 +468,10 @@ class QM_Queue:
 
             priority = clamp_priority(item[3].pop("qm_priority", 0))
 
+            # Read before the upsert: once the row is written, a resubmission of the
+            # prefetched item would be compared against its own new priority.
+            head_prompt_id = self.native_queue.queue[0][1] if len(self.native_queue.queue) > 0 else None
+
             # Add the item to the database
             write_query(
                 """
@@ -493,7 +500,11 @@ class QM_Queue:
 
             # qm_log.info("Workflow queued: %s at %s", item[1], item[0])
 
-            if not self.paused and (len(self.native_queue.queue) == 0 or self.outranks_heap_head(priority, item[0])):
+            if not self.paused and (
+                head_prompt_id is None
+                or head_prompt_id == item[1]
+                or self.outranks_heap_head(priority, item[0])
+            ):
                 self.native_queue.queue = []
                 self.pull_head_into_heap()
             else:  # just notify frontend that we have a new item
@@ -534,6 +545,30 @@ class QM_Queue:
             return False
 
         return (priority, -number) > (head_row[0], -head_row[1])
+
+    def preempt_heap_head_if_stale(self):
+        if len(self.native_queue.queue) == 0:
+            return False
+
+        head_prompt_id = self.native_queue.queue[0][1]
+        # A head with no row was queued straight through original_put, so the database
+        # cannot restore it if we drop it from the heap.
+        if read_single("SELECT id FROM queue WHERE prompt_id = ?", (head_prompt_id,)) is None:
+            return False
+
+        best = read_single("""
+            SELECT prompt_id
+            FROM queue
+            WHERE status = 0
+            ORDER BY priority DESC, number
+            LIMIT 1
+        """)
+        if best is None or best[0] == head_prompt_id:
+            return False
+
+        self.native_queue.queue = []
+        self.pull_head_into_heap()
+        return True
 
     def queue_get(self, timeout=None):
         with self.pause_lock:
@@ -729,7 +764,7 @@ class QM_Queue:
         """
         Set priority for pending or archived items in the database
         """
-        if not isinstance(priority, int) or not (PRIORITY_MIN <= priority <= PRIORITY_MAX):
+        if type(priority) is not int or not (PRIORITY_MIN <= priority <= PRIORITY_MAX):
             raise BadRouteException("Invalid priority: " + str(priority))
 
         with self.native_queue.mutex:
@@ -755,9 +790,7 @@ class QM_Queue:
 
             get_conn().commit()
 
-            if pending_updated and len(self.native_queue.queue) > 0:
-                self.native_queue.queue = []
-                self.pull_head_into_heap()
+            if pending_updated and self.preempt_heap_head_if_stale():
                 self.native_queue.not_empty.notify()
 
             if updated > 0:
@@ -840,6 +873,8 @@ class QM_Queue:
                 # with highest priority in the database
                 if front:
                     self.native_queue.queue = []
+                else:
+                    self.preempt_heap_head_if_stale()
 
                 # Notify native queue lock so if it's waiting it can move on and go for next iteration
                 PromptServer.instance.prompt_queue.not_empty.notify()
@@ -900,6 +935,9 @@ class QM_Queue:
             )
 
             if moved > 0:
+                if not front:
+                    self.preempt_heap_head_if_stale()
+
                 # Notify native queue lock so if it's waiting it can move on and go for next iteration
                 PromptServer.instance.prompt_queue.not_empty.notify()
 
@@ -980,6 +1018,8 @@ class QM_Queue:
                         total += 1
 
             if total > 0:
+                if status == 0:
+                    self.preempt_heap_head_if_stale()
                 theQueue.not_empty.notify()
                 if status == 0:
                     theServer.queue_updated()
@@ -997,29 +1037,33 @@ class QM_Queue:
 
             # Get running items from the database
             rows = read_query("""
-                SELECT prompt_id, number, name, workflow_id, prompt
+                SELECT prompt_id, number, name, workflow_id, prompt, priority
                 FROM queue
                 WHERE status = 1
                 ORDER BY number
             """)
             if len(rows) > 0:
                 qm_log.info("Restoring unfinished jobs: %d item(s)", len(rows))
-                # Get current highest priority (lowest number for pending task) in the database
-                lowest = read_single("""
-                    SELECT number
-                    FROM queue
-                    WHERE status = 0
-                    ORDER BY priority DESC, number
-                    LIMIT 1
-                """)
-
-                if lowest:
-                    min_number = lowest[0] - 1
-                else:
-                    min_number = 0
+                # Ordering is priority DESC, number ASC, so a restored row only needs to
+                # beat the pending rows sharing its own priority.
+                min_numbers = {}
 
                 # Set the priority of the running items to the current highest priority
                 for row in rows:
+                    priority = row[5]
+                    if priority not in min_numbers:
+                        lowest = read_single(
+                            """
+                            SELECT number
+                            FROM queue
+                            WHERE status = 0 AND priority = ?
+                            ORDER BY number
+                            LIMIT 1
+                        """,
+                            (priority,),
+                        )
+                        min_numbers[priority] = lowest[0] - 1 if lowest else 0
+
                     write_query(
                         """
                         UPDATE queue
@@ -1027,11 +1071,11 @@ class QM_Queue:
                         WHERE prompt_id = ?
                     """,
                         (
-                            min_number,
+                            min_numbers[priority],
                             row[0],
                         ),
                     )
-                    min_number -= 1
+                    min_numbers[priority] -= 1
 
             # Get task counter (highest absolute task number) from the database
             rows = read_single("""
