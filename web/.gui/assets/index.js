@@ -19031,101 +19031,9 @@ function mergeSlotProps$1(externalSlotProps, defaultSlotProps) {
     }
   };
 }
-const FileDownloadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5z"
-}));
-const PlayArrowOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M10 8.64 15.27 12 10 15.36zM8 5v14l11-7z"
-}));
-const DeleteOutlineSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M6 21h12V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z"
-}));
-const DriveFolderUploadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2m0 12H4V6h5.17l2 2H20zM9.41 14.42 11 12.84V17h2v-4.16l1.59 1.59L16 13.01 12.01 9 8 13.01z"
-}));
 const UploadSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"
 }));
-const Inventory2SharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M2 2v6.7h1V22h18V8.7h1V2zm13 12H9v-2h6zm5-7H4V4h16z"
-}));
-function ThemeProviderNoVars({
-  theme: themeInput,
-  ...props
-}) {
-  const scopedTheme = THEME_ID in themeInput ? themeInput[THEME_ID] : void 0;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider$1, {
-    ...props,
-    themeId: scopedTheme ? THEME_ID : void 0,
-    theme: scopedTheme || themeInput
-  });
-}
-const defaultConfig = {
-  colorSchemeStorageKey: "mui-color-scheme",
-  defaultLightColorScheme: "light",
-  defaultDarkColorScheme: "dark",
-  modeStorageKey: "mui-mode"
-};
-const {
-  CssVarsProvider: InternalCssVarsProvider
-} = createCssVarsProvider({
-  themeId: THEME_ID,
-  // @ts-ignore ignore module augmentation tests
-  theme: () => createTheme({
-    cssVariables: true
-  }),
-  colorSchemeStorageKey: defaultConfig.colorSchemeStorageKey,
-  modeStorageKey: defaultConfig.modeStorageKey,
-  defaultColorScheme: {
-    light: defaultConfig.defaultLightColorScheme,
-    dark: defaultConfig.defaultDarkColorScheme
-  },
-  resolveTheme: (theme) => {
-    const newTheme = {
-      ...theme,
-      typography: createTypography(theme.palette, theme.typography)
-    };
-    newTheme.unstable_sx = function sx(props) {
-      return styleFunctionSx({
-        sx: props,
-        theme: this
-      });
-    };
-    return newTheme;
-  }
-});
-const CssVarsProvider = InternalCssVarsProvider;
-function ThemeProvider({
-  theme,
-  ...props
-}) {
-  const noVarsTheme = reactExports.useMemo(() => {
-    if (typeof theme === "function") {
-      return theme;
-    }
-    const muiTheme = THEME_ID in theme ? theme[THEME_ID] : theme;
-    if (!("colorSchemes" in muiTheme)) {
-      if (!("vars" in muiTheme)) {
-        return {
-          ...theme,
-          vars: null
-        };
-      }
-      return theme;
-    }
-    return null;
-  }, [theme]);
-  if (noVarsTheme) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProviderNoVars, {
-      theme: noVarsTheme,
-      ...props
-    });
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(CssVarsProvider, {
-    theme,
-    ...props
-  });
-}
 const toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 const toCamelCase = (string) => string.replace(
   /^([A-Z])|[\s-_]+(\w)/g,
@@ -19414,6 +19322,9 @@ const msgLoadWorkflow = (workflow, number) => {
     "*"
   );
 };
+const PlayArrowOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M10 8.64 15.27 12 10 15.36zM8 5v14l11-7z"
+}));
 function viewURL(file) {
   const { filename, subfolder, type } = file;
   const params = new URLSearchParams({
@@ -19743,6 +19654,15 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
     }
   );
 });
+const FileDownloadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5z"
+}));
+const DeleteOutlineSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M6 21h12V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z"
+}));
+const Inventory2SharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M2 2v6.7h1V22h18V8.7h1V2zm13 12H9v-2h6zm5-7H4V4h16z"
+}));
 const Stack = createStack({
   createStyledComponent: styled("div", {
     name: "MuiStack",
@@ -19753,108 +19673,82 @@ const Stack = createStack({
     name: "MuiStack"
   })
 });
-const useInsertionEffect = typeof window !== "undefined" ? (
-  // useInsertionEffect is available in React 18+
-  React.useInsertionEffect || React.useLayoutEffect
-) : () => {
-};
-function useEvent(callback) {
-  const latestRef = React.useRef(useEvent_shouldNotBeInvokedBeforeMount);
-  useInsertionEffect(() => {
-    latestRef.current = callback;
-  }, [callback]);
-  const stableRef = React.useRef(null);
-  if (!stableRef.current) {
-    stableRef.current = function() {
-      return latestRef.current.apply(this, arguments);
-    };
-  }
-  return stableRef.current;
-}
-function useEvent_shouldNotBeInvokedBeforeMount() {
-  throw new Error("INVALID_USEEVENT_INVOCATION: the callback from useEvent cannot be invoked before the component has mounted.");
-}
-function isFocusVisible(element) {
-  try {
-    return element.matches(":focus-visible");
-  } catch (error) {
-  }
-  return false;
-}
-const UNINITIALIZED = {};
-function useLazyRef(init, initArg) {
-  const ref = reactExports.useRef(UNINITIALIZED);
-  if (ref.current === UNINITIALIZED) {
-    ref.current = init(initArg);
-  }
-  return ref;
-}
-class LazyRipple {
-  /** React ref to the ripple instance */
-  /** If the ripple component should be mounted */
-  /** Promise that resolves when the ripple component is mounted */
-  /** If the ripple component has been mounted */
-  /** React state hook setter */
-  static create() {
-    return new LazyRipple();
-  }
-  static use() {
-    const ripple = useLazyRef(LazyRipple.create).current;
-    const [shouldMount, setShouldMount] = reactExports.useState(false);
-    ripple.shouldMount = shouldMount;
-    ripple.setShouldMount = setShouldMount;
-    reactExports.useEffect(ripple.mountEffect, [shouldMount]);
-    return ripple;
-  }
-  constructor() {
-    this.ref = {
-      current: null
-    };
-    this.mounted = null;
-    this.didMount = false;
-    this.shouldMount = false;
-    this.setShouldMount = null;
-  }
-  mount() {
-    if (!this.mounted) {
-      this.mounted = createControlledPromise();
-      this.shouldMount = true;
-      this.setShouldMount(this.shouldMount);
-    }
-    return this.mounted;
-  }
-  mountEffect = () => {
-    if (this.shouldMount && !this.didMount) {
-      if (this.ref.current !== null) {
-        this.didMount = true;
-        this.mounted.resolve();
-      }
-    }
-  };
-  /* Ripple API */
-  start(...args) {
-    this.mount().then(() => this.ref.current?.start(...args));
-  }
-  stop(...args) {
-    this.mount().then(() => this.ref.current?.stop(...args));
-  }
-  pulsate(...args) {
-    this.mount().then(() => this.ref.current?.pulsate(...args));
-  }
-}
-function useLazyRipple() {
-  return LazyRipple.use();
-}
-function createControlledPromise() {
-  let resolve;
-  let reject;
-  const p = new Promise((resolveFn, rejectFn) => {
-    resolve = resolveFn;
-    reject = rejectFn;
+function ThemeProviderNoVars({
+  theme: themeInput,
+  ...props
+}) {
+  const scopedTheme = THEME_ID in themeInput ? themeInput[THEME_ID] : void 0;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider$1, {
+    ...props,
+    themeId: scopedTheme ? THEME_ID : void 0,
+    theme: scopedTheme || themeInput
   });
-  p.resolve = resolve;
-  p.reject = reject;
-  return p;
+}
+const defaultConfig = {
+  colorSchemeStorageKey: "mui-color-scheme",
+  defaultLightColorScheme: "light",
+  defaultDarkColorScheme: "dark",
+  modeStorageKey: "mui-mode"
+};
+const {
+  CssVarsProvider: InternalCssVarsProvider
+} = createCssVarsProvider({
+  themeId: THEME_ID,
+  // @ts-ignore ignore module augmentation tests
+  theme: () => createTheme({
+    cssVariables: true
+  }),
+  colorSchemeStorageKey: defaultConfig.colorSchemeStorageKey,
+  modeStorageKey: defaultConfig.modeStorageKey,
+  defaultColorScheme: {
+    light: defaultConfig.defaultLightColorScheme,
+    dark: defaultConfig.defaultDarkColorScheme
+  },
+  resolveTheme: (theme) => {
+    const newTheme = {
+      ...theme,
+      typography: createTypography(theme.palette, theme.typography)
+    };
+    newTheme.unstable_sx = function sx(props) {
+      return styleFunctionSx({
+        sx: props,
+        theme: this
+      });
+    };
+    return newTheme;
+  }
+});
+const CssVarsProvider = InternalCssVarsProvider;
+function ThemeProvider({
+  theme,
+  ...props
+}) {
+  const noVarsTheme = reactExports.useMemo(() => {
+    if (typeof theme === "function") {
+      return theme;
+    }
+    const muiTheme = THEME_ID in theme ? theme[THEME_ID] : theme;
+    if (!("colorSchemes" in muiTheme)) {
+      if (!("vars" in muiTheme)) {
+        return {
+          ...theme,
+          vars: null
+        };
+      }
+      return theme;
+    }
+    return null;
+  }, [theme]);
+  if (noVarsTheme) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProviderNoVars, {
+      theme: noVarsTheme,
+      ...props
+    });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(CssVarsProvider, {
+    theme,
+    ...props
+  });
 }
 function _objectWithoutPropertiesLoose(r2, e) {
   if (null == r2) return {};
@@ -20312,6 +20206,14 @@ var TransitionGroup = /* @__PURE__ */ (function(_React$Component) {
 })(React.Component);
 TransitionGroup.propTypes = {};
 TransitionGroup.defaultProps = defaultProps;
+const UNINITIALIZED = {};
+function useLazyRef(init, initArg) {
+  const ref = reactExports.useRef(UNINITIALIZED);
+  if (ref.current === UNINITIALIZED) {
+    ref.current = init(initArg);
+  }
+  return ref;
+}
 const EMPTY = [];
 function useOnMount(fn) {
   reactExports.useEffect(fn, EMPTY);
@@ -20345,6 +20247,343 @@ function useTimeout() {
   const timeout = useLazyRef(Timeout.create).current;
   useOnMount(timeout.disposeEffect);
   return timeout;
+}
+const reflow = (node2) => node2.scrollTop;
+function getTransitionProps(props, options) {
+  const {
+    timeout,
+    easing: easing2,
+    style: style2 = {}
+  } = props;
+  return {
+    duration: style2.transitionDuration ?? (typeof timeout === "number" ? timeout : timeout[options.mode] || 0),
+    easing: style2.transitionTimingFunction ?? (typeof easing2 === "object" ? easing2[options.mode] : easing2),
+    delay: style2.transitionDelay
+  };
+}
+function isHostComponent(element) {
+  return typeof element === "string";
+}
+function appendOwnerState(elementType, otherProps, ownerState) {
+  if (elementType === void 0 || isHostComponent(elementType)) {
+    return otherProps;
+  }
+  return {
+    ...otherProps,
+    ownerState: {
+      ...otherProps.ownerState,
+      ...ownerState
+    }
+  };
+}
+function resolveComponentProps(componentProps, ownerState, slotState) {
+  if (typeof componentProps === "function") {
+    return componentProps(ownerState, slotState);
+  }
+  return componentProps;
+}
+function extractEventHandlers(object, excludeKeys = []) {
+  if (object === void 0) {
+    return {};
+  }
+  const result = {};
+  Object.keys(object).filter((prop) => prop.match(/^on[A-Z]/) && typeof object[prop] === "function" && !excludeKeys.includes(prop)).forEach((prop) => {
+    result[prop] = object[prop];
+  });
+  return result;
+}
+function omitEventHandlers(object) {
+  if (object === void 0) {
+    return {};
+  }
+  const result = {};
+  Object.keys(object).filter((prop) => !(prop.match(/^on[A-Z]/) && typeof object[prop] === "function")).forEach((prop) => {
+    result[prop] = object[prop];
+  });
+  return result;
+}
+function mergeSlotProps(parameters) {
+  const {
+    getSlotProps,
+    additionalProps,
+    externalSlotProps,
+    externalForwardedProps,
+    className
+  } = parameters;
+  if (!getSlotProps) {
+    const joinedClasses2 = clsx(additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
+    const mergedStyle2 = {
+      ...additionalProps?.style,
+      ...externalForwardedProps?.style,
+      ...externalSlotProps?.style
+    };
+    const props2 = {
+      ...additionalProps,
+      ...externalForwardedProps,
+      ...externalSlotProps
+    };
+    if (joinedClasses2.length > 0) {
+      props2.className = joinedClasses2;
+    }
+    if (Object.keys(mergedStyle2).length > 0) {
+      props2.style = mergedStyle2;
+    }
+    return {
+      props: props2,
+      internalRef: void 0
+    };
+  }
+  const eventHandlers = extractEventHandlers({
+    ...externalForwardedProps,
+    ...externalSlotProps
+  });
+  const componentsPropsWithoutEventHandlers = omitEventHandlers(externalSlotProps);
+  const otherPropsWithoutEventHandlers = omitEventHandlers(externalForwardedProps);
+  const internalSlotProps = getSlotProps(eventHandlers);
+  const joinedClasses = clsx(internalSlotProps?.className, additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
+  const mergedStyle = {
+    ...internalSlotProps?.style,
+    ...additionalProps?.style,
+    ...externalForwardedProps?.style,
+    ...externalSlotProps?.style
+  };
+  const props = {
+    ...internalSlotProps,
+    ...additionalProps,
+    ...otherPropsWithoutEventHandlers,
+    ...componentsPropsWithoutEventHandlers
+  };
+  if (joinedClasses.length > 0) {
+    props.className = joinedClasses;
+  }
+  if (Object.keys(mergedStyle).length > 0) {
+    props.style = mergedStyle;
+  }
+  return {
+    props,
+    internalRef: internalSlotProps.ref
+  };
+}
+function useSlot(name, parameters) {
+  const {
+    className,
+    elementType: initialElementType,
+    ownerState,
+    externalForwardedProps,
+    internalForwardedProps,
+    shouldForwardComponentProp = false,
+    ...useSlotPropsParams
+  } = parameters;
+  const {
+    component: rootComponent,
+    slots = {
+      [name]: void 0
+    },
+    slotProps = {
+      [name]: void 0
+    },
+    ...other
+  } = externalForwardedProps;
+  const elementType = slots[name] || initialElementType;
+  const resolvedComponentsProps = resolveComponentProps(slotProps[name], ownerState);
+  const {
+    props: {
+      component: slotComponent,
+      ...mergedProps
+    },
+    internalRef
+  } = mergeSlotProps({
+    className,
+    ...useSlotPropsParams,
+    externalForwardedProps: name === "root" ? other : void 0,
+    externalSlotProps: resolvedComponentsProps
+  });
+  const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.ref);
+  const LeafComponent = name === "root" ? slotComponent || rootComponent : slotComponent;
+  const props = appendOwnerState(elementType, {
+    ...name === "root" && !rootComponent && !slots[name] && internalForwardedProps,
+    ...name !== "root" && !slots[name] && internalForwardedProps,
+    ...mergedProps,
+    ...LeafComponent && !shouldForwardComponentProp && {
+      as: LeafComponent
+    },
+    ...LeafComponent && shouldForwardComponentProp && {
+      component: LeafComponent
+    },
+    ref
+  }, ownerState);
+  return [elementType, props];
+}
+function getPaperUtilityClass(slot) {
+  return generateUtilityClass("MuiPaper", slot);
+}
+generateUtilityClasses("MuiPaper", ["root", "rounded", "outlined", "elevation", "elevation0", "elevation1", "elevation2", "elevation3", "elevation4", "elevation5", "elevation6", "elevation7", "elevation8", "elevation9", "elevation10", "elevation11", "elevation12", "elevation13", "elevation14", "elevation15", "elevation16", "elevation17", "elevation18", "elevation19", "elevation20", "elevation21", "elevation22", "elevation23", "elevation24"]);
+const useUtilityClasses$i = (ownerState) => {
+  const {
+    square,
+    elevation,
+    variant,
+    classes
+  } = ownerState;
+  const slots = {
+    root: ["root", variant, !square && "rounded", variant === "elevation" && `elevation${elevation}`]
+  };
+  return composeClasses(slots, getPaperUtilityClass, classes);
+};
+const PaperRoot = styled("div", {
+  name: "MuiPaper",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, styles2[ownerState.variant], !ownerState.square && styles2.rounded, ownerState.variant === "elevation" && styles2[`elevation${ownerState.elevation}`]];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  backgroundColor: (theme.vars || theme).palette.background.paper,
+  color: (theme.vars || theme).palette.text.primary,
+  transition: theme.transitions.create("box-shadow"),
+  variants: [{
+    props: ({
+      ownerState
+    }) => !ownerState.square,
+    style: {
+      borderRadius: theme.shape.borderRadius
+    }
+  }, {
+    props: {
+      variant: "outlined"
+    },
+    style: {
+      border: `1px solid ${(theme.vars || theme).palette.divider}`
+    }
+  }, {
+    props: {
+      variant: "elevation"
+    },
+    style: {
+      boxShadow: "var(--Paper-shadow)",
+      backgroundImage: "var(--Paper-overlay)"
+    }
+  }]
+})));
+const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiPaper"
+  });
+  const theme = useTheme();
+  const {
+    className,
+    component = "div",
+    elevation = 1,
+    square = false,
+    variant = "elevation",
+    ...other
+  } = props;
+  const ownerState = {
+    ...props,
+    component,
+    elevation,
+    square,
+    variant
+  };
+  const classes = useUtilityClasses$i(ownerState);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PaperRoot, {
+    as: component,
+    ownerState,
+    className: clsx(classes.root, className),
+    ref,
+    ...other,
+    style: {
+      ...variant === "elevation" && {
+        "--Paper-shadow": (theme.vars || theme).shadows[elevation],
+        ...theme.vars && {
+          "--Paper-overlay": theme.vars.overlays?.[elevation]
+        },
+        ...!theme.vars && theme.palette.mode === "dark" && {
+          "--Paper-overlay": `linear-gradient(${alpha("#fff", getOverlayAlpha(elevation))}, ${alpha("#fff", getOverlayAlpha(elevation))})`
+        }
+      },
+      ...other.style
+    }
+  });
+});
+function isFocusVisible(element) {
+  try {
+    return element.matches(":focus-visible");
+  } catch (error) {
+  }
+  return false;
+}
+class LazyRipple {
+  /** React ref to the ripple instance */
+  /** If the ripple component should be mounted */
+  /** Promise that resolves when the ripple component is mounted */
+  /** If the ripple component has been mounted */
+  /** React state hook setter */
+  static create() {
+    return new LazyRipple();
+  }
+  static use() {
+    const ripple = useLazyRef(LazyRipple.create).current;
+    const [shouldMount, setShouldMount] = reactExports.useState(false);
+    ripple.shouldMount = shouldMount;
+    ripple.setShouldMount = setShouldMount;
+    reactExports.useEffect(ripple.mountEffect, [shouldMount]);
+    return ripple;
+  }
+  constructor() {
+    this.ref = {
+      current: null
+    };
+    this.mounted = null;
+    this.didMount = false;
+    this.shouldMount = false;
+    this.setShouldMount = null;
+  }
+  mount() {
+    if (!this.mounted) {
+      this.mounted = createControlledPromise();
+      this.shouldMount = true;
+      this.setShouldMount(this.shouldMount);
+    }
+    return this.mounted;
+  }
+  mountEffect = () => {
+    if (this.shouldMount && !this.didMount) {
+      if (this.ref.current !== null) {
+        this.didMount = true;
+        this.mounted.resolve();
+      }
+    }
+  };
+  /* Ripple API */
+  start(...args) {
+    this.mount().then(() => this.ref.current?.start(...args));
+  }
+  stop(...args) {
+    this.mount().then(() => this.ref.current?.stop(...args));
+  }
+  pulsate(...args) {
+    this.mount().then(() => this.ref.current?.pulsate(...args));
+  }
+}
+function useLazyRipple() {
+  return LazyRipple.use();
+}
+function createControlledPromise() {
+  let resolve;
+  let reject;
+  const p = new Promise((resolveFn, rejectFn) => {
+    resolve = resolveFn;
+    reject = rejectFn;
+  });
+  p.resolve = resolve;
+  p.reject = reject;
+  return p;
 }
 function Ripple(props) {
   const {
@@ -20660,7 +20899,7 @@ function getButtonBaseUtilityClass(slot) {
   return generateUtilityClass("MuiButtonBase", slot);
 }
 const buttonBaseClasses = generateUtilityClasses("MuiButtonBase", ["root", "disabled", "focusVisible"]);
-const useUtilityClasses$i = (ownerState) => {
+const useUtilityClasses$h = (ownerState) => {
   const {
     disabled,
     focusVisible,
@@ -20877,7 +21116,7 @@ const ButtonBase = /* @__PURE__ */ reactExports.forwardRef(function ButtonBase2(
     tabIndex,
     focusVisible
   };
-  const classes = useUtilityClasses$i(ownerState);
+  const classes = useUtilityClasses$h(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(ButtonBaseRoot, {
     as: ComponentProp,
     className: clsx(classes.root, className),
@@ -20971,7 +21210,7 @@ const rotateAnimation = typeof circularRotateKeyframe !== "string" ? css`
 const dashAnimation = typeof circularDashKeyframe !== "string" ? css`
         animation: ${circularDashKeyframe} 1.4s ease-in-out infinite;
       ` : null;
-const useUtilityClasses$h = (ownerState) => {
+const useUtilityClasses$g = (ownerState) => {
   const {
     classes,
     variant,
@@ -21105,7 +21344,7 @@ const CircularProgress = /* @__PURE__ */ reactExports.forwardRef(function Circul
     variant,
     enableTrackSlot
   };
-  const classes = useUtilityClasses$h(ownerState);
+  const classes = useUtilityClasses$g(ownerState);
   const circleStyle = {};
   const rootStyle = {};
   const rootProps = {};
@@ -21155,13 +21394,992 @@ const CircularProgress = /* @__PURE__ */ reactExports.forwardRef(function Circul
     })
   });
 });
+function useSlotProps(parameters) {
+  const {
+    elementType,
+    externalSlotProps,
+    ownerState,
+    skipResolvingSlotProps = false,
+    ...other
+  } = parameters;
+  const resolvedComponentsProps = skipResolvingSlotProps ? {} : resolveComponentProps(externalSlotProps, ownerState);
+  const {
+    props: mergedProps,
+    internalRef
+  } = mergeSlotProps({
+    ...other,
+    externalSlotProps: resolvedComponentsProps
+  });
+  const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.additionalProps?.ref);
+  const props = appendOwnerState(elementType, {
+    ...mergedProps,
+    ref
+  }, ownerState);
+  return props;
+}
+function getReactElementRef(element) {
+  if (parseInt(reactExports.version, 10) >= 19) {
+    return element?.props?.ref || null;
+  }
+  return element?.ref || null;
+}
+function getContainer$1(container) {
+  return typeof container === "function" ? container() : container;
+}
+const Portal = /* @__PURE__ */ reactExports.forwardRef(function Portal2(props, forwardedRef) {
+  const {
+    children,
+    container,
+    disablePortal = false
+  } = props;
+  const [mountNode, setMountNode] = reactExports.useState(null);
+  const handleRef = useForkRef(/* @__PURE__ */ reactExports.isValidElement(children) ? getReactElementRef(children) : null, forwardedRef);
+  useEnhancedEffect(() => {
+    if (!disablePortal) {
+      setMountNode(getContainer$1(container) || document.body);
+    }
+  }, [container, disablePortal]);
+  useEnhancedEffect(() => {
+    if (mountNode && !disablePortal) {
+      setRef(forwardedRef, mountNode);
+      return () => {
+        setRef(forwardedRef, null);
+      };
+    }
+    return void 0;
+  }, [forwardedRef, mountNode, disablePortal]);
+  if (disablePortal) {
+    if (/* @__PURE__ */ reactExports.isValidElement(children)) {
+      const newProps = {
+        ref: handleRef
+      };
+      return /* @__PURE__ */ reactExports.cloneElement(children, newProps);
+    }
+    return children;
+  }
+  return mountNode ? /* @__PURE__ */ reactDomExports.createPortal(children, mountNode) : mountNode;
+});
+function getStyleValue(value) {
+  return parseInt(value, 10) || 0;
+}
+const styles$2 = {
+  shadow: {
+    // Visibility needed to hide the extra text area on iPads
+    visibility: "hidden",
+    // Remove from the content flow
+    position: "absolute",
+    // Ignore the scrollbar width
+    overflow: "hidden",
+    height: 0,
+    top: 0,
+    left: 0,
+    // Create a new layer, increase the isolation of the computed values
+    transform: "translateZ(0)"
+  }
+};
+function isObjectEmpty(object) {
+  for (const _ in object) {
+    return false;
+  }
+  return true;
+}
+function isEmpty$1(obj) {
+  return isObjectEmpty(obj) || obj.outerHeightStyle === 0 && !obj.overflowing;
+}
+const TextareaAutosize = /* @__PURE__ */ reactExports.forwardRef(function TextareaAutosize2(props, forwardedRef) {
+  const {
+    onChange,
+    maxRows,
+    minRows = 1,
+    style: style2,
+    value,
+    ...other
+  } = props;
+  const {
+    current: isControlled
+  } = reactExports.useRef(value != null);
+  const textareaRef = reactExports.useRef(null);
+  const handleRef = useForkRef(forwardedRef, textareaRef);
+  const heightRef = reactExports.useRef(null);
+  const hiddenTextareaRef = reactExports.useRef(null);
+  const calculateTextareaStyles = reactExports.useCallback(() => {
+    const textarea = textareaRef.current;
+    const hiddenTextarea = hiddenTextareaRef.current;
+    if (!textarea || !hiddenTextarea) {
+      return void 0;
+    }
+    const containerWindow = ownerWindow(textarea);
+    const computedStyle = containerWindow.getComputedStyle(textarea);
+    if (computedStyle.width === "0px") {
+      return {
+        outerHeightStyle: 0,
+        overflowing: false
+      };
+    }
+    hiddenTextarea.style.width = computedStyle.width;
+    hiddenTextarea.value = textarea.value || props.placeholder || "x";
+    if (hiddenTextarea.value.slice(-1) === "\n") {
+      hiddenTextarea.value += " ";
+    }
+    const boxSizing2 = computedStyle.boxSizing;
+    const padding2 = getStyleValue(computedStyle.paddingBottom) + getStyleValue(computedStyle.paddingTop);
+    const border2 = getStyleValue(computedStyle.borderBottomWidth) + getStyleValue(computedStyle.borderTopWidth);
+    const innerHeight = hiddenTextarea.scrollHeight;
+    hiddenTextarea.value = "x";
+    const singleRowHeight = hiddenTextarea.scrollHeight;
+    let outerHeight = innerHeight;
+    if (minRows) {
+      outerHeight = Math.max(Number(minRows) * singleRowHeight, outerHeight);
+    }
+    if (maxRows) {
+      outerHeight = Math.min(Number(maxRows) * singleRowHeight, outerHeight);
+    }
+    outerHeight = Math.max(outerHeight, singleRowHeight);
+    const outerHeightStyle = outerHeight + (boxSizing2 === "border-box" ? padding2 + border2 : 0);
+    const overflowing = Math.abs(outerHeight - innerHeight) <= 1;
+    return {
+      outerHeightStyle,
+      overflowing
+    };
+  }, [maxRows, minRows, props.placeholder]);
+  const didHeightChange = useEventCallback(() => {
+    const textarea = textareaRef.current;
+    const textareaStyles = calculateTextareaStyles();
+    if (!textarea || !textareaStyles || isEmpty$1(textareaStyles)) {
+      return false;
+    }
+    const outerHeightStyle = textareaStyles.outerHeightStyle;
+    return heightRef.current != null && heightRef.current !== outerHeightStyle;
+  });
+  const syncHeight = reactExports.useCallback(() => {
+    const textarea = textareaRef.current;
+    const textareaStyles = calculateTextareaStyles();
+    if (!textarea || !textareaStyles || isEmpty$1(textareaStyles)) {
+      return;
+    }
+    const outerHeightStyle = textareaStyles.outerHeightStyle;
+    if (heightRef.current !== outerHeightStyle) {
+      heightRef.current = outerHeightStyle;
+      textarea.style.height = `${outerHeightStyle}px`;
+    }
+    textarea.style.overflow = textareaStyles.overflowing ? "hidden" : "";
+  }, [calculateTextareaStyles]);
+  const frameRef = reactExports.useRef(-1);
+  useEnhancedEffect(() => {
+    const debouncedHandleResize = debounce(syncHeight);
+    const textarea = textareaRef?.current;
+    if (!textarea) {
+      return void 0;
+    }
+    const containerWindow = ownerWindow(textarea);
+    containerWindow.addEventListener("resize", debouncedHandleResize);
+    let resizeObserver;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        if (didHeightChange()) {
+          resizeObserver.unobserve(textarea);
+          cancelAnimationFrame(frameRef.current);
+          syncHeight();
+          frameRef.current = requestAnimationFrame(() => {
+            resizeObserver.observe(textarea);
+          });
+        }
+      });
+      resizeObserver.observe(textarea);
+    }
+    return () => {
+      debouncedHandleResize.clear();
+      cancelAnimationFrame(frameRef.current);
+      containerWindow.removeEventListener("resize", debouncedHandleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, [calculateTextareaStyles, syncHeight, didHeightChange]);
+  useEnhancedEffect(() => {
+    syncHeight();
+  });
+  const handleChange = (event) => {
+    if (!isControlled) {
+      syncHeight();
+    }
+    const textarea = event.target;
+    const countOfCharacters = textarea.value.length;
+    const isLastCharacterNewLine = textarea.value.endsWith("\n");
+    const isEndOfTheLine = textarea.selectionStart === countOfCharacters;
+    if (isLastCharacterNewLine && isEndOfTheLine) {
+      textarea.setSelectionRange(countOfCharacters, countOfCharacters);
+    }
+    if (onChange) {
+      onChange(event);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
+    children: [/* @__PURE__ */ jsxRuntimeExports.jsx("textarea", {
+      value,
+      onChange: handleChange,
+      ref: handleRef,
+      rows: minRows,
+      style: style2,
+      ...other
+    }), /* @__PURE__ */ jsxRuntimeExports.jsx("textarea", {
+      "aria-hidden": true,
+      className: props.className,
+      readOnly: true,
+      ref: hiddenTextareaRef,
+      tabIndex: -1,
+      style: {
+        ...styles$2.shadow,
+        ...style2,
+        paddingTop: 0,
+        paddingBottom: 0
+      }
+    })]
+  });
+});
+function formControlState({
+  props,
+  states,
+  muiFormControl
+}) {
+  return states.reduce((acc, state) => {
+    acc[state] = props[state];
+    if (muiFormControl) {
+      if (typeof props[state] === "undefined") {
+        acc[state] = muiFormControl[state];
+      }
+    }
+    return acc;
+  }, {});
+}
+const FormControlContext = /* @__PURE__ */ reactExports.createContext(void 0);
+function useFormControl() {
+  return reactExports.useContext(FormControlContext);
+}
+function hasValue(value) {
+  return value != null && !(Array.isArray(value) && value.length === 0);
+}
+function isFilled(obj, SSR = false) {
+  return obj && (hasValue(obj.value) && obj.value !== "" || SSR && hasValue(obj.defaultValue) && obj.defaultValue !== "");
+}
+function getInputBaseUtilityClass(slot) {
+  return generateUtilityClass("MuiInputBase", slot);
+}
+const inputBaseClasses = generateUtilityClasses("MuiInputBase", ["root", "formControl", "focused", "disabled", "adornedStart", "adornedEnd", "error", "sizeSmall", "multiline", "colorSecondary", "fullWidth", "hiddenLabel", "readOnly", "input", "inputSizeSmall", "inputMultiline", "inputTypeSearch", "inputAdornedStart", "inputAdornedEnd", "inputHiddenLabel"]);
+var _InputGlobalStyles;
+const rootOverridesResolver = (props, styles2) => {
+  const {
+    ownerState
+  } = props;
+  return [styles2.root, ownerState.formControl && styles2.formControl, ownerState.startAdornment && styles2.adornedStart, ownerState.endAdornment && styles2.adornedEnd, ownerState.error && styles2.error, ownerState.size === "small" && styles2.sizeSmall, ownerState.multiline && styles2.multiline, ownerState.color && styles2[`color${capitalize(ownerState.color)}`], ownerState.fullWidth && styles2.fullWidth, ownerState.hiddenLabel && styles2.hiddenLabel];
+};
+const inputOverridesResolver = (props, styles2) => {
+  const {
+    ownerState
+  } = props;
+  return [styles2.input, ownerState.size === "small" && styles2.inputSizeSmall, ownerState.multiline && styles2.inputMultiline, ownerState.type === "search" && styles2.inputTypeSearch, ownerState.startAdornment && styles2.inputAdornedStart, ownerState.endAdornment && styles2.inputAdornedEnd, ownerState.hiddenLabel && styles2.inputHiddenLabel];
+};
+const useUtilityClasses$f = (ownerState) => {
+  const {
+    classes,
+    color: color2,
+    disabled,
+    error,
+    endAdornment,
+    focused,
+    formControl,
+    fullWidth,
+    hiddenLabel,
+    multiline,
+    readOnly,
+    size,
+    startAdornment,
+    type
+  } = ownerState;
+  const slots = {
+    root: ["root", `color${capitalize(color2)}`, disabled && "disabled", error && "error", fullWidth && "fullWidth", focused && "focused", formControl && "formControl", size && size !== "medium" && `size${capitalize(size)}`, multiline && "multiline", startAdornment && "adornedStart", endAdornment && "adornedEnd", hiddenLabel && "hiddenLabel", readOnly && "readOnly"],
+    input: ["input", disabled && "disabled", type === "search" && "inputTypeSearch", multiline && "inputMultiline", size === "small" && "inputSizeSmall", hiddenLabel && "inputHiddenLabel", startAdornment && "inputAdornedStart", endAdornment && "inputAdornedEnd", readOnly && "readOnly"]
+  };
+  return composeClasses(slots, getInputBaseUtilityClass, classes);
+};
+const InputBaseRoot = styled("div", {
+  name: "MuiInputBase",
+  slot: "Root",
+  overridesResolver: rootOverridesResolver
+})(memoTheme(({
+  theme
+}) => ({
+  ...theme.typography.body1,
+  color: (theme.vars || theme).palette.text.primary,
+  lineHeight: "1.4375em",
+  // 23px
+  boxSizing: "border-box",
+  // Prevent padding issue with fullWidth.
+  position: "relative",
+  cursor: "text",
+  display: "inline-flex",
+  alignItems: "center",
+  [`&.${inputBaseClasses.disabled}`]: {
+    color: (theme.vars || theme).palette.text.disabled,
+    cursor: "default"
+  },
+  variants: [{
+    props: ({
+      ownerState
+    }) => ownerState.multiline,
+    style: {
+      padding: "4px 0 5px"
+    }
+  }, {
+    props: ({
+      ownerState,
+      size
+    }) => ownerState.multiline && size === "small",
+    style: {
+      paddingTop: 1
+    }
+  }, {
+    props: ({
+      ownerState
+    }) => ownerState.fullWidth,
+    style: {
+      width: "100%"
+    }
+  }]
+})));
+const InputBaseInput = styled("input", {
+  name: "MuiInputBase",
+  slot: "Input",
+  overridesResolver: inputOverridesResolver
+})(memoTheme(({
+  theme
+}) => {
+  const light2 = theme.palette.mode === "light";
+  const placeholder = {
+    color: "currentColor",
+    ...theme.vars ? {
+      opacity: theme.vars.opacity.inputPlaceholder
+    } : {
+      opacity: light2 ? 0.42 : 0.5
+    },
+    transition: theme.transitions.create("opacity", {
+      duration: theme.transitions.duration.shorter
+    })
+  };
+  const placeholderHidden = {
+    opacity: "0 !important"
+  };
+  const placeholderVisible = theme.vars ? {
+    opacity: theme.vars.opacity.inputPlaceholder
+  } : {
+    opacity: light2 ? 0.42 : 0.5
+  };
+  return {
+    font: "inherit",
+    letterSpacing: "inherit",
+    color: "currentColor",
+    padding: "4px 0 5px",
+    border: 0,
+    boxSizing: "content-box",
+    background: "none",
+    height: "1.4375em",
+    // Reset 23pxthe native input line-height
+    margin: 0,
+    // Reset for Safari
+    WebkitTapHighlightColor: "transparent",
+    display: "block",
+    // Make the flex item shrink with Firefox
+    minWidth: 0,
+    width: "100%",
+    "&::-webkit-input-placeholder": placeholder,
+    "&::-moz-placeholder": placeholder,
+    // Firefox 19+
+    "&::-ms-input-placeholder": placeholder,
+    // Edge
+    "&:focus": {
+      outline: 0
+    },
+    // Reset Firefox invalid required input style
+    "&:invalid": {
+      boxShadow: "none"
+    },
+    "&::-webkit-search-decoration": {
+      // Remove the padding when type=search.
+      WebkitAppearance: "none"
+    },
+    // Show and hide the placeholder logic
+    [`label[data-shrink=false] + .${inputBaseClasses.formControl} &`]: {
+      "&::-webkit-input-placeholder": placeholderHidden,
+      "&::-moz-placeholder": placeholderHidden,
+      // Firefox 19+
+      "&::-ms-input-placeholder": placeholderHidden,
+      // Edge
+      "&:focus::-webkit-input-placeholder": placeholderVisible,
+      "&:focus::-moz-placeholder": placeholderVisible,
+      // Firefox 19+
+      "&:focus::-ms-input-placeholder": placeholderVisible
+      // Edge
+    },
+    [`&.${inputBaseClasses.disabled}`]: {
+      opacity: 1,
+      // Reset iOS opacity
+      WebkitTextFillColor: (theme.vars || theme).palette.text.disabled
+      // Fix opacity Safari bug
+    },
+    variants: [{
+      props: ({
+        ownerState
+      }) => !ownerState.disableInjectingGlobalStyles,
+      style: {
+        animationName: "mui-auto-fill-cancel",
+        animationDuration: "10ms",
+        "&:-webkit-autofill": {
+          animationDuration: "5000s",
+          animationName: "mui-auto-fill"
+        }
+      }
+    }, {
+      props: {
+        size: "small"
+      },
+      style: {
+        paddingTop: 1
+      }
+    }, {
+      props: ({
+        ownerState
+      }) => ownerState.multiline,
+      style: {
+        height: "auto",
+        resize: "none",
+        padding: 0,
+        paddingTop: 0
+      }
+    }, {
+      props: {
+        type: "search"
+      },
+      style: {
+        MozAppearance: "textfield"
+        // Improve type search style.
+      }
+    }]
+  };
+}));
+const InputGlobalStyles = globalCss({
+  "@keyframes mui-auto-fill": {
+    from: {
+      display: "block"
+    }
+  },
+  "@keyframes mui-auto-fill-cancel": {
+    from: {
+      display: "block"
+    }
+  }
+});
+const InputBase = /* @__PURE__ */ reactExports.forwardRef(function InputBase2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiInputBase"
+  });
+  const {
+    "aria-describedby": ariaDescribedby,
+    autoComplete,
+    autoFocus,
+    className,
+    color: color2,
+    components = {},
+    componentsProps = {},
+    defaultValue,
+    disabled,
+    disableInjectingGlobalStyles,
+    endAdornment,
+    error,
+    fullWidth = false,
+    id,
+    inputComponent = "input",
+    inputProps: inputPropsProp = {},
+    inputRef: inputRefProp,
+    margin: margin2,
+    maxRows,
+    minRows,
+    multiline = false,
+    name,
+    onBlur,
+    onChange,
+    onClick,
+    onFocus,
+    onKeyDown,
+    onKeyUp,
+    placeholder,
+    readOnly,
+    renderSuffix,
+    rows,
+    size,
+    slotProps = {},
+    slots = {},
+    startAdornment,
+    type = "text",
+    value: valueProp,
+    ...other
+  } = props;
+  const value = inputPropsProp.value != null ? inputPropsProp.value : valueProp;
+  const {
+    current: isControlled
+  } = reactExports.useRef(value != null);
+  const inputRef = reactExports.useRef();
+  const handleInputRefWarning = reactExports.useCallback((instance) => {
+  }, []);
+  const handleInputRef = useForkRef(inputRef, inputRefProp, inputPropsProp.ref, handleInputRefWarning);
+  const [focused, setFocused] = reactExports.useState(false);
+  const muiFormControl = useFormControl();
+  const fcs = formControlState({
+    props,
+    muiFormControl,
+    states: ["color", "disabled", "error", "hiddenLabel", "size", "required", "filled"]
+  });
+  fcs.focused = muiFormControl ? muiFormControl.focused : focused;
+  reactExports.useEffect(() => {
+    if (!muiFormControl && disabled && focused) {
+      setFocused(false);
+      if (onBlur) {
+        onBlur();
+      }
+    }
+  }, [muiFormControl, disabled, focused, onBlur]);
+  const onFilled = muiFormControl && muiFormControl.onFilled;
+  const onEmpty = muiFormControl && muiFormControl.onEmpty;
+  const checkDirty = reactExports.useCallback((obj) => {
+    if (isFilled(obj)) {
+      if (onFilled) {
+        onFilled();
+      }
+    } else if (onEmpty) {
+      onEmpty();
+    }
+  }, [onFilled, onEmpty]);
+  useEnhancedEffect(() => {
+    if (isControlled) {
+      checkDirty({
+        value
+      });
+    }
+  }, [value, checkDirty, isControlled]);
+  const handleFocus = (event) => {
+    if (onFocus) {
+      onFocus(event);
+    }
+    if (inputPropsProp.onFocus) {
+      inputPropsProp.onFocus(event);
+    }
+    if (muiFormControl && muiFormControl.onFocus) {
+      muiFormControl.onFocus(event);
+    } else {
+      setFocused(true);
+    }
+  };
+  const handleBlur = (event) => {
+    if (onBlur) {
+      onBlur(event);
+    }
+    if (inputPropsProp.onBlur) {
+      inputPropsProp.onBlur(event);
+    }
+    if (muiFormControl && muiFormControl.onBlur) {
+      muiFormControl.onBlur(event);
+    } else {
+      setFocused(false);
+    }
+  };
+  const handleChange = (event, ...args) => {
+    if (!isControlled) {
+      const element = event.target || inputRef.current;
+      if (element == null) {
+        throw new Error(formatMuiErrorMessage(1));
+      }
+      checkDirty({
+        value: element.value
+      });
+    }
+    if (inputPropsProp.onChange) {
+      inputPropsProp.onChange(event, ...args);
+    }
+    if (onChange) {
+      onChange(event, ...args);
+    }
+  };
+  reactExports.useEffect(() => {
+    checkDirty(inputRef.current);
+  }, []);
+  const handleClick = (event) => {
+    if (inputRef.current && event.currentTarget === event.target) {
+      inputRef.current.focus();
+    }
+    if (onClick) {
+      onClick(event);
+    }
+  };
+  let InputComponent = inputComponent;
+  let inputProps = inputPropsProp;
+  if (multiline && InputComponent === "input") {
+    if (rows) {
+      inputProps = {
+        type: void 0,
+        minRows: rows,
+        maxRows: rows,
+        ...inputProps
+      };
+    } else {
+      inputProps = {
+        type: void 0,
+        maxRows,
+        minRows,
+        ...inputProps
+      };
+    }
+    InputComponent = TextareaAutosize;
+  }
+  const handleAutoFill = (event) => {
+    checkDirty(event.animationName === "mui-auto-fill-cancel" ? inputRef.current : {
+      value: "x"
+    });
+  };
+  reactExports.useEffect(() => {
+    if (muiFormControl) {
+      muiFormControl.setAdornedStart(Boolean(startAdornment));
+    }
+  }, [muiFormControl, startAdornment]);
+  const ownerState = {
+    ...props,
+    color: fcs.color || "primary",
+    disabled: fcs.disabled,
+    endAdornment,
+    error: fcs.error,
+    focused: fcs.focused,
+    formControl: muiFormControl,
+    fullWidth,
+    hiddenLabel: fcs.hiddenLabel,
+    multiline,
+    size: fcs.size,
+    startAdornment,
+    type
+  };
+  const classes = useUtilityClasses$f(ownerState);
+  const Root = slots.root || components.Root || InputBaseRoot;
+  const rootProps = slotProps.root || componentsProps.root || {};
+  const Input3 = slots.input || components.Input || InputBaseInput;
+  inputProps = {
+    ...inputProps,
+    ...slotProps.input ?? componentsProps.input
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
+    children: [!disableInjectingGlobalStyles && typeof InputGlobalStyles === "function" && // For Emotion/Styled-components, InputGlobalStyles will be a function
+    // For Pigment CSS, this has no effect because the InputGlobalStyles will be null.
+    (_InputGlobalStyles || (_InputGlobalStyles = /* @__PURE__ */ jsxRuntimeExports.jsx(InputGlobalStyles, {}))), /* @__PURE__ */ jsxRuntimeExports.jsxs(Root, {
+      ...rootProps,
+      ref,
+      onClick: handleClick,
+      ...other,
+      ...!isHostComponent(Root) && {
+        ownerState: {
+          ...ownerState,
+          ...rootProps.ownerState
+        }
+      },
+      className: clsx(classes.root, rootProps.className, className, readOnly && "MuiInputBase-readOnly"),
+      children: [startAdornment, /* @__PURE__ */ jsxRuntimeExports.jsx(FormControlContext.Provider, {
+        value: null,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input3, {
+          "aria-invalid": fcs.error,
+          "aria-describedby": ariaDescribedby,
+          autoComplete,
+          autoFocus,
+          defaultValue,
+          disabled: fcs.disabled,
+          id,
+          onAnimationStart: handleAutoFill,
+          name,
+          placeholder,
+          readOnly,
+          required: fcs.required,
+          rows,
+          value,
+          onKeyDown,
+          onKeyUp,
+          type,
+          ...inputProps,
+          ...!isHostComponent(Input3) && {
+            as: InputComponent,
+            ownerState: {
+              ...ownerState,
+              ...inputProps.ownerState
+            }
+          },
+          ref: handleInputRef,
+          className: clsx(classes.input, inputProps.className, readOnly && "MuiInputBase-readOnly"),
+          onBlur: handleBlur,
+          onChange: handleChange,
+          onFocus: handleFocus
+        })
+      }), endAdornment, renderSuffix ? renderSuffix({
+        ...fcs,
+        startAdornment
+      }) : null]
+    })]
+  });
+});
+function getInputUtilityClass(slot) {
+  return generateUtilityClass("MuiInput", slot);
+}
+const inputClasses = {
+  ...inputBaseClasses,
+  ...generateUtilityClasses("MuiInput", ["root", "underline", "input"])
+};
+function getOutlinedInputUtilityClass(slot) {
+  return generateUtilityClass("MuiOutlinedInput", slot);
+}
+const outlinedInputClasses = {
+  ...inputBaseClasses,
+  ...generateUtilityClasses("MuiOutlinedInput", ["root", "notchedOutline", "input"])
+};
+function getFilledInputUtilityClass(slot) {
+  return generateUtilityClass("MuiFilledInput", slot);
+}
+const filledInputClasses = {
+  ...inputBaseClasses,
+  ...generateUtilityClasses("MuiFilledInput", ["root", "underline", "input", "adornedStart", "adornedEnd", "sizeSmall", "multiline", "hiddenLabel"])
+};
+const ArrowDropDownIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M7 10l5 5 5-5z"
+}));
+const styles$1 = {
+  entering: {
+    opacity: 1
+  },
+  entered: {
+    opacity: 1
+  }
+};
+const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) {
+  const theme = useTheme();
+  const defaultTimeout = {
+    enter: theme.transitions.duration.enteringScreen,
+    exit: theme.transitions.duration.leavingScreen
+  };
+  const {
+    addEndListener,
+    appear = true,
+    children,
+    easing: easing2,
+    in: inProp,
+    onEnter,
+    onEntered,
+    onEntering,
+    onExit,
+    onExited,
+    onExiting,
+    style: style2,
+    timeout = defaultTimeout,
+    // eslint-disable-next-line react/prop-types
+    TransitionComponent = Transition,
+    ...other
+  } = props;
+  const nodeRef = reactExports.useRef(null);
+  const handleRef = useForkRef(nodeRef, getReactElementRef(children), ref);
+  const normalizedTransitionCallback = (callback) => (maybeIsAppearing) => {
+    if (callback) {
+      const node2 = nodeRef.current;
+      if (maybeIsAppearing === void 0) {
+        callback(node2);
+      } else {
+        callback(node2, maybeIsAppearing);
+      }
+    }
+  };
+  const handleEntering = normalizedTransitionCallback(onEntering);
+  const handleEnter = normalizedTransitionCallback((node2, isAppearing) => {
+    reflow(node2);
+    const transitionProps = getTransitionProps({
+      style: style2,
+      timeout,
+      easing: easing2
+    }, {
+      mode: "enter"
+    });
+    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
+    node2.style.transition = theme.transitions.create("opacity", transitionProps);
+    if (onEnter) {
+      onEnter(node2, isAppearing);
+    }
+  });
+  const handleEntered = normalizedTransitionCallback(onEntered);
+  const handleExiting = normalizedTransitionCallback(onExiting);
+  const handleExit = normalizedTransitionCallback((node2) => {
+    const transitionProps = getTransitionProps({
+      style: style2,
+      timeout,
+      easing: easing2
+    }, {
+      mode: "exit"
+    });
+    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
+    node2.style.transition = theme.transitions.create("opacity", transitionProps);
+    if (onExit) {
+      onExit(node2);
+    }
+  });
+  const handleExited = normalizedTransitionCallback(onExited);
+  const handleAddEndListener = (next2) => {
+    if (addEndListener) {
+      addEndListener(nodeRef.current, next2);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionComponent, {
+    appear,
+    in: inProp,
+    nodeRef,
+    onEnter: handleEnter,
+    onEntered: handleEntered,
+    onEntering: handleEntering,
+    onExit: handleExit,
+    onExited: handleExited,
+    onExiting: handleExiting,
+    addEndListener: handleAddEndListener,
+    timeout,
+    ...other,
+    children: (state, {
+      ownerState,
+      ...restChildProps
+    }) => {
+      return /* @__PURE__ */ reactExports.cloneElement(children, {
+        style: {
+          opacity: 0,
+          visibility: state === "exited" && !inProp ? "hidden" : void 0,
+          ...styles$1[state],
+          ...style2,
+          ...children.props.style
+        },
+        ref: handleRef,
+        ...restChildProps
+      });
+    }
+  });
+});
+function getBackdropUtilityClass(slot) {
+  return generateUtilityClass("MuiBackdrop", slot);
+}
+generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
+const useUtilityClasses$e = (ownerState) => {
+  const {
+    classes,
+    invisible
+  } = ownerState;
+  const slots = {
+    root: ["root", invisible && "invisible"]
+  };
+  return composeClasses(slots, getBackdropUtilityClass, classes);
+};
+const BackdropRoot = styled("div", {
+  name: "MuiBackdrop",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, ownerState.invisible && styles2.invisible];
+  }
+})({
+  position: "fixed",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  right: 0,
+  bottom: 0,
+  top: 0,
+  left: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  WebkitTapHighlightColor: "transparent",
+  variants: [{
+    props: {
+      invisible: true
+    },
+    style: {
+      backgroundColor: "transparent"
+    }
+  }]
+});
+const Backdrop = /* @__PURE__ */ reactExports.forwardRef(function Backdrop2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiBackdrop"
+  });
+  const {
+    children,
+    className,
+    component = "div",
+    invisible = false,
+    open,
+    components = {},
+    componentsProps = {},
+    slotProps = {},
+    slots = {},
+    TransitionComponent: TransitionComponentProp,
+    transitionDuration,
+    ...other
+  } = props;
+  const ownerState = {
+    ...props,
+    component,
+    invisible
+  };
+  const classes = useUtilityClasses$e(ownerState);
+  const backwardCompatibleSlots = {
+    transition: TransitionComponentProp,
+    root: components.Root,
+    ...slots
+  };
+  const backwardCompatibleSlotProps = {
+    ...componentsProps,
+    ...slotProps
+  };
+  const externalForwardedProps = {
+    component,
+    slots: backwardCompatibleSlots,
+    slotProps: backwardCompatibleSlotProps
+  };
+  const [RootSlot, rootProps] = useSlot("root", {
+    elementType: BackdropRoot,
+    externalForwardedProps,
+    className: clsx(classes.root, className),
+    ownerState
+  });
+  const [TransitionSlot, transitionProps] = useSlot("transition", {
+    elementType: Fade,
+    externalForwardedProps,
+    ownerState
+  });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionSlot, {
+    in: open,
+    timeout: transitionDuration,
+    ...other,
+    ...transitionProps,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(RootSlot, {
+      "aria-hidden": true,
+      ...rootProps,
+      classes,
+      ref,
+      children
+    })
+  });
+});
 function getButtonUtilityClass(slot) {
   return generateUtilityClass("MuiButton", slot);
 }
 const buttonClasses = generateUtilityClasses("MuiButton", ["root", "text", "textInherit", "textPrimary", "textSecondary", "textSuccess", "textError", "textInfo", "textWarning", "outlined", "outlinedInherit", "outlinedPrimary", "outlinedSecondary", "outlinedSuccess", "outlinedError", "outlinedInfo", "outlinedWarning", "contained", "containedInherit", "containedPrimary", "containedSecondary", "containedSuccess", "containedError", "containedInfo", "containedWarning", "disableElevation", "focusVisible", "disabled", "colorInherit", "colorPrimary", "colorSecondary", "colorSuccess", "colorError", "colorInfo", "colorWarning", "textSizeSmall", "textSizeMedium", "textSizeLarge", "outlinedSizeSmall", "outlinedSizeMedium", "outlinedSizeLarge", "containedSizeSmall", "containedSizeMedium", "containedSizeLarge", "sizeMedium", "sizeSmall", "sizeLarge", "fullWidth", "startIcon", "endIcon", "icon", "iconSizeSmall", "iconSizeMedium", "iconSizeLarge", "loading", "loadingWrapper", "loadingIconPlaceholder", "loadingIndicator", "loadingPositionCenter", "loadingPositionStart", "loadingPositionEnd"]);
 const ButtonGroupContext = /* @__PURE__ */ reactExports.createContext({});
 const ButtonGroupButtonContext = /* @__PURE__ */ reactExports.createContext(void 0);
-const useUtilityClasses$g = (ownerState) => {
+const useUtilityClasses$d = (ownerState) => {
   const {
     color: color2,
     disableElevation,
@@ -21661,7 +22879,7 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     type,
     variant
   };
-  const classes = useUtilityClasses$g(ownerState);
+  const classes = useUtilityClasses$d(ownerState);
   const startIcon = (startIconProp || loading && loadingPosition === "start") && /* @__PURE__ */ jsxRuntimeExports.jsx(ButtonStartIcon, {
     className: classes.startIcon,
     ownerState,
@@ -21706,1324 +22924,6 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     ...other,
     classes,
     children: [startIcon, loadingPosition !== "end" && loader, children, loadingPosition === "end" && loader, endIcon]
-  });
-});
-const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-}));
-function SplashScreen({ onClick }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-screen", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { className: "close", onClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(CloseSharpIcon, {}) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-content", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { children: "ComfyUI Queue Manager" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "sub", children: "Version: v0.2.0" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("h4", { className: "sub", children: [
-        "Released: 12",
-        /* @__PURE__ */ jsxRuntimeExports.jsx("sup", { children: "th" }),
-        " September 2026"
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "What's new?" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Output thumbnails" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "The lightbox view is gone. Completed jobs now show a row of output thumbnails; click one to open the full file in a new browser tab." }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
-          "For more details check the updated manual on Github: ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: "Queue Manager Manual" }),
-          "."
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
-          "For full Release Notes view ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md", target: "_blank", rel: "noreferrer", children: "Changelog" }),
-          "."
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
-          "Leave a feedback or report an issue here ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/issues", target: "_blank", rel: "noreferrer", children: "Issues" }),
-          ". "
-        ] })
-      ] })
-    ] })
-  ] });
-}
-const useOptionsStore = create((set) => ({
-  Basic: {},
-  Completed: {
-    ListOrder: "Newest first"
-  },
-  /**
-   * Set a single option within a category
-   */
-  setOption: (category, key, value) => set((state) => ({
-    ...state,
-    [category]: {
-      ...state[category],
-      [key]: value
-    }
-  })),
-  /**
-   * Set all options within a category
-   */
-  setOptionsCategory: (category, options) => set((state) => ({
-    ...state,
-    [category]: options
-  })),
-  /**
-   * Set all options
-   */
-  setAllOptions: (allOptions) => set(() => ({
-    ...allOptions
-  })),
-  /**
-   * Set a single option directly on the root state
-   */
-  setDirectOption: (key, value) => set((state) => ({
-    ...state,
-    [key]: value
-  }))
-}));
-const reflow = (node2) => node2.scrollTop;
-function getTransitionProps(props, options) {
-  const {
-    timeout,
-    easing: easing2,
-    style: style2 = {}
-  } = props;
-  return {
-    duration: style2.transitionDuration ?? (typeof timeout === "number" ? timeout : timeout[options.mode] || 0),
-    easing: style2.transitionTimingFunction ?? (typeof easing2 === "object" ? easing2[options.mode] : easing2),
-    delay: style2.transitionDelay
-  };
-}
-function isHostComponent(element) {
-  return typeof element === "string";
-}
-function appendOwnerState(elementType, otherProps, ownerState) {
-  if (elementType === void 0 || isHostComponent(elementType)) {
-    return otherProps;
-  }
-  return {
-    ...otherProps,
-    ownerState: {
-      ...otherProps.ownerState,
-      ...ownerState
-    }
-  };
-}
-function resolveComponentProps(componentProps, ownerState, slotState) {
-  if (typeof componentProps === "function") {
-    return componentProps(ownerState, slotState);
-  }
-  return componentProps;
-}
-function extractEventHandlers(object, excludeKeys = []) {
-  if (object === void 0) {
-    return {};
-  }
-  const result = {};
-  Object.keys(object).filter((prop) => prop.match(/^on[A-Z]/) && typeof object[prop] === "function" && !excludeKeys.includes(prop)).forEach((prop) => {
-    result[prop] = object[prop];
-  });
-  return result;
-}
-function omitEventHandlers(object) {
-  if (object === void 0) {
-    return {};
-  }
-  const result = {};
-  Object.keys(object).filter((prop) => !(prop.match(/^on[A-Z]/) && typeof object[prop] === "function")).forEach((prop) => {
-    result[prop] = object[prop];
-  });
-  return result;
-}
-function mergeSlotProps(parameters) {
-  const {
-    getSlotProps,
-    additionalProps,
-    externalSlotProps,
-    externalForwardedProps,
-    className
-  } = parameters;
-  if (!getSlotProps) {
-    const joinedClasses2 = clsx(additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
-    const mergedStyle2 = {
-      ...additionalProps?.style,
-      ...externalForwardedProps?.style,
-      ...externalSlotProps?.style
-    };
-    const props2 = {
-      ...additionalProps,
-      ...externalForwardedProps,
-      ...externalSlotProps
-    };
-    if (joinedClasses2.length > 0) {
-      props2.className = joinedClasses2;
-    }
-    if (Object.keys(mergedStyle2).length > 0) {
-      props2.style = mergedStyle2;
-    }
-    return {
-      props: props2,
-      internalRef: void 0
-    };
-  }
-  const eventHandlers = extractEventHandlers({
-    ...externalForwardedProps,
-    ...externalSlotProps
-  });
-  const componentsPropsWithoutEventHandlers = omitEventHandlers(externalSlotProps);
-  const otherPropsWithoutEventHandlers = omitEventHandlers(externalForwardedProps);
-  const internalSlotProps = getSlotProps(eventHandlers);
-  const joinedClasses = clsx(internalSlotProps?.className, additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
-  const mergedStyle = {
-    ...internalSlotProps?.style,
-    ...additionalProps?.style,
-    ...externalForwardedProps?.style,
-    ...externalSlotProps?.style
-  };
-  const props = {
-    ...internalSlotProps,
-    ...additionalProps,
-    ...otherPropsWithoutEventHandlers,
-    ...componentsPropsWithoutEventHandlers
-  };
-  if (joinedClasses.length > 0) {
-    props.className = joinedClasses;
-  }
-  if (Object.keys(mergedStyle).length > 0) {
-    props.style = mergedStyle;
-  }
-  return {
-    props,
-    internalRef: internalSlotProps.ref
-  };
-}
-function useSlot(name, parameters) {
-  const {
-    className,
-    elementType: initialElementType,
-    ownerState,
-    externalForwardedProps,
-    internalForwardedProps,
-    shouldForwardComponentProp = false,
-    ...useSlotPropsParams
-  } = parameters;
-  const {
-    component: rootComponent,
-    slots = {
-      [name]: void 0
-    },
-    slotProps = {
-      [name]: void 0
-    },
-    ...other
-  } = externalForwardedProps;
-  const elementType = slots[name] || initialElementType;
-  const resolvedComponentsProps = resolveComponentProps(slotProps[name], ownerState);
-  const {
-    props: {
-      component: slotComponent,
-      ...mergedProps
-    },
-    internalRef
-  } = mergeSlotProps({
-    className,
-    ...useSlotPropsParams,
-    externalForwardedProps: name === "root" ? other : void 0,
-    externalSlotProps: resolvedComponentsProps
-  });
-  const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.ref);
-  const LeafComponent = name === "root" ? slotComponent || rootComponent : slotComponent;
-  const props = appendOwnerState(elementType, {
-    ...name === "root" && !rootComponent && !slots[name] && internalForwardedProps,
-    ...name !== "root" && !slots[name] && internalForwardedProps,
-    ...mergedProps,
-    ...LeafComponent && !shouldForwardComponentProp && {
-      as: LeafComponent
-    },
-    ...LeafComponent && shouldForwardComponentProp && {
-      component: LeafComponent
-    },
-    ref
-  }, ownerState);
-  return [elementType, props];
-}
-function getPaperUtilityClass(slot) {
-  return generateUtilityClass("MuiPaper", slot);
-}
-generateUtilityClasses("MuiPaper", ["root", "rounded", "outlined", "elevation", "elevation0", "elevation1", "elevation2", "elevation3", "elevation4", "elevation5", "elevation6", "elevation7", "elevation8", "elevation9", "elevation10", "elevation11", "elevation12", "elevation13", "elevation14", "elevation15", "elevation16", "elevation17", "elevation18", "elevation19", "elevation20", "elevation21", "elevation22", "elevation23", "elevation24"]);
-const useUtilityClasses$f = (ownerState) => {
-  const {
-    square,
-    elevation,
-    variant,
-    classes
-  } = ownerState;
-  const slots = {
-    root: ["root", variant, !square && "rounded", variant === "elevation" && `elevation${elevation}`]
-  };
-  return composeClasses(slots, getPaperUtilityClass, classes);
-};
-const PaperRoot = styled("div", {
-  name: "MuiPaper",
-  slot: "Root",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.root, styles2[ownerState.variant], !ownerState.square && styles2.rounded, ownerState.variant === "elevation" && styles2[`elevation${ownerState.elevation}`]];
-  }
-})(memoTheme(({
-  theme
-}) => ({
-  backgroundColor: (theme.vars || theme).palette.background.paper,
-  color: (theme.vars || theme).palette.text.primary,
-  transition: theme.transitions.create("box-shadow"),
-  variants: [{
-    props: ({
-      ownerState
-    }) => !ownerState.square,
-    style: {
-      borderRadius: theme.shape.borderRadius
-    }
-  }, {
-    props: {
-      variant: "outlined"
-    },
-    style: {
-      border: `1px solid ${(theme.vars || theme).palette.divider}`
-    }
-  }, {
-    props: {
-      variant: "elevation"
-    },
-    style: {
-      boxShadow: "var(--Paper-shadow)",
-      backgroundImage: "var(--Paper-overlay)"
-    }
-  }]
-})));
-const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, ref) {
-  const props = useDefaultProps({
-    props: inProps,
-    name: "MuiPaper"
-  });
-  const theme = useTheme();
-  const {
-    className,
-    component = "div",
-    elevation = 1,
-    square = false,
-    variant = "elevation",
-    ...other
-  } = props;
-  const ownerState = {
-    ...props,
-    component,
-    elevation,
-    square,
-    variant
-  };
-  const classes = useUtilityClasses$f(ownerState);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(PaperRoot, {
-    as: component,
-    ownerState,
-    className: clsx(classes.root, className),
-    ref,
-    ...other,
-    style: {
-      ...variant === "elevation" && {
-        "--Paper-shadow": (theme.vars || theme).shadows[elevation],
-        ...theme.vars && {
-          "--Paper-overlay": theme.vars.overlays?.[elevation]
-        },
-        ...!theme.vars && theme.palette.mode === "dark" && {
-          "--Paper-overlay": `linear-gradient(${alpha("#fff", getOverlayAlpha(elevation))}, ${alpha("#fff", getOverlayAlpha(elevation))})`
-        }
-      },
-      ...other.style
-    }
-  });
-});
-function useSlotProps(parameters) {
-  const {
-    elementType,
-    externalSlotProps,
-    ownerState,
-    skipResolvingSlotProps = false,
-    ...other
-  } = parameters;
-  const resolvedComponentsProps = skipResolvingSlotProps ? {} : resolveComponentProps(externalSlotProps, ownerState);
-  const {
-    props: mergedProps,
-    internalRef
-  } = mergeSlotProps({
-    ...other,
-    externalSlotProps: resolvedComponentsProps
-  });
-  const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.additionalProps?.ref);
-  const props = appendOwnerState(elementType, {
-    ...mergedProps,
-    ref
-  }, ownerState);
-  return props;
-}
-function getReactElementRef(element) {
-  if (parseInt(reactExports.version, 10) >= 19) {
-    return element?.props?.ref || null;
-  }
-  return element?.ref || null;
-}
-function getContainer$1(container) {
-  return typeof container === "function" ? container() : container;
-}
-const Portal = /* @__PURE__ */ reactExports.forwardRef(function Portal2(props, forwardedRef) {
-  const {
-    children,
-    container,
-    disablePortal = false
-  } = props;
-  const [mountNode, setMountNode] = reactExports.useState(null);
-  const handleRef = useForkRef(/* @__PURE__ */ reactExports.isValidElement(children) ? getReactElementRef(children) : null, forwardedRef);
-  useEnhancedEffect(() => {
-    if (!disablePortal) {
-      setMountNode(getContainer$1(container) || document.body);
-    }
-  }, [container, disablePortal]);
-  useEnhancedEffect(() => {
-    if (mountNode && !disablePortal) {
-      setRef(forwardedRef, mountNode);
-      return () => {
-        setRef(forwardedRef, null);
-      };
-    }
-    return void 0;
-  }, [forwardedRef, mountNode, disablePortal]);
-  if (disablePortal) {
-    if (/* @__PURE__ */ reactExports.isValidElement(children)) {
-      const newProps = {
-        ref: handleRef
-      };
-      return /* @__PURE__ */ reactExports.cloneElement(children, newProps);
-    }
-    return children;
-  }
-  return mountNode ? /* @__PURE__ */ reactDomExports.createPortal(children, mountNode) : mountNode;
-});
-function getStyleValue(value) {
-  return parseInt(value, 10) || 0;
-}
-const styles$2 = {
-  shadow: {
-    // Visibility needed to hide the extra text area on iPads
-    visibility: "hidden",
-    // Remove from the content flow
-    position: "absolute",
-    // Ignore the scrollbar width
-    overflow: "hidden",
-    height: 0,
-    top: 0,
-    left: 0,
-    // Create a new layer, increase the isolation of the computed values
-    transform: "translateZ(0)"
-  }
-};
-function isObjectEmpty(object) {
-  for (const _ in object) {
-    return false;
-  }
-  return true;
-}
-function isEmpty$1(obj) {
-  return isObjectEmpty(obj) || obj.outerHeightStyle === 0 && !obj.overflowing;
-}
-const TextareaAutosize = /* @__PURE__ */ reactExports.forwardRef(function TextareaAutosize2(props, forwardedRef) {
-  const {
-    onChange,
-    maxRows,
-    minRows = 1,
-    style: style2,
-    value,
-    ...other
-  } = props;
-  const {
-    current: isControlled
-  } = reactExports.useRef(value != null);
-  const textareaRef = reactExports.useRef(null);
-  const handleRef = useForkRef(forwardedRef, textareaRef);
-  const heightRef = reactExports.useRef(null);
-  const hiddenTextareaRef = reactExports.useRef(null);
-  const calculateTextareaStyles = reactExports.useCallback(() => {
-    const textarea = textareaRef.current;
-    const hiddenTextarea = hiddenTextareaRef.current;
-    if (!textarea || !hiddenTextarea) {
-      return void 0;
-    }
-    const containerWindow = ownerWindow(textarea);
-    const computedStyle = containerWindow.getComputedStyle(textarea);
-    if (computedStyle.width === "0px") {
-      return {
-        outerHeightStyle: 0,
-        overflowing: false
-      };
-    }
-    hiddenTextarea.style.width = computedStyle.width;
-    hiddenTextarea.value = textarea.value || props.placeholder || "x";
-    if (hiddenTextarea.value.slice(-1) === "\n") {
-      hiddenTextarea.value += " ";
-    }
-    const boxSizing2 = computedStyle.boxSizing;
-    const padding2 = getStyleValue(computedStyle.paddingBottom) + getStyleValue(computedStyle.paddingTop);
-    const border2 = getStyleValue(computedStyle.borderBottomWidth) + getStyleValue(computedStyle.borderTopWidth);
-    const innerHeight = hiddenTextarea.scrollHeight;
-    hiddenTextarea.value = "x";
-    const singleRowHeight = hiddenTextarea.scrollHeight;
-    let outerHeight = innerHeight;
-    if (minRows) {
-      outerHeight = Math.max(Number(minRows) * singleRowHeight, outerHeight);
-    }
-    if (maxRows) {
-      outerHeight = Math.min(Number(maxRows) * singleRowHeight, outerHeight);
-    }
-    outerHeight = Math.max(outerHeight, singleRowHeight);
-    const outerHeightStyle = outerHeight + (boxSizing2 === "border-box" ? padding2 + border2 : 0);
-    const overflowing = Math.abs(outerHeight - innerHeight) <= 1;
-    return {
-      outerHeightStyle,
-      overflowing
-    };
-  }, [maxRows, minRows, props.placeholder]);
-  const didHeightChange = useEventCallback(() => {
-    const textarea = textareaRef.current;
-    const textareaStyles = calculateTextareaStyles();
-    if (!textarea || !textareaStyles || isEmpty$1(textareaStyles)) {
-      return false;
-    }
-    const outerHeightStyle = textareaStyles.outerHeightStyle;
-    return heightRef.current != null && heightRef.current !== outerHeightStyle;
-  });
-  const syncHeight = reactExports.useCallback(() => {
-    const textarea = textareaRef.current;
-    const textareaStyles = calculateTextareaStyles();
-    if (!textarea || !textareaStyles || isEmpty$1(textareaStyles)) {
-      return;
-    }
-    const outerHeightStyle = textareaStyles.outerHeightStyle;
-    if (heightRef.current !== outerHeightStyle) {
-      heightRef.current = outerHeightStyle;
-      textarea.style.height = `${outerHeightStyle}px`;
-    }
-    textarea.style.overflow = textareaStyles.overflowing ? "hidden" : "";
-  }, [calculateTextareaStyles]);
-  const frameRef = reactExports.useRef(-1);
-  useEnhancedEffect(() => {
-    const debouncedHandleResize = debounce(syncHeight);
-    const textarea = textareaRef?.current;
-    if (!textarea) {
-      return void 0;
-    }
-    const containerWindow = ownerWindow(textarea);
-    containerWindow.addEventListener("resize", debouncedHandleResize);
-    let resizeObserver;
-    if (typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(() => {
-        if (didHeightChange()) {
-          resizeObserver.unobserve(textarea);
-          cancelAnimationFrame(frameRef.current);
-          syncHeight();
-          frameRef.current = requestAnimationFrame(() => {
-            resizeObserver.observe(textarea);
-          });
-        }
-      });
-      resizeObserver.observe(textarea);
-    }
-    return () => {
-      debouncedHandleResize.clear();
-      cancelAnimationFrame(frameRef.current);
-      containerWindow.removeEventListener("resize", debouncedHandleResize);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, [calculateTextareaStyles, syncHeight, didHeightChange]);
-  useEnhancedEffect(() => {
-    syncHeight();
-  });
-  const handleChange = (event) => {
-    if (!isControlled) {
-      syncHeight();
-    }
-    const textarea = event.target;
-    const countOfCharacters = textarea.value.length;
-    const isLastCharacterNewLine = textarea.value.endsWith("\n");
-    const isEndOfTheLine = textarea.selectionStart === countOfCharacters;
-    if (isLastCharacterNewLine && isEndOfTheLine) {
-      textarea.setSelectionRange(countOfCharacters, countOfCharacters);
-    }
-    if (onChange) {
-      onChange(event);
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
-    children: [/* @__PURE__ */ jsxRuntimeExports.jsx("textarea", {
-      value,
-      onChange: handleChange,
-      ref: handleRef,
-      rows: minRows,
-      style: style2,
-      ...other
-    }), /* @__PURE__ */ jsxRuntimeExports.jsx("textarea", {
-      "aria-hidden": true,
-      className: props.className,
-      readOnly: true,
-      ref: hiddenTextareaRef,
-      tabIndex: -1,
-      style: {
-        ...styles$2.shadow,
-        ...style2,
-        paddingTop: 0,
-        paddingBottom: 0
-      }
-    })]
-  });
-});
-function formControlState({
-  props,
-  states,
-  muiFormControl
-}) {
-  return states.reduce((acc, state) => {
-    acc[state] = props[state];
-    if (muiFormControl) {
-      if (typeof props[state] === "undefined") {
-        acc[state] = muiFormControl[state];
-      }
-    }
-    return acc;
-  }, {});
-}
-const FormControlContext = /* @__PURE__ */ reactExports.createContext(void 0);
-function useFormControl() {
-  return reactExports.useContext(FormControlContext);
-}
-function hasValue(value) {
-  return value != null && !(Array.isArray(value) && value.length === 0);
-}
-function isFilled(obj, SSR = false) {
-  return obj && (hasValue(obj.value) && obj.value !== "" || SSR && hasValue(obj.defaultValue) && obj.defaultValue !== "");
-}
-function getInputBaseUtilityClass(slot) {
-  return generateUtilityClass("MuiInputBase", slot);
-}
-const inputBaseClasses = generateUtilityClasses("MuiInputBase", ["root", "formControl", "focused", "disabled", "adornedStart", "adornedEnd", "error", "sizeSmall", "multiline", "colorSecondary", "fullWidth", "hiddenLabel", "readOnly", "input", "inputSizeSmall", "inputMultiline", "inputTypeSearch", "inputAdornedStart", "inputAdornedEnd", "inputHiddenLabel"]);
-var _InputGlobalStyles;
-const rootOverridesResolver = (props, styles2) => {
-  const {
-    ownerState
-  } = props;
-  return [styles2.root, ownerState.formControl && styles2.formControl, ownerState.startAdornment && styles2.adornedStart, ownerState.endAdornment && styles2.adornedEnd, ownerState.error && styles2.error, ownerState.size === "small" && styles2.sizeSmall, ownerState.multiline && styles2.multiline, ownerState.color && styles2[`color${capitalize(ownerState.color)}`], ownerState.fullWidth && styles2.fullWidth, ownerState.hiddenLabel && styles2.hiddenLabel];
-};
-const inputOverridesResolver = (props, styles2) => {
-  const {
-    ownerState
-  } = props;
-  return [styles2.input, ownerState.size === "small" && styles2.inputSizeSmall, ownerState.multiline && styles2.inputMultiline, ownerState.type === "search" && styles2.inputTypeSearch, ownerState.startAdornment && styles2.inputAdornedStart, ownerState.endAdornment && styles2.inputAdornedEnd, ownerState.hiddenLabel && styles2.inputHiddenLabel];
-};
-const useUtilityClasses$e = (ownerState) => {
-  const {
-    classes,
-    color: color2,
-    disabled,
-    error,
-    endAdornment,
-    focused,
-    formControl,
-    fullWidth,
-    hiddenLabel,
-    multiline,
-    readOnly,
-    size,
-    startAdornment,
-    type
-  } = ownerState;
-  const slots = {
-    root: ["root", `color${capitalize(color2)}`, disabled && "disabled", error && "error", fullWidth && "fullWidth", focused && "focused", formControl && "formControl", size && size !== "medium" && `size${capitalize(size)}`, multiline && "multiline", startAdornment && "adornedStart", endAdornment && "adornedEnd", hiddenLabel && "hiddenLabel", readOnly && "readOnly"],
-    input: ["input", disabled && "disabled", type === "search" && "inputTypeSearch", multiline && "inputMultiline", size === "small" && "inputSizeSmall", hiddenLabel && "inputHiddenLabel", startAdornment && "inputAdornedStart", endAdornment && "inputAdornedEnd", readOnly && "readOnly"]
-  };
-  return composeClasses(slots, getInputBaseUtilityClass, classes);
-};
-const InputBaseRoot = styled("div", {
-  name: "MuiInputBase",
-  slot: "Root",
-  overridesResolver: rootOverridesResolver
-})(memoTheme(({
-  theme
-}) => ({
-  ...theme.typography.body1,
-  color: (theme.vars || theme).palette.text.primary,
-  lineHeight: "1.4375em",
-  // 23px
-  boxSizing: "border-box",
-  // Prevent padding issue with fullWidth.
-  position: "relative",
-  cursor: "text",
-  display: "inline-flex",
-  alignItems: "center",
-  [`&.${inputBaseClasses.disabled}`]: {
-    color: (theme.vars || theme).palette.text.disabled,
-    cursor: "default"
-  },
-  variants: [{
-    props: ({
-      ownerState
-    }) => ownerState.multiline,
-    style: {
-      padding: "4px 0 5px"
-    }
-  }, {
-    props: ({
-      ownerState,
-      size
-    }) => ownerState.multiline && size === "small",
-    style: {
-      paddingTop: 1
-    }
-  }, {
-    props: ({
-      ownerState
-    }) => ownerState.fullWidth,
-    style: {
-      width: "100%"
-    }
-  }]
-})));
-const InputBaseInput = styled("input", {
-  name: "MuiInputBase",
-  slot: "Input",
-  overridesResolver: inputOverridesResolver
-})(memoTheme(({
-  theme
-}) => {
-  const light2 = theme.palette.mode === "light";
-  const placeholder = {
-    color: "currentColor",
-    ...theme.vars ? {
-      opacity: theme.vars.opacity.inputPlaceholder
-    } : {
-      opacity: light2 ? 0.42 : 0.5
-    },
-    transition: theme.transitions.create("opacity", {
-      duration: theme.transitions.duration.shorter
-    })
-  };
-  const placeholderHidden = {
-    opacity: "0 !important"
-  };
-  const placeholderVisible = theme.vars ? {
-    opacity: theme.vars.opacity.inputPlaceholder
-  } : {
-    opacity: light2 ? 0.42 : 0.5
-  };
-  return {
-    font: "inherit",
-    letterSpacing: "inherit",
-    color: "currentColor",
-    padding: "4px 0 5px",
-    border: 0,
-    boxSizing: "content-box",
-    background: "none",
-    height: "1.4375em",
-    // Reset 23pxthe native input line-height
-    margin: 0,
-    // Reset for Safari
-    WebkitTapHighlightColor: "transparent",
-    display: "block",
-    // Make the flex item shrink with Firefox
-    minWidth: 0,
-    width: "100%",
-    "&::-webkit-input-placeholder": placeholder,
-    "&::-moz-placeholder": placeholder,
-    // Firefox 19+
-    "&::-ms-input-placeholder": placeholder,
-    // Edge
-    "&:focus": {
-      outline: 0
-    },
-    // Reset Firefox invalid required input style
-    "&:invalid": {
-      boxShadow: "none"
-    },
-    "&::-webkit-search-decoration": {
-      // Remove the padding when type=search.
-      WebkitAppearance: "none"
-    },
-    // Show and hide the placeholder logic
-    [`label[data-shrink=false] + .${inputBaseClasses.formControl} &`]: {
-      "&::-webkit-input-placeholder": placeholderHidden,
-      "&::-moz-placeholder": placeholderHidden,
-      // Firefox 19+
-      "&::-ms-input-placeholder": placeholderHidden,
-      // Edge
-      "&:focus::-webkit-input-placeholder": placeholderVisible,
-      "&:focus::-moz-placeholder": placeholderVisible,
-      // Firefox 19+
-      "&:focus::-ms-input-placeholder": placeholderVisible
-      // Edge
-    },
-    [`&.${inputBaseClasses.disabled}`]: {
-      opacity: 1,
-      // Reset iOS opacity
-      WebkitTextFillColor: (theme.vars || theme).palette.text.disabled
-      // Fix opacity Safari bug
-    },
-    variants: [{
-      props: ({
-        ownerState
-      }) => !ownerState.disableInjectingGlobalStyles,
-      style: {
-        animationName: "mui-auto-fill-cancel",
-        animationDuration: "10ms",
-        "&:-webkit-autofill": {
-          animationDuration: "5000s",
-          animationName: "mui-auto-fill"
-        }
-      }
-    }, {
-      props: {
-        size: "small"
-      },
-      style: {
-        paddingTop: 1
-      }
-    }, {
-      props: ({
-        ownerState
-      }) => ownerState.multiline,
-      style: {
-        height: "auto",
-        resize: "none",
-        padding: 0,
-        paddingTop: 0
-      }
-    }, {
-      props: {
-        type: "search"
-      },
-      style: {
-        MozAppearance: "textfield"
-        // Improve type search style.
-      }
-    }]
-  };
-}));
-const InputGlobalStyles = globalCss({
-  "@keyframes mui-auto-fill": {
-    from: {
-      display: "block"
-    }
-  },
-  "@keyframes mui-auto-fill-cancel": {
-    from: {
-      display: "block"
-    }
-  }
-});
-const InputBase = /* @__PURE__ */ reactExports.forwardRef(function InputBase2(inProps, ref) {
-  const props = useDefaultProps({
-    props: inProps,
-    name: "MuiInputBase"
-  });
-  const {
-    "aria-describedby": ariaDescribedby,
-    autoComplete,
-    autoFocus,
-    className,
-    color: color2,
-    components = {},
-    componentsProps = {},
-    defaultValue,
-    disabled,
-    disableInjectingGlobalStyles,
-    endAdornment,
-    error,
-    fullWidth = false,
-    id,
-    inputComponent = "input",
-    inputProps: inputPropsProp = {},
-    inputRef: inputRefProp,
-    margin: margin2,
-    maxRows,
-    minRows,
-    multiline = false,
-    name,
-    onBlur,
-    onChange,
-    onClick,
-    onFocus,
-    onKeyDown,
-    onKeyUp,
-    placeholder,
-    readOnly,
-    renderSuffix,
-    rows,
-    size,
-    slotProps = {},
-    slots = {},
-    startAdornment,
-    type = "text",
-    value: valueProp,
-    ...other
-  } = props;
-  const value = inputPropsProp.value != null ? inputPropsProp.value : valueProp;
-  const {
-    current: isControlled
-  } = reactExports.useRef(value != null);
-  const inputRef = reactExports.useRef();
-  const handleInputRefWarning = reactExports.useCallback((instance) => {
-  }, []);
-  const handleInputRef = useForkRef(inputRef, inputRefProp, inputPropsProp.ref, handleInputRefWarning);
-  const [focused, setFocused] = reactExports.useState(false);
-  const muiFormControl = useFormControl();
-  const fcs = formControlState({
-    props,
-    muiFormControl,
-    states: ["color", "disabled", "error", "hiddenLabel", "size", "required", "filled"]
-  });
-  fcs.focused = muiFormControl ? muiFormControl.focused : focused;
-  reactExports.useEffect(() => {
-    if (!muiFormControl && disabled && focused) {
-      setFocused(false);
-      if (onBlur) {
-        onBlur();
-      }
-    }
-  }, [muiFormControl, disabled, focused, onBlur]);
-  const onFilled = muiFormControl && muiFormControl.onFilled;
-  const onEmpty = muiFormControl && muiFormControl.onEmpty;
-  const checkDirty = reactExports.useCallback((obj) => {
-    if (isFilled(obj)) {
-      if (onFilled) {
-        onFilled();
-      }
-    } else if (onEmpty) {
-      onEmpty();
-    }
-  }, [onFilled, onEmpty]);
-  useEnhancedEffect(() => {
-    if (isControlled) {
-      checkDirty({
-        value
-      });
-    }
-  }, [value, checkDirty, isControlled]);
-  const handleFocus = (event) => {
-    if (onFocus) {
-      onFocus(event);
-    }
-    if (inputPropsProp.onFocus) {
-      inputPropsProp.onFocus(event);
-    }
-    if (muiFormControl && muiFormControl.onFocus) {
-      muiFormControl.onFocus(event);
-    } else {
-      setFocused(true);
-    }
-  };
-  const handleBlur = (event) => {
-    if (onBlur) {
-      onBlur(event);
-    }
-    if (inputPropsProp.onBlur) {
-      inputPropsProp.onBlur(event);
-    }
-    if (muiFormControl && muiFormControl.onBlur) {
-      muiFormControl.onBlur(event);
-    } else {
-      setFocused(false);
-    }
-  };
-  const handleChange = (event, ...args) => {
-    if (!isControlled) {
-      const element = event.target || inputRef.current;
-      if (element == null) {
-        throw new Error(formatMuiErrorMessage(1));
-      }
-      checkDirty({
-        value: element.value
-      });
-    }
-    if (inputPropsProp.onChange) {
-      inputPropsProp.onChange(event, ...args);
-    }
-    if (onChange) {
-      onChange(event, ...args);
-    }
-  };
-  reactExports.useEffect(() => {
-    checkDirty(inputRef.current);
-  }, []);
-  const handleClick = (event) => {
-    if (inputRef.current && event.currentTarget === event.target) {
-      inputRef.current.focus();
-    }
-    if (onClick) {
-      onClick(event);
-    }
-  };
-  let InputComponent = inputComponent;
-  let inputProps = inputPropsProp;
-  if (multiline && InputComponent === "input") {
-    if (rows) {
-      inputProps = {
-        type: void 0,
-        minRows: rows,
-        maxRows: rows,
-        ...inputProps
-      };
-    } else {
-      inputProps = {
-        type: void 0,
-        maxRows,
-        minRows,
-        ...inputProps
-      };
-    }
-    InputComponent = TextareaAutosize;
-  }
-  const handleAutoFill = (event) => {
-    checkDirty(event.animationName === "mui-auto-fill-cancel" ? inputRef.current : {
-      value: "x"
-    });
-  };
-  reactExports.useEffect(() => {
-    if (muiFormControl) {
-      muiFormControl.setAdornedStart(Boolean(startAdornment));
-    }
-  }, [muiFormControl, startAdornment]);
-  const ownerState = {
-    ...props,
-    color: fcs.color || "primary",
-    disabled: fcs.disabled,
-    endAdornment,
-    error: fcs.error,
-    focused: fcs.focused,
-    formControl: muiFormControl,
-    fullWidth,
-    hiddenLabel: fcs.hiddenLabel,
-    multiline,
-    size: fcs.size,
-    startAdornment,
-    type
-  };
-  const classes = useUtilityClasses$e(ownerState);
-  const Root = slots.root || components.Root || InputBaseRoot;
-  const rootProps = slotProps.root || componentsProps.root || {};
-  const Input3 = slots.input || components.Input || InputBaseInput;
-  inputProps = {
-    ...inputProps,
-    ...slotProps.input ?? componentsProps.input
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
-    children: [!disableInjectingGlobalStyles && typeof InputGlobalStyles === "function" && // For Emotion/Styled-components, InputGlobalStyles will be a function
-    // For Pigment CSS, this has no effect because the InputGlobalStyles will be null.
-    (_InputGlobalStyles || (_InputGlobalStyles = /* @__PURE__ */ jsxRuntimeExports.jsx(InputGlobalStyles, {}))), /* @__PURE__ */ jsxRuntimeExports.jsxs(Root, {
-      ...rootProps,
-      ref,
-      onClick: handleClick,
-      ...other,
-      ...!isHostComponent(Root) && {
-        ownerState: {
-          ...ownerState,
-          ...rootProps.ownerState
-        }
-      },
-      className: clsx(classes.root, rootProps.className, className, readOnly && "MuiInputBase-readOnly"),
-      children: [startAdornment, /* @__PURE__ */ jsxRuntimeExports.jsx(FormControlContext.Provider, {
-        value: null,
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Input3, {
-          "aria-invalid": fcs.error,
-          "aria-describedby": ariaDescribedby,
-          autoComplete,
-          autoFocus,
-          defaultValue,
-          disabled: fcs.disabled,
-          id,
-          onAnimationStart: handleAutoFill,
-          name,
-          placeholder,
-          readOnly,
-          required: fcs.required,
-          rows,
-          value,
-          onKeyDown,
-          onKeyUp,
-          type,
-          ...inputProps,
-          ...!isHostComponent(Input3) && {
-            as: InputComponent,
-            ownerState: {
-              ...ownerState,
-              ...inputProps.ownerState
-            }
-          },
-          ref: handleInputRef,
-          className: clsx(classes.input, inputProps.className, readOnly && "MuiInputBase-readOnly"),
-          onBlur: handleBlur,
-          onChange: handleChange,
-          onFocus: handleFocus
-        })
-      }), endAdornment, renderSuffix ? renderSuffix({
-        ...fcs,
-        startAdornment
-      }) : null]
-    })]
-  });
-});
-function getInputUtilityClass(slot) {
-  return generateUtilityClass("MuiInput", slot);
-}
-const inputClasses = {
-  ...inputBaseClasses,
-  ...generateUtilityClasses("MuiInput", ["root", "underline", "input"])
-};
-function getOutlinedInputUtilityClass(slot) {
-  return generateUtilityClass("MuiOutlinedInput", slot);
-}
-const outlinedInputClasses = {
-  ...inputBaseClasses,
-  ...generateUtilityClasses("MuiOutlinedInput", ["root", "notchedOutline", "input"])
-};
-function getFilledInputUtilityClass(slot) {
-  return generateUtilityClass("MuiFilledInput", slot);
-}
-const filledInputClasses = {
-  ...inputBaseClasses,
-  ...generateUtilityClasses("MuiFilledInput", ["root", "underline", "input", "adornedStart", "adornedEnd", "sizeSmall", "multiline", "hiddenLabel"])
-};
-const ArrowDropDownIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M7 10l5 5 5-5z"
-}));
-const styles$1 = {
-  entering: {
-    opacity: 1
-  },
-  entered: {
-    opacity: 1
-  }
-};
-const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) {
-  const theme = useTheme();
-  const defaultTimeout = {
-    enter: theme.transitions.duration.enteringScreen,
-    exit: theme.transitions.duration.leavingScreen
-  };
-  const {
-    addEndListener,
-    appear = true,
-    children,
-    easing: easing2,
-    in: inProp,
-    onEnter,
-    onEntered,
-    onEntering,
-    onExit,
-    onExited,
-    onExiting,
-    style: style2,
-    timeout = defaultTimeout,
-    // eslint-disable-next-line react/prop-types
-    TransitionComponent = Transition,
-    ...other
-  } = props;
-  const nodeRef = reactExports.useRef(null);
-  const handleRef = useForkRef(nodeRef, getReactElementRef(children), ref);
-  const normalizedTransitionCallback = (callback) => (maybeIsAppearing) => {
-    if (callback) {
-      const node2 = nodeRef.current;
-      if (maybeIsAppearing === void 0) {
-        callback(node2);
-      } else {
-        callback(node2, maybeIsAppearing);
-      }
-    }
-  };
-  const handleEntering = normalizedTransitionCallback(onEntering);
-  const handleEnter = normalizedTransitionCallback((node2, isAppearing) => {
-    reflow(node2);
-    const transitionProps = getTransitionProps({
-      style: style2,
-      timeout,
-      easing: easing2
-    }, {
-      mode: "enter"
-    });
-    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
-    node2.style.transition = theme.transitions.create("opacity", transitionProps);
-    if (onEnter) {
-      onEnter(node2, isAppearing);
-    }
-  });
-  const handleEntered = normalizedTransitionCallback(onEntered);
-  const handleExiting = normalizedTransitionCallback(onExiting);
-  const handleExit = normalizedTransitionCallback((node2) => {
-    const transitionProps = getTransitionProps({
-      style: style2,
-      timeout,
-      easing: easing2
-    }, {
-      mode: "exit"
-    });
-    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
-    node2.style.transition = theme.transitions.create("opacity", transitionProps);
-    if (onExit) {
-      onExit(node2);
-    }
-  });
-  const handleExited = normalizedTransitionCallback(onExited);
-  const handleAddEndListener = (next2) => {
-    if (addEndListener) {
-      addEndListener(nodeRef.current, next2);
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionComponent, {
-    appear,
-    in: inProp,
-    nodeRef,
-    onEnter: handleEnter,
-    onEntered: handleEntered,
-    onEntering: handleEntering,
-    onExit: handleExit,
-    onExited: handleExited,
-    onExiting: handleExiting,
-    addEndListener: handleAddEndListener,
-    timeout,
-    ...other,
-    children: (state, {
-      ownerState,
-      ...restChildProps
-    }) => {
-      return /* @__PURE__ */ reactExports.cloneElement(children, {
-        style: {
-          opacity: 0,
-          visibility: state === "exited" && !inProp ? "hidden" : void 0,
-          ...styles$1[state],
-          ...style2,
-          ...children.props.style
-        },
-        ref: handleRef,
-        ...restChildProps
-      });
-    }
-  });
-});
-function getBackdropUtilityClass(slot) {
-  return generateUtilityClass("MuiBackdrop", slot);
-}
-generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
-const useUtilityClasses$d = (ownerState) => {
-  const {
-    classes,
-    invisible
-  } = ownerState;
-  const slots = {
-    root: ["root", invisible && "invisible"]
-  };
-  return composeClasses(slots, getBackdropUtilityClass, classes);
-};
-const BackdropRoot = styled("div", {
-  name: "MuiBackdrop",
-  slot: "Root",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.root, ownerState.invisible && styles2.invisible];
-  }
-})({
-  position: "fixed",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  right: 0,
-  bottom: 0,
-  top: 0,
-  left: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  WebkitTapHighlightColor: "transparent",
-  variants: [{
-    props: {
-      invisible: true
-    },
-    style: {
-      backgroundColor: "transparent"
-    }
-  }]
-});
-const Backdrop = /* @__PURE__ */ reactExports.forwardRef(function Backdrop2(inProps, ref) {
-  const props = useDefaultProps({
-    props: inProps,
-    name: "MuiBackdrop"
-  });
-  const {
-    children,
-    className,
-    component = "div",
-    invisible = false,
-    open,
-    components = {},
-    componentsProps = {},
-    slotProps = {},
-    slots = {},
-    TransitionComponent: TransitionComponentProp,
-    transitionDuration,
-    ...other
-  } = props;
-  const ownerState = {
-    ...props,
-    component,
-    invisible
-  };
-  const classes = useUtilityClasses$d(ownerState);
-  const backwardCompatibleSlots = {
-    transition: TransitionComponentProp,
-    root: components.Root,
-    ...slots
-  };
-  const backwardCompatibleSlotProps = {
-    ...componentsProps,
-    ...slotProps
-  };
-  const externalForwardedProps = {
-    component,
-    slots: backwardCompatibleSlots,
-    slotProps: backwardCompatibleSlotProps
-  };
-  const [RootSlot, rootProps] = useSlot("root", {
-    elementType: BackdropRoot,
-    externalForwardedProps,
-    className: clsx(classes.root, className),
-    ownerState
-  });
-  const [TransitionSlot, transitionProps] = useSlot("transition", {
-    elementType: Fade,
-    externalForwardedProps,
-    ownerState
-  });
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionSlot, {
-    in: open,
-    timeout: transitionDuration,
-    ...other,
-    ...transitionProps,
-    children: /* @__PURE__ */ jsxRuntimeExports.jsx(RootSlot, {
-      "aria-hidden": true,
-      ...rootProps,
-      classes,
-      ref,
-      children
-    })
   });
 });
 function getScrollbarSize(win = window) {
@@ -27128,6 +27028,365 @@ const Select = /* @__PURE__ */ reactExports.forwardRef(function Select2(inProps,
   });
 });
 Select.muiName = "Select";
+function QueuePagination({ info, onPageChange }) {
+  if (!info || !(info.last_page > 0)) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pagination", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Pagination,
+      {
+        shape: "rounded",
+        variant: "outlined",
+        boundaryCount: 2,
+        siblingCount: 2,
+        page: info.page + 1,
+        onChange: (event, value) => {
+          onPageChange(value - 1);
+        },
+        count: info.last_page + 1
+      }
+    ),
+    info.last_page > 10 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "page-selector", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Select,
+      {
+        value: info.page,
+        onChange: (event) => {
+          onPageChange(event.target.value);
+        },
+        size: "small",
+        children: [...Array(info.last_page + 1).keys()].map((pageNum) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          MenuItem,
+          {
+            value: pageNum,
+            children: pageNum + 1
+          },
+          pageNum
+        ))
+      }
+    ) })
+  ] });
+}
+const DriveFolderUploadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2m0 12H4V6h5.17l2 2H20zM9.41 14.42 11 12.84V17h2v-4.16l1.59 1.59L16 13.01 12.01 9 8 13.01z"
+}));
+const useInsertionEffect = typeof window !== "undefined" ? (
+  // useInsertionEffect is available in React 18+
+  React.useInsertionEffect || React.useLayoutEffect
+) : () => {
+};
+function useEvent(callback) {
+  const latestRef = React.useRef(useEvent_shouldNotBeInvokedBeforeMount);
+  useInsertionEffect(() => {
+    latestRef.current = callback;
+  }, [callback]);
+  const stableRef = React.useRef(null);
+  if (!stableRef.current) {
+    stableRef.current = function() {
+      return latestRef.current.apply(this, arguments);
+    };
+  }
+  return stableRef.current;
+}
+function useEvent_shouldNotBeInvokedBeforeMount() {
+  throw new Error("INVALID_USEEVENT_INVOCATION: the callback from useEvent cannot be invoked before the component has mounted.");
+}
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1
+});
+function ImportExport({ route }) {
+  const uploadQueue = useEvent(async (e) => {
+    if (!e.target.files || !e.target.files.length === 0) {
+      return;
+    }
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("queue_json", file);
+    formData.append("client_id", useAppStore.getState().clientId);
+    const comfyApiKey = localStorage.getItem("comfy_api_key");
+    if (comfyApiKey) {
+      formData.append("api_key_comfy_org", comfyApiKey);
+    }
+    if (route === "archive") {
+      formData.append("archive", true);
+    }
+    try {
+      const response = await fetch(`${baseURL}queue_manager/import`, {
+        method: "POST",
+        body: formData
+      });
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      console.log("Queue imported successfully", data);
+      e.target.value = "";
+    } catch (error) {
+      console.error("Error importing queue:", error);
+    }
+  });
+  if (!["queue", "archive"].includes(route)) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "form",
+    {
+      method: "post",
+      encType: "multipart/form-data",
+      className: "import-form",
+      children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "qm-btn", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DriveFolderUploadOutlinedIcon, {}),
+        "  Import ",
+        route === "queue" ? "Queue" : "Archive",
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          VisuallyHiddenInput,
+          {
+            type: "file",
+            onChange: uploadQueue,
+            multiple: true,
+            name: "queue_json",
+            accept: ".json",
+            required: true
+          }
+        )
+      ] })
+    }
+  );
+}
+function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetchQueueItems }) {
+  async function archiveAll() {
+    try {
+      let queryArgs = appendFilters("");
+      await fetch(`${baseURL}queue_manager/archive-queue${queryArgs}`);
+    } catch (error) {
+      console.error("Error fetching queue items:", error);
+    }
+  }
+  async function playAllArchive() {
+    await apiCall("queue_manager/play-archive", {
+      client_id: useAppStore.getState().clientId,
+      filters: isFilterOn() ? useAppStore.getState().filters : null,
+      front: useAppStore.getState().shiftDown === true
+    });
+  }
+  async function deleteFromQueue() {
+    let queryArgs = appendFilters("?route=" + route);
+    try {
+      await fetch(`${baseURL}queue_manager/queue${queryArgs}`, {
+        method: "DELETE"
+      });
+    } catch (error) {
+      console.error(`Error deleting items from ${route}:`, error);
+    }
+  }
+  async function clearPending() {
+    try {
+      await fetch(`${baseURL}api/queue`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ clear: true })
+      });
+    } catch (error) {
+      console.error("Error fetching queue items:", error);
+    }
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "footer", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      QueuePagination,
+      {
+        info: queueData?.info,
+        onPageChange: (page) => fetchQueueItems({ page, reload: true })
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 flex actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Stack, { direction: "row", spacing: 1, className: "min-w-full buttons", children: [
+      queueData && (queueData.running.length > 0 || queueData.pending.length > 0) && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+        route === "queue" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: archiveAll, className: "qm-btn", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Inventory2SharpIcon, {}),
+            "  Archive All ",
+            isFilterOn() ? "*" : "Pending"
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "a",
+            {
+              className: "qm-btn",
+              href: baseURL + "queue_manager/export" + appendRoute(appendFilters("")),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
+                "  Export ",
+                isFilterOn() ? "*" : "Queue"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              color: "error",
+              onClick: isFilterOn() ? deleteFromQueue : clearPending,
+              className: "order-last delete qm-btn qm-btn-danger",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
+                "  Delete All ",
+                isFilterOn() ? "*" : "Pending"
+              ]
+            }
+          )
+        ] }),
+        route === "archive" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              onClick: playAllArchive,
+              className: "qm-btn qm-btn-primary",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, {}),
+                "  Run All ",
+                isFilterOn() ? "*" : ""
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "a",
+            {
+              className: "qm-btn",
+              href: baseURL + "queue_manager/export" + appendFilters("?route=archive"),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
+                "  Export ",
+                isFilterOn() ? "*" : "Archive"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              onClick: deleteFromQueue,
+              className: "delete order-last qm-btn qm-btn-danger",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
+                "  Delete ",
+                isFilterOn() ? "All *" : "All Archive"
+              ]
+            }
+          )
+        ] }),
+        route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "a",
+            {
+              className: "qm-btn",
+              href: baseURL + "queue_manager/export" + appendFilters("?route=completed"),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
+                "  Export ",
+                isFilterOn() ? "*" : "Completed Jobs"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              onClick: deleteFromQueue,
+              className: "order-last delete qm-btn qm-btn-danger",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
+                "  Delete ",
+                isFilterOn() ? "All *" : "All Completed Jobs"
+              ]
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(ImportExport, { route })
+    ] }) })
+  ] });
+}
+const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+}));
+function SplashScreen({ onClick }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-screen", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { className: "close", onClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(CloseSharpIcon, {}) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-content", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { children: "ComfyUI Queue Manager" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "sub", children: "Version: v0.2.0" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("h4", { className: "sub", children: [
+        "Released: 12",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("sup", { children: "th" }),
+        " September 2026"
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "What's new?" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { children: "Output thumbnails" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "The lightbox view is gone. Completed jobs now show a row of output thumbnails; click one to open the full file in a new browser tab." }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
+          "For more details check the updated manual on Github: ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: "Queue Manager Manual" }),
+          "."
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
+          "For full Release Notes view ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/blob/main/CHANGELOG.md", target: "_blank", rel: "noreferrer", children: "Changelog" }),
+          "."
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("i", { children: [
+          "Leave a feedback or report an issue here ",
+          /* @__PURE__ */ jsxRuntimeExports.jsx("a", { href: "https://github.com/QuietNoise/comfyui_queue_manager/issues", target: "_blank", rel: "noreferrer", children: "Issues" }),
+          ". "
+        ] })
+      ] })
+    ] })
+  ] });
+}
+const useOptionsStore = create((set) => ({
+  Basic: {},
+  Completed: {
+    ListOrder: "Newest first"
+  },
+  /**
+   * Set a single option within a category
+   */
+  setOption: (category, key, value) => set((state) => ({
+    ...state,
+    [category]: {
+      ...state[category],
+      [key]: value
+    }
+  })),
+  /**
+   * Set all options within a category
+   */
+  setOptionsCategory: (category, options) => set((state) => ({
+    ...state,
+    [category]: options
+  })),
+  /**
+   * Set all options
+   */
+  setAllOptions: (allOptions) => set(() => ({
+    ...allOptions
+  })),
+  /**
+   * Set a single option directly on the root state
+   */
+  setDirectOption: (key, value) => set((state) => ({
+    ...state,
+    [key]: value
+  }))
+}));
 function applyTheme({ vars, fontFamily, fontSize, dark: dark2 }) {
   const root = document.documentElement;
   if (vars) {
@@ -27436,17 +27695,6 @@ function useQueue({ fetchOptions } = {}) {
     onQueueStatusUpdated
   };
 }
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1
-});
 function Home({ onDarkChange }) {
   const options = useOptionsStore((state) => state);
   const pageSize = useOptionsStore((state) => state.Basic.PageSize);
@@ -27498,75 +27746,7 @@ function Home({ onDarkChange }) {
       fetchQueueItems({ page: 0, reload: true });
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);
-  async function archiveAll() {
-    try {
-      let queryArgs = appendFilters("");
-      const response = await fetch(`${baseURL}queue_manager/archive-queue${queryArgs}`);
-    } catch (error) {
-      console.error("Error fetching queue items:", error);
-    }
-  }
-  async function playAllArchive() {
-    await apiCall("queue_manager/play-archive", {
-      client_id: useAppStore.getState().clientId,
-      filters: isFilterOn() ? filters : null,
-      front: useAppStore.getState().shiftDown === true
-    });
-  }
-  async function deleteFromQueue() {
-    let queryArgs = appendFilters("?route=" + route);
-    try {
-      const response = await fetch(`${baseURL}queue_manager/queue${queryArgs}`, {
-        method: "DELETE"
-      });
-    } catch (error) {
-      console.error(`Error deleting items from ${route}:`, error);
-    }
-  }
-  async function clearPending() {
-    try {
-      const response = await fetch(`${baseURL}api/queue`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ clear: true })
-      });
-    } catch (error) {
-      console.error("Error fetching queue items:", error);
-    }
-  }
   useParentMessages({ onQueueStatusUpdated });
-  const uploadQueue = useEvent(async (e) => {
-    if (!e.target.files || !e.target.files.length === 0) {
-      return;
-    }
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append("queue_json", file);
-    formData.append("client_id", useAppStore.getState().clientId);
-    const comfyApiKey = localStorage.getItem("comfy_api_key");
-    if (comfyApiKey) {
-      formData.append("api_key_comfy_org", comfyApiKey);
-    }
-    if (route === "archive") {
-      formData.append("archive", true);
-    }
-    try {
-      const response = await fetch(`${baseURL}queue_manager/import`, {
-        method: "POST",
-        body: formData
-      });
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await response.json();
-      console.log("Queue imported successfully", data);
-      e.target.value = "";
-    } catch (error) {
-      console.error("Error importing queue:", error);
-    }
-  });
   const openSplash = useEvent(() => {
     setShowSplash(true);
   });
@@ -27710,167 +27890,17 @@ function Home({ onDarkChange }) {
           route
         }
       ) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "footer", children: [
-        queueData && queueData.info && queueData.info.last_page > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pagination", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            Pagination,
-            {
-              shape: "rounded",
-              variant: "outlined",
-              boundaryCount: 2,
-              siblingCount: 2,
-              page: queueData.info.page + 1,
-              onChange: (event, value) => {
-                fetchQueueItems({ page: value - 1, reload: true });
-              },
-              count: queueData.info.last_page + 1
-            }
-          ),
-          queueData.info.last_page > 10 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "page-selector", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-            Select,
-            {
-              value: queueData.info.page,
-              onChange: (event) => {
-                const pageNum = event.target.value;
-                fetchQueueItems({ page: pageNum, reload: true });
-              },
-              size: "small",
-              children: [...Array(queueData.info.last_page + 1).keys()].map((pageNum) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                MenuItem,
-                {
-                  value: pageNum,
-                  children: pageNum + 1
-                },
-                pageNum
-              ))
-            }
-          ) })
-        ] }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 flex actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Stack, { direction: "row", spacing: 1, className: "min-w-full buttons", children: [
-          queueData && (queueData.running.length > 0 || queueData.pending.length > 0) && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-            route === "queue" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: archiveAll, className: "qm-btn", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Inventory2SharpIcon, {}),
-                "  Archive All ",
-                isFilterOn() ? "*" : "Pending"
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "a",
-                {
-                  className: "qm-btn",
-                  href: baseURL + "queue_manager/export" + appendRoute(appendFilters("")),
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
-                    "  Export ",
-                    isFilterOn() ? "*" : "Queue"
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  color: "error",
-                  onClick: isFilterOn() ? deleteFromQueue : clearPending,
-                  className: "order-last delete qm-btn qm-btn-danger",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
-                    "  Delete All ",
-                    isFilterOn() ? "*" : "Pending"
-                  ]
-                }
-              )
-            ] }),
-            route === "archive" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  onClick: playAllArchive,
-                  className: "qm-btn qm-btn-primary",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, {}),
-                    "  Run All ",
-                    isFilterOn() ? "*" : ""
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "a",
-                {
-                  className: "qm-btn",
-                  href: baseURL + "queue_manager/export" + appendFilters("?route=archive"),
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
-                    "  Export ",
-                    isFilterOn() ? "*" : "Archive"
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  onClick: deleteFromQueue,
-                  className: "delete order-last qm-btn qm-btn-danger",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
-                    "  Delete ",
-                    isFilterOn() ? "All *" : "All Archive"
-                  ]
-                }
-              )
-            ] }),
-            route === "completed" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "a",
-                {
-                  className: "qm-btn",
-                  href: baseURL + "queue_manager/export" + appendFilters("?route=completed"),
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(FileDownloadOutlinedIcon, {}),
-                    "  Export ",
-                    isFilterOn() ? "*" : "Completed Jobs"
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  onClick: deleteFromQueue,
-                  className: "order-last delete qm-btn qm-btn-danger",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, {}),
-                    "  Delete ",
-                    isFilterOn() ? "All *" : "All Completed Jobs"
-                  ]
-                }
-              )
-            ] })
-          ] }),
-          ["queue", "archive"].includes(route) && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "form",
-            {
-              method: "post",
-              encType: "multipart/form-data",
-              className: "import-form",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "qm-btn", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(DriveFolderUploadOutlinedIcon, {}),
-                "  Import ",
-                route === "queue" ? "Queue" : "Archive",
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  VisuallyHiddenInput,
-                  {
-                    type: "file",
-                    onChange: uploadQueue,
-                    multiple: true,
-                    name: "queue_json",
-                    accept: ".json",
-                    required: true
-                  }
-                )
-              ] })
-            }
-          )
-        ] }) })
-      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Footer,
+        {
+          route,
+          queueData,
+          isFilterOn,
+          appendFilters,
+          appendRoute,
+          fetchQueueItems
+        }
+      ),
       showSplash && /* @__PURE__ */ jsxRuntimeExports.jsx(SplashScreen, { onClick: closeSplash })
     ] })
   ] });

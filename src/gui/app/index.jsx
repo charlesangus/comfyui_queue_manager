@@ -1,17 +1,10 @@
 "use client";
 
-import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
-import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
-import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
-import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
 import UploadSharpIcon from '@mui/icons-material/UploadSharp';
-import Inventory2SharpIcon from '@mui/icons-material/Inventory2Sharp';
-import { styled } from '@mui/material/styles';
 
 import TopMenu from "./components/TopMenu";
 import {Queue} from "./components/Queue";
-import Stack from "@mui/material/Stack";
-import {baseURL} from "./internals/config";
+import {Footer} from "./components/Footer";
 import { useEffect, useState, useCallback, useMemo, useRef} from "react";
 import {apiCall} from "./internals/functions";
 import useEvent from "react-use-event-hook";
@@ -21,23 +14,10 @@ import {SplashScreen} from "./components/SplashScreen";
 import {compareVersions} from "./internals/functions";
 import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
-import {MenuItem, Pagination, Select} from "@mui/material";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
 import {useComfyTheme} from "./hooks/useComfyTheme";
 import {useParentMessages} from "./hooks/useParentMessages";
 import {useQueue} from "./hooks/useQueue";
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
 
 export default function Home({ onDarkChange }) {
   const options = useOptionsStore((state) => state);
@@ -103,95 +83,7 @@ export default function Home({ onDarkChange }) {
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);
 
-  async function archiveAll() {
-    try {
-      let queryArgs = appendFilters("");
-
-      const response = await fetch(`${baseURL}queue_manager/archive-queue${queryArgs}`);
-    } catch (error) {
-      console.error("Error fetching queue items:", error);
-    }
-  }
-
-  async function playAllArchive() {
-    await apiCall('queue_manager/play-archive', {
-      client_id: useAppStore.getState().clientId,
-      filters: isFilterOn() ? filters : null,
-      front: useAppStore.getState().shiftDown === true
-    })
-  }
-
-  async function deleteFromQueue() {
-    let queryArgs = appendFilters("?route=" + route);
-
-    try {
-      const response = await fetch(`${baseURL}queue_manager/queue${queryArgs}`, {
-        method: "DELETE",
-      });
-    } catch (error) {
-      console.error(`Error deleting items from ${route}:`, error);
-    }
-  }
-
-  async function clearPending() {
-    try {
-        // POST {"clear":true} to /api/queue
-        const response = await fetch(`${baseURL}api/queue`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({clear: true})
-        });
-      } catch (error) {
-        console.error("Error fetching queue items:", error);
-      }
-  }
-
   useParentMessages({ onQueueStatusUpdated });
-
-  const uploadQueue = useEvent( async (e) => {
-    // if empty value then bounce
-    if (!e.target.files || !e.target.files.length === 0) {
-      return;
-    }
-
-    const file = e.target.files[0];
-
-
-    const formData = new FormData();
-    formData.append("queue_json", file);
-    formData.append("client_id", useAppStore.getState().clientId);
-
-    const comfyApiKey = localStorage.getItem("comfy_api_key");
-    if (comfyApiKey) {
-      formData.append("api_key_comfy_org", comfyApiKey);
-    }
-
-    if (route === 'archive') {
-      formData.append("archive", true);
-    }
-
-
-    try {
-      const response = await fetch(`${baseURL}queue_manager/import`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json();
-      console.log("Queue imported successfully", data);
-
-      e.target.value = "";
-
-    } catch (error) {
-      console.error("Error importing queue:", error);
-    }
-  });
 
   const openSplash = useEvent(() => {
     setShowSplash(true);
@@ -336,138 +228,14 @@ export default function Home({ onDarkChange }) {
           />
         </div>
 
-        {/*
-        *
-        * Footer with paging and actions
-        *
-        */}
-        <footer className={"footer"}>
-          {/* Paging */}
-          {queueData && queueData.info && (queueData.info.last_page > 0) &&
-            <>
-              <div className={"pagination"}>
-                <Pagination
-                  shape="rounded"
-                  variant="outlined"
-                  boundaryCount={2}
-                  siblingCount={2}
-                  page={queueData.info.page + 1}
-                  onChange={(event, value) => {
-                    fetchQueueItems({page:value -1, reload: true});
-                  }}
-                  count={queueData.info.last_page + 1}></Pagination>
-
-                {/* If more than 11 pages show page selector */}
-                {queueData.info.last_page > 10 &&
-                  <div className="page-selector">
-                    <Select
-                      value={queueData.info.page}
-                      onChange={(event) => {
-                        const pageNum = event.target.value;
-                        fetchQueueItems({page:pageNum, reload: true});
-                      }}
-                      size="small"
-                    >
-                      {[...Array(queueData.info.last_page + 1).keys()].map((pageNum) => (
-                        <MenuItem
-                          key={pageNum}
-                          value={pageNum}
-                        >
-                          {pageNum + 1}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </div>
-                }
-              </div>
-
-
-            </>
-
-          }
-
-          {/* Footer Actions */}
-          <div className="p-2 flex actions">
-            <Stack direction="row" spacing={1} className={'min-w-full buttons'}>
-              {queueData && (queueData.running.length > 0 || queueData.pending.length > 0) &&
-                <>
-
-
-                  {/* Queue Actions  */}
-                  {route === 'queue' &&
-                    <>
-                      <button onClick={archiveAll} className={"qm-btn"}>
-                        <Inventory2SharpIcon/>&nbsp;
-                        Archive All {isFilterOn() ? "*" : "Pending"}
-                      </button>
-                      <a className={"qm-btn"}
-                              href={baseURL + "queue_manager/export" + appendRoute(appendFilters(""))}>
-                        <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Queue"}
-                      </a>
-                      <button color="error" onClick={isFilterOn() ? deleteFromQueue : clearPending}
-                              className={"order-last delete qm-btn qm-btn-danger"} >
-                        <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete All {isFilterOn() ? "*" : "Pending"}
-                      </button>
-                    </>
-                  }
-
-                  {/* Archive Actions */}
-                  {route === 'archive' &&
-                    <>
-                      <button onClick={playAllArchive}
-                              className="qm-btn qm-btn-primary">
-                        <PlayArrowOutlinedIcon/>&nbsp;&nbsp;Run All {isFilterOn() ? "*" : ""}
-                      </button>
-                      <a className={"qm-btn"}
-                              href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>
-                        <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Archive"}
-                      </a>
-                      <button onClick={deleteFromQueue}
-                              className={"delete order-last qm-btn qm-btn-danger"}>
-                        <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Archive"}
-                      </button>
-                    </>
-                  }
-
-                  {/* Completed Actions */}
-                  {route === 'completed' &&
-                    <>
-                      <a className={"qm-btn"}
-                              href={baseURL + "queue_manager/export" + appendFilters("?route=completed")}>
-                        <FileDownloadOutlinedIcon/>&nbsp;&nbsp;Export {isFilterOn() ? "*" : "Completed Jobs"}
-                      </a>
-                      <button onClick={deleteFromQueue}
-                              className={"order-last delete qm-btn qm-btn-danger"}>
-                        <DeleteOutlineSharpIcon/>&nbsp;&nbsp;Delete {isFilterOn() ? "All *" : "All Completed Jobs"}
-                      </button>
-                    </>
-                  }
-                </>
-              }
-
-              {['queue', 'archive'].includes(route) &&
-                <form
-                  method="post"
-                  encType="multipart/form-data"
-                  className={"import-form"}
-                >
-                  <label className="qm-btn">
-                    <DriveFolderUploadOutlinedIcon/>&nbsp;&nbsp;Import {route === 'queue' ? 'Queue' : 'Archive'}
-                    <VisuallyHiddenInput
-                      type="file"
-                      onChange={uploadQueue}
-                      multiple
-                      name="queue_json"
-                      accept=".json"
-                      required
-                    />
-                  </label>
-                </form>
-              }
-
-            </Stack>
-          </div>
-        </footer>
+        <Footer
+          route={route}
+          queueData={queueData}
+          isFilterOn={isFilterOn}
+          appendFilters={appendFilters}
+          appendRoute={appendRoute}
+          fetchQueueItems={fetchQueueItems}
+        />
         {showSplash &&
           <SplashScreen onClick={closeSplash}/>
         }
