@@ -5,6 +5,7 @@ import UploadSharpIcon from "@mui/icons-material/UploadSharp";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import Inventory2SharpIcon from "@mui/icons-material/Inventory2Sharp";
 
+import { PriorityMenu } from "./PriorityMenu";
 import { apiCall } from "../internals/functions";
 import { msgLoadWorkflow } from "../internals/parentBridge";
 import { performDelete } from "../internals/deleteUtils";
@@ -60,6 +61,9 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
+  const canSetPriority =
+    (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
+  const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
 
   return (
     <div className="selection-bar">
@@ -85,6 +89,8 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
             &nbsp;Archive
           </button>
         )}
+
+        {canSetPriority && <PriorityMenu dbIds={priorityDbIds} onDone={finish} />}
 
         {canRun && (
           <button

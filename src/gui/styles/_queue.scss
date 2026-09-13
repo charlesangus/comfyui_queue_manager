@@ -103,6 +103,18 @@ header.header {
       background-color: var(--qm-bg);
       white-space: nowrap;
     }
+
+    .priority-badge {
+      &.priority-positive {
+        background-color: var(--qm-success);
+        color: var(--qm-primary-fg);
+      }
+
+      &.priority-negative {
+        background-color: color-mix(in srgb, var(--qm-fg-muted) 55%, var(--qm-primary) 45%);
+        color: var(--qm-primary-fg);
+      }
+    }
   }
 
   .card-body {

@@ -103,7 +103,7 @@ class QM_Queue:
             last_page = 0
             order_string = "ORDER BY priority DESC, number"
             join_string = ""
-            select_string = "SELECT queue.id as id, prompt, number"
+            select_string = "SELECT queue.id as id, prompt, number, priority"
 
             match route:
                 case "queue":
@@ -174,6 +174,7 @@ class QM_Queue:
                     item = json.loads(row["prompt"])
                     # Add db_id to the item
                     item[3]["db_id"] = row["id"]
+                    item[3]["priority"] = row["priority"]
                     if row["card"] is not None:
                         item[3]["card"] = json.loads(row["card"])
 
