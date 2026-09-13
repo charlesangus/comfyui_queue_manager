@@ -250,6 +250,40 @@ header.header {
     }
   }
 
+  .qm-card.failed {
+    border-color: var(--qm-danger);
+  }
+
+  .error-details {
+    margin: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--qm-danger);
+    border-radius: var(--qm-radius-sm);
+    background-color: var(--qm-bg);
+    font-size: 0.8rem;
+
+    summary {
+      cursor: pointer;
+      color: var(--qm-danger);
+      font-weight: bold;
+    }
+
+    .error-message,
+    .error-node {
+      margin: 0.4rem 0 0;
+    }
+
+    .error-traceback {
+      margin: 0.4rem 0 0;
+      max-height: 240px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.75rem;
+      color: var(--qm-fg-muted);
+    }
+  }
+
   .info-cell {
     padding: 20px;
   }
