@@ -74,6 +74,7 @@ const executionTimeLabel = useMemo(() => {
     }, []);
 
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    const priority = item?.[3]?.priority;
 
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
@@ -100,6 +101,15 @@ const executionTimeLabel = useMemo(() => {
             <div className="execution-time" title="Execution time">
               {executionTimeLabel}
             </div>
+          ) : null}
+
+          {priority ? (
+            <span
+              className={`qm-badge priority-badge ${priority > 0 ? "priority-positive" : "priority-negative"}`}
+              title={`Priority ${priority > 0 ? "+" : ""}${priority}`}
+            >
+              {priority > 0 ? `+${priority}` : priority}
+            </span>
           ) : null}
 
           {error ? (
@@ -171,7 +181,8 @@ const executionTimeLabel = useMemo(() => {
       prev.itemKey === next.itemKey &&
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size &&
-      prev.item?.[3]?.card === next.item?.[3]?.card
+      prev.item?.[3]?.card === next.item?.[3]?.card &&
+      prev.item?.[3]?.priority === next.item?.[3]?.priority
     );
   }
 );

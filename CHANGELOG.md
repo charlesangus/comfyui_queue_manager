@@ -1,5 +1,16 @@
 # Release Notes
 
+## v0.6.0
+_Sep 13, 2026_
+### New features and enhancements
+- Every queue job now has an integer priority (default `0`, user range `-100`\-`100`). Set it from the selection action bar's new **Priority** menu, with Low/Normal/High presets or a custom value. Higher priority jobs run first; jobs with equal priority keep the existing order, so **Run at front of the queue** still works as a tie-break within a priority level.
+- Priority is shown as a small badge on the card (green for positive, muted blue-grey for negative), and survives archive/run as well as export/import.
+
+### Bugfixes
+- Fixed a bug where an item the extension had already prefetched into the native execution queue could silently block a legitimate front-of-queue submission; submitting or boosting a higher-priority item now correctly preempts it.
+
+---
+
 ## v0.5.0
 _Sep 13, 2026_
 ### New features and enhancements

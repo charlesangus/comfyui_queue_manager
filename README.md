@@ -13,6 +13,7 @@ An extension supporting more streamlined prompt queue management.
   - [Stop / Clear Queue](#stop--clear-queue)
   - [Running and main Queue Manager window](#running-and-main-queue-manager-window)
   - [Archive](#archive)
+  - [Priority](#priority)
   - [Export and Import](#export-and-import)
   - [Filter by workflow](#filter-by-workflow)
   - [Restore client focus](#restore-client-focus)
@@ -126,6 +127,15 @@ You can run a selection, the entire archive, or a filtered-out list of jobs at t
 When holding Shift pressed a small indicator message will appear on top of the window to confirm that the action will run at front of queue.
 
 ![shift-pressed.png](readme-img/shift-pressed.png)
+
+### Priority
+Every job has an integer priority, `0` by default. Higher priority jobs run first.
+
+Select one or more items and click **Priority** on the selection action bar to set it. Pick one of the presets — Low (`-1`), Normal (`0`), High (`+1`) — or enter a custom value from `-100` to `100`.
+
+Jobs with equal priority run in the existing order, so **Run at front of the queue** (holding Shift, see above) still works as a tie-break within a priority level: it moves the selection to the front of its own priority tier, not necessarily to the very front of the whole queue if higher-priority jobs are ahead of it.
+
+Priority is shown as a small badge on the card (green for a positive value, muted blue-grey for negative) and is preserved when a job is archived and later run again, and when the queue is exported and imported.
 
 ### Export and Import
 

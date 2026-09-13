@@ -2,6 +2,8 @@ import json
 
 import pytest
 
+from src.comfyui_queue_manager.inc.exceptions import BadRouteException
+
 
 def _make_item(number, prompt_id, workflow_name, workflow_id):
     return [
@@ -109,6 +111,286 @@ def test_queue_put_ignores_resubmission_of_running_item(qm_queue):
     assert row_after["id"] == row_running["id"]
     assert row_after["status"] == 1
     assert row_after["number"] == row_running["number"]
+
+
+def test_higher_priority_item_dequeues_before_earlier_queued_items(qm_queue):
+    for number, prompt_id, priority in ((1, "prompt-low-1", 0), (2, "prompt-high", 1), (3, "prompt-low-2", 0)):
+        item = _make_item(number, prompt_id, "Workflow A", "wf-a")
+        item[3]["qm_priority"] = priority
+        qm_queue.native_queue.put(item)
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(3)]
+
+    assert dequeued == ["prompt-high", "prompt-low-1", "prompt-low-2"]
+
+
+def test_queue_put_preempts_prefetched_lower_priority_item(qm_queue):
+    prefetched = _make_item(10, "prompt-prefetched", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(prefetched)
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-prefetched"]
+
+    urgent = _make_item(11, "prompt-urgent", "Workflow A", "wf-a")
+    urgent[3]["qm_priority"] = 1
+    qm_queue.native_queue.put(urgent)
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-urgent"]
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority, prompt FROM queue WHERE prompt_id = ?",
+        ("prompt-urgent",),
+    )
+    assert row["priority"] == 1
+    assert "qm_priority" not in row["prompt"]
+
+    assert qm_queue.native_queue.get()[0][1] == "prompt-urgent"
+    assert qm_queue.native_queue.get()[0][1] == "prompt-prefetched"
+
+
+def test_set_priority_keeps_external_heap_head(qm_queue):
+    external = tuple(_make_item(5, "prompt-external-head", "External", "wf-ext"))
+    qm_queue.qm.original_put(external)
+
+    pending = _make_item(6, "prompt-db-pending", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(pending)
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-external-head"]
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-db-pending",),
+    )["id"]
+
+    assert qm_queue.qm.set_priority([db_id], 50) == 1
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-external-head"]
+
+
+def test_set_priority_rejects_boolean_priority(qm_queue):
+    item = _make_item(100, "prompt-priority-bool", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-bool",),
+    )["id"]
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], True)
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], False)
+
+
+def test_resubmitting_prefetched_item_with_lower_priority_yields(qm_queue):
+    prefetched = _make_item(1, "prompt-prefetched-high", "Workflow A", "wf-a")
+    prefetched[3]["qm_priority"] = 5
+    qm_queue.native_queue.put(prefetched)
+
+    waiting = _make_item(2, "prompt-waiting", "Workflow A", "wf-a")
+    waiting[3]["qm_priority"] = 1
+    qm_queue.native_queue.put(waiting)
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-prefetched-high"]
+
+    demoted = _make_item(3, "prompt-prefetched-high", "Workflow A", "wf-a")
+    demoted[3]["qm_priority"] = 0
+    qm_queue.native_queue.put(demoted)
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-waiting"]
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(2)]
+    assert dequeued == ["prompt-waiting", "prompt-prefetched-high"]
+
+
+def test_import_queue_preempts_prefetched_lower_priority_item(qm_queue):
+    prefetched = _make_item(1, "prompt-import-prefetched", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(prefetched)
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-import-prefetched"]
+
+    urgent = _make_item(2, "prompt-import-urgent", "Workflow A", "wf-a")
+    urgent[3]["qm_priority"] = 5
+
+    assert qm_queue.qm.import_queue([urgent]) == (1, 1)
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-import-urgent"]
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(2)]
+    assert dequeued == ["prompt-import-urgent", "prompt-import-prefetched"]
+
+
+def test_play_items_preempts_prefetched_lower_priority_item(qm_queue):
+    prefetched = _make_item(1, "prompt-play-prefetched", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(prefetched)
+
+    replayed = _make_item(2, "prompt-play-urgent", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(replayed)
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-play-prefetched"]
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-play-urgent",),
+    )["id"]
+    assert qm_queue.qm.archive_items([db_id]) == 1
+    assert qm_queue.qm.set_priority([db_id], 10) == 1
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-play-prefetched"]
+
+    assert qm_queue.qm.play_items([db_id], front=False) == 1
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-play-urgent"]
+
+
+def test_play_archive_preempts_prefetched_lower_priority_item(qm_queue):
+    prefetched = _make_item(1, "prompt-archive-prefetched", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(prefetched)
+
+    replayed = _make_item(2, "prompt-archive-urgent", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(replayed)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-archive-urgent",),
+    )["id"]
+    assert qm_queue.qm.archive_items([db_id]) == 1
+    assert qm_queue.qm.set_priority([db_id], 10) == 1
+
+    assert qm_queue.qm.play_archive(front=False) == 1
+
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-archive-urgent"]
+
+
+def test_get_current_queue_reports_priority_of_running_item(qm_queue):
+    item = _make_item(100, "prompt-running-priority", "Workflow A", "wf-a")
+    item[3]["qm_priority"] = 7
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+
+    running, pending = qm_queue.qm.get_current_queue(page_size=20)
+
+    assert pending == []
+    assert running[0][1] == "prompt-running-priority"
+    assert running[0][3]["priority"] == 7
+
+
+def test_restore_queue_tie_breaks_within_own_priority(qm_queue):
+    seeded = (
+        ("prompt-restore-high", 100, 50, 0),
+        ("prompt-restore-low", -10, 0, 0),
+        ("prompt-restore-running", 500, 0, 1),
+    )
+    for prompt_id, number, priority, status in seeded:
+        qm_queue.qm_db.write_query(
+            "INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status, priority) VALUES (?, ?, 'W', 'wf', ?, ?, ?)",
+            (prompt_id, number, json.dumps(_make_item(number, prompt_id, "W", "wf")), status, priority),
+        )
+
+    qm_queue.qm.restore_queue(True)
+
+    restored = qm_queue.qm_db.read_single(
+        "SELECT number, status FROM queue WHERE prompt_id = ?",
+        ("prompt-restore-running",),
+    )
+    assert restored["status"] == 0
+    assert restored["number"] == -11
+
+    order = [
+        row[0]
+        for row in qm_queue.qm_db.read_query("SELECT prompt_id FROM queue WHERE status = 0 ORDER BY priority DESC, number")
+    ]
+    assert order == ["prompt-restore-high", "prompt-restore-running", "prompt-restore-low"]
+
+
+def test_set_priority_rejects_out_of_range_priority(qm_queue):
+    item = _make_item(100, "prompt-priority-oob", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-oob",),
+    )["id"]
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], 101)
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], -101)
+
+
+@pytest.mark.parametrize("reserved", [999, 1000])
+def test_set_priority_rejects_reserved_values(qm_queue, reserved):
+    item = _make_item(100, "prompt-priority-reserved", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-reserved",),
+    )["id"]
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_priority([db_id], reserved)
+
+
+def test_set_priority_updates_row_and_reorders_dequeue(qm_queue):
+    low = _make_item(1, "prompt-priority-low", "Workflow A", "wf-a")
+    second = _make_item(2, "prompt-priority-second", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(low)
+    qm_queue.native_queue.put(second)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-second",),
+    )["id"]
+
+    assert qm_queue.qm.set_priority([db_id], 50) == 1
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority FROM queue WHERE id = ?",
+        (db_id,),
+    )
+    assert row["priority"] == 50
+
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(2)]
+    assert dequeued == ["prompt-priority-second", "prompt-priority-low"]
+
+
+def test_archived_item_priority_survives_replay(qm_queue):
+    item = _make_item(100, "prompt-priority-archive", "Workflow A", "wf-a")
+    item[3]["qm_priority"] = 2
+    qm_queue.native_queue.put(item)
+
+    db_id = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-archive",),
+    )["id"]
+
+    assert qm_queue.qm.archive_items([db_id]) == 1
+    row_archived = qm_queue.qm_db.read_single(
+        "SELECT status, priority FROM queue WHERE id = ?",
+        (db_id,),
+    )
+    assert row_archived["status"] == 3
+    assert row_archived["priority"] == 2
+
+    assert qm_queue.qm.play_items([db_id], front=False) == 1
+    row_played = qm_queue.qm_db.read_single(
+        "SELECT status, priority FROM queue WHERE id = ?",
+        (db_id,),
+    )
+    assert row_played["status"] == 0
+    assert row_played["priority"] == 2
+
+
+def test_export_import_round_trip_preserves_priority(qm_queue):
+    item = _make_item(100, "prompt-priority-export", "Workflow A", "wf-a")
+    item[3]["qm_priority"] = 5
+    qm_queue.native_queue.put(item)
+
+    exported = qm_queue.qm.get_full_queue("queue")
+    assert len(exported) == 1
+    assert exported[0][3]["qm_priority"] == 5
+
+    exported[0][1] = "prompt-priority-imported"
+    assert qm_queue.qm.import_queue(exported) == (1, 1)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT priority FROM queue WHERE prompt_id = ?",
+        ("prompt-priority-imported",),
+    )
+    assert row["priority"] == 5
 
 
 def test_task_done_dedupes_meta_on_repeat_completion(qm_queue):

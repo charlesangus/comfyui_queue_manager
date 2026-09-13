@@ -17271,6 +17271,14 @@ function createGetColorSchemeSelector(selector) {
     return "&";
   };
 }
+function isMuiElement(element, muiNames) {
+  return /* @__PURE__ */ reactExports.isValidElement(element) && muiNames.indexOf(
+    // For server components `muiName` is available in element.type._payload.value.muiName
+    // relevant info - https://github.com/facebook/react/blob/2807d781a08db8e9873687fccc25c0f12b4fb3d4/packages/react/src/ReactLazy.js#L45
+    // eslint-disable-next-line no-underscore-dangle
+    element.type.muiName ?? element.type?._payload?.value?.muiName
+  ) !== -1;
+}
 const defaultTheme$1 = createTheme$1();
 const defaultCreateStyledComponent = styled$1("div", {
   name: "MuiStack",
@@ -18697,7 +18705,7 @@ function getSvgIconUtilityClass(slot) {
   return generateUtilityClass("MuiSvgIcon", slot);
 }
 generateUtilityClasses("MuiSvgIcon", ["root", "colorPrimary", "colorSecondary", "colorAction", "colorError", "colorDisabled", "fontSizeInherit", "fontSizeSmall", "fontSizeMedium", "fontSizeLarge"]);
-const useUtilityClasses$j = (ownerState) => {
+const useUtilityClasses$o = (ownerState) => {
   const {
     color: color2,
     fontSize,
@@ -18836,7 +18844,7 @@ const SvgIcon = /* @__PURE__ */ reactExports.forwardRef(function SvgIcon2(inProp
   if (!inheritViewBox) {
     more.viewBox = viewBox;
   }
-  const classes = useUtilityClasses$j(ownerState);
+  const classes = useUtilityClasses$o(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(SvgIconRoot, {
     as: component,
     className: clsx(classes.root, className),
@@ -19501,6 +19509,7 @@ const QueueCard = reactExports.memo(
       window.open(viewURL(file), "_blank");
     }, []);
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    const priority = item?.[3]?.priority;
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -19515,6 +19524,14 @@ const QueueCard = reactExports.memo(
               loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
               route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              priority ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge priority-badge ${priority > 0 ? "priority-positive" : "priority-negative"}`,
+                  title: `Priority ${priority > 0 ? "+" : ""}${priority}`,
+                  children: priority > 0 ? `+${priority}` : priority
+                }
+              ) : null,
               error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,
               mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
             ] }),
@@ -19562,7 +19579,7 @@ const QueueCard = reactExports.memo(
     const prevId = prev2.item?.[3]?.db_id;
     const nextId = next2.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card && prev2.item?.[3]?.priority === next2.item?.[3]?.priority;
   }
 );
 const useSelectionStore = create((set) => ({
@@ -20459,7 +20476,7 @@ function getPaperUtilityClass(slot) {
   return generateUtilityClass("MuiPaper", slot);
 }
 generateUtilityClasses("MuiPaper", ["root", "rounded", "outlined", "elevation", "elevation0", "elevation1", "elevation2", "elevation3", "elevation4", "elevation5", "elevation6", "elevation7", "elevation8", "elevation9", "elevation10", "elevation11", "elevation12", "elevation13", "elevation14", "elevation15", "elevation16", "elevation17", "elevation18", "elevation19", "elevation20", "elevation21", "elevation22", "elevation23", "elevation24"]);
-const useUtilityClasses$i = (ownerState) => {
+const useUtilityClasses$n = (ownerState) => {
   const {
     square,
     elevation,
@@ -20531,7 +20548,7 @@ const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, r
     square,
     variant
   };
-  const classes = useUtilityClasses$i(ownerState);
+  const classes = useUtilityClasses$n(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(PaperRoot, {
     as: component,
     ownerState,
@@ -20940,7 +20957,7 @@ function getButtonBaseUtilityClass(slot) {
   return generateUtilityClass("MuiButtonBase", slot);
 }
 const buttonBaseClasses = generateUtilityClasses("MuiButtonBase", ["root", "disabled", "focusVisible"]);
-const useUtilityClasses$h = (ownerState) => {
+const useUtilityClasses$m = (ownerState) => {
   const {
     disabled,
     focusVisible,
@@ -21157,7 +21174,7 @@ const ButtonBase = /* @__PURE__ */ reactExports.forwardRef(function ButtonBase2(
     tabIndex,
     focusVisible
   };
-  const classes = useUtilityClasses$h(ownerState);
+  const classes = useUtilityClasses$m(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(ButtonBaseRoot, {
     as: ComponentProp,
     className: clsx(classes.root, className),
@@ -21251,7 +21268,7 @@ const rotateAnimation = typeof circularRotateKeyframe !== "string" ? css`
 const dashAnimation = typeof circularDashKeyframe !== "string" ? css`
         animation: ${circularDashKeyframe} 1.4s ease-in-out infinite;
       ` : null;
-const useUtilityClasses$g = (ownerState) => {
+const useUtilityClasses$l = (ownerState) => {
   const {
     classes,
     variant,
@@ -21385,7 +21402,7 @@ const CircularProgress = /* @__PURE__ */ reactExports.forwardRef(function Circul
     variant,
     enableTrackSlot
   };
-  const classes = useUtilityClasses$g(ownerState);
+  const classes = useUtilityClasses$l(ownerState);
   const circleStyle = {};
   const rootStyle = {};
   const rootProps = {};
@@ -21703,6 +21720,9 @@ function hasValue(value) {
 function isFilled(obj, SSR = false) {
   return obj && (hasValue(obj.value) && obj.value !== "" || SSR && hasValue(obj.defaultValue) && obj.defaultValue !== "");
 }
+function isAdornedStart(obj) {
+  return obj.startAdornment;
+}
 function getInputBaseUtilityClass(slot) {
   return generateUtilityClass("MuiInputBase", slot);
 }
@@ -21720,7 +21740,7 @@ const inputOverridesResolver = (props, styles2) => {
   } = props;
   return [styles2.input, ownerState.size === "small" && styles2.inputSizeSmall, ownerState.multiline && styles2.inputMultiline, ownerState.type === "search" && styles2.inputTypeSearch, ownerState.startAdornment && styles2.inputAdornedStart, ownerState.endAdornment && styles2.inputAdornedEnd, ownerState.hiddenLabel && styles2.inputHiddenLabel];
 };
-const useUtilityClasses$f = (ownerState) => {
+const useUtilityClasses$k = (ownerState) => {
   const {
     classes,
     color: color2,
@@ -22106,7 +22126,7 @@ const InputBase = /* @__PURE__ */ reactExports.forwardRef(function InputBase2(in
     startAdornment,
     type
   };
-  const classes = useUtilityClasses$f(ownerState);
+  const classes = useUtilityClasses$k(ownerState);
   const Root = slots.root || components.Root || InputBaseRoot;
   const rootProps = slotProps.root || componentsProps.root || {};
   const Input3 = slots.input || components.Input || InputBaseInput;
@@ -22311,7 +22331,7 @@ function getBackdropUtilityClass(slot) {
   return generateUtilityClass("MuiBackdrop", slot);
 }
 generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
-const useUtilityClasses$e = (ownerState) => {
+const useUtilityClasses$j = (ownerState) => {
   const {
     classes,
     invisible
@@ -22374,7 +22394,7 @@ const Backdrop = /* @__PURE__ */ reactExports.forwardRef(function Backdrop2(inPr
     component,
     invisible
   };
-  const classes = useUtilityClasses$e(ownerState);
+  const classes = useUtilityClasses$j(ownerState);
   const backwardCompatibleSlots = {
     transition: TransitionComponentProp,
     root: components.Root,
@@ -22420,7 +22440,7 @@ function getButtonUtilityClass(slot) {
 const buttonClasses = generateUtilityClasses("MuiButton", ["root", "text", "textInherit", "textPrimary", "textSecondary", "textSuccess", "textError", "textInfo", "textWarning", "outlined", "outlinedInherit", "outlinedPrimary", "outlinedSecondary", "outlinedSuccess", "outlinedError", "outlinedInfo", "outlinedWarning", "contained", "containedInherit", "containedPrimary", "containedSecondary", "containedSuccess", "containedError", "containedInfo", "containedWarning", "disableElevation", "focusVisible", "disabled", "colorInherit", "colorPrimary", "colorSecondary", "colorSuccess", "colorError", "colorInfo", "colorWarning", "textSizeSmall", "textSizeMedium", "textSizeLarge", "outlinedSizeSmall", "outlinedSizeMedium", "outlinedSizeLarge", "containedSizeSmall", "containedSizeMedium", "containedSizeLarge", "sizeMedium", "sizeSmall", "sizeLarge", "fullWidth", "startIcon", "endIcon", "icon", "iconSizeSmall", "iconSizeMedium", "iconSizeLarge", "loading", "loadingWrapper", "loadingIconPlaceholder", "loadingIndicator", "loadingPositionCenter", "loadingPositionStart", "loadingPositionEnd"]);
 const ButtonGroupContext = /* @__PURE__ */ reactExports.createContext({});
 const ButtonGroupButtonContext = /* @__PURE__ */ reactExports.createContext(void 0);
-const useUtilityClasses$d = (ownerState) => {
+const useUtilityClasses$i = (ownerState) => {
   const {
     color: color2,
     disableElevation,
@@ -22920,7 +22940,7 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     type,
     variant
   };
-  const classes = useUtilityClasses$d(ownerState);
+  const classes = useUtilityClasses$i(ownerState);
   const startIcon = (startIconProp || loading && loadingPosition === "start") && /* @__PURE__ */ jsxRuntimeExports.jsx(ButtonStartIcon, {
     className: classes.startIcon,
     ownerState,
@@ -23538,7 +23558,7 @@ function getModalUtilityClass(slot) {
   return generateUtilityClass("MuiModal", slot);
 }
 generateUtilityClasses("MuiModal", ["root", "hidden", "backdrop"]);
-const useUtilityClasses$c = (ownerState) => {
+const useUtilityClasses$h = (ownerState) => {
   const {
     open,
     exited,
@@ -23645,7 +23665,7 @@ const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, r
     ...propsWithDefaults,
     exited
   };
-  const classes = useUtilityClasses$c(ownerState);
+  const classes = useUtilityClasses$h(ownerState);
   const childProps = {};
   if (children.props.tabIndex === void 0) {
     childProps.tabIndex = "-1";
@@ -23723,7 +23743,7 @@ const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, r
   });
 });
 const dividerClasses = generateUtilityClasses("MuiDivider", ["root", "absolute", "fullWidth", "inset", "middle", "flexItem", "light", "vertical", "withChildren", "withChildrenVertical", "textAlignRight", "textAlignLeft", "wrapper", "wrapperVertical"]);
-const useUtilityClasses$b = (ownerState) => {
+const useUtilityClasses$g = (ownerState) => {
   const {
     classes,
     disableUnderline,
@@ -24002,7 +24022,7 @@ const FilledInput = /* @__PURE__ */ reactExports.forwardRef(function FilledInput
     multiline,
     type
   };
-  const classes = useUtilityClasses$b(props);
+  const classes = useUtilityClasses$g(props);
   const filledInputComponentsProps = {
     root: {
       ownerState
@@ -24030,6 +24050,413 @@ const FilledInput = /* @__PURE__ */ reactExports.forwardRef(function FilledInput
   });
 });
 FilledInput.muiName = "Input";
+function getFormControlUtilityClasses(slot) {
+  return generateUtilityClass("MuiFormControl", slot);
+}
+generateUtilityClasses("MuiFormControl", ["root", "marginNone", "marginNormal", "marginDense", "fullWidth", "disabled"]);
+const useUtilityClasses$f = (ownerState) => {
+  const {
+    classes,
+    margin: margin2,
+    fullWidth
+  } = ownerState;
+  const slots = {
+    root: ["root", margin2 !== "none" && `margin${capitalize(margin2)}`, fullWidth && "fullWidth"]
+  };
+  return composeClasses(slots, getFormControlUtilityClasses, classes);
+};
+const FormControlRoot = styled("div", {
+  name: "MuiFormControl",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, styles2[`margin${capitalize(ownerState.margin)}`], ownerState.fullWidth && styles2.fullWidth];
+  }
+})({
+  display: "inline-flex",
+  flexDirection: "column",
+  position: "relative",
+  // Reset fieldset default style.
+  minWidth: 0,
+  padding: 0,
+  margin: 0,
+  border: 0,
+  verticalAlign: "top",
+  // Fix alignment issue on Safari.
+  variants: [{
+    props: {
+      margin: "normal"
+    },
+    style: {
+      marginTop: 16,
+      marginBottom: 8
+    }
+  }, {
+    props: {
+      margin: "dense"
+    },
+    style: {
+      marginTop: 8,
+      marginBottom: 4
+    }
+  }, {
+    props: {
+      fullWidth: true
+    },
+    style: {
+      width: "100%"
+    }
+  }]
+});
+const FormControl = /* @__PURE__ */ reactExports.forwardRef(function FormControl2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiFormControl"
+  });
+  const {
+    children,
+    className,
+    color: color2 = "primary",
+    component = "div",
+    disabled = false,
+    error = false,
+    focused: visuallyFocused,
+    fullWidth = false,
+    hiddenLabel = false,
+    margin: margin2 = "none",
+    required = false,
+    size = "medium",
+    variant = "outlined",
+    ...other
+  } = props;
+  const ownerState = {
+    ...props,
+    color: color2,
+    component,
+    disabled,
+    error,
+    fullWidth,
+    hiddenLabel,
+    margin: margin2,
+    required,
+    size,
+    variant
+  };
+  const classes = useUtilityClasses$f(ownerState);
+  const [adornedStart, setAdornedStart] = reactExports.useState(() => {
+    let initialAdornedStart = false;
+    if (children) {
+      reactExports.Children.forEach(children, (child) => {
+        if (!isMuiElement(child, ["Input", "Select"])) {
+          return;
+        }
+        const input = isMuiElement(child, ["Select"]) ? child.props.input : child;
+        if (input && isAdornedStart(input.props)) {
+          initialAdornedStart = true;
+        }
+      });
+    }
+    return initialAdornedStart;
+  });
+  const [filled, setFilled] = reactExports.useState(() => {
+    let initialFilled = false;
+    if (children) {
+      reactExports.Children.forEach(children, (child) => {
+        if (!isMuiElement(child, ["Input", "Select"])) {
+          return;
+        }
+        if (isFilled(child.props, true) || isFilled(child.props.inputProps, true)) {
+          initialFilled = true;
+        }
+      });
+    }
+    return initialFilled;
+  });
+  const [focusedState, setFocused] = reactExports.useState(false);
+  if (disabled && focusedState) {
+    setFocused(false);
+  }
+  const focused = visuallyFocused !== void 0 && !disabled ? visuallyFocused : focusedState;
+  let registerEffect;
+  reactExports.useRef(false);
+  const onFilled = reactExports.useCallback(() => {
+    setFilled(true);
+  }, []);
+  const onEmpty = reactExports.useCallback(() => {
+    setFilled(false);
+  }, []);
+  const childContext = reactExports.useMemo(() => {
+    return {
+      adornedStart,
+      setAdornedStart,
+      color: color2,
+      disabled,
+      error,
+      filled,
+      focused,
+      fullWidth,
+      hiddenLabel,
+      size,
+      onBlur: () => {
+        setFocused(false);
+      },
+      onFocus: () => {
+        setFocused(true);
+      },
+      onEmpty,
+      onFilled,
+      registerEffect,
+      required,
+      variant
+    };
+  }, [adornedStart, color2, disabled, error, filled, focused, fullWidth, hiddenLabel, registerEffect, onEmpty, onFilled, required, size, variant]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(FormControlContext.Provider, {
+    value: childContext,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(FormControlRoot, {
+      as: component,
+      ownerState,
+      className: clsx(classes.root, className),
+      ref,
+      ...other,
+      children
+    })
+  });
+});
+function getFormHelperTextUtilityClasses(slot) {
+  return generateUtilityClass("MuiFormHelperText", slot);
+}
+const formHelperTextClasses = generateUtilityClasses("MuiFormHelperText", ["root", "error", "disabled", "sizeSmall", "sizeMedium", "contained", "focused", "filled", "required"]);
+var _span$2;
+const useUtilityClasses$e = (ownerState) => {
+  const {
+    classes,
+    contained,
+    size,
+    disabled,
+    error,
+    filled,
+    focused,
+    required
+  } = ownerState;
+  const slots = {
+    root: ["root", disabled && "disabled", error && "error", size && `size${capitalize(size)}`, contained && "contained", focused && "focused", filled && "filled", required && "required"]
+  };
+  return composeClasses(slots, getFormHelperTextUtilityClasses, classes);
+};
+const FormHelperTextRoot = styled("p", {
+  name: "MuiFormHelperText",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, ownerState.size && styles2[`size${capitalize(ownerState.size)}`], ownerState.contained && styles2.contained, ownerState.filled && styles2.filled];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  color: (theme.vars || theme).palette.text.secondary,
+  ...theme.typography.caption,
+  textAlign: "left",
+  marginTop: 3,
+  marginRight: 0,
+  marginBottom: 0,
+  marginLeft: 0,
+  [`&.${formHelperTextClasses.disabled}`]: {
+    color: (theme.vars || theme).palette.text.disabled
+  },
+  [`&.${formHelperTextClasses.error}`]: {
+    color: (theme.vars || theme).palette.error.main
+  },
+  variants: [{
+    props: {
+      size: "small"
+    },
+    style: {
+      marginTop: 4
+    }
+  }, {
+    props: ({
+      ownerState
+    }) => ownerState.contained,
+    style: {
+      marginLeft: 14,
+      marginRight: 14
+    }
+  }]
+})));
+const FormHelperText = /* @__PURE__ */ reactExports.forwardRef(function FormHelperText2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiFormHelperText"
+  });
+  const {
+    children,
+    className,
+    component = "p",
+    disabled,
+    error,
+    filled,
+    focused,
+    margin: margin2,
+    required,
+    variant,
+    ...other
+  } = props;
+  const muiFormControl = useFormControl();
+  const fcs = formControlState({
+    props,
+    muiFormControl,
+    states: ["variant", "size", "disabled", "error", "filled", "focused", "required"]
+  });
+  const ownerState = {
+    ...props,
+    component,
+    contained: fcs.variant === "filled" || fcs.variant === "outlined",
+    variant: fcs.variant,
+    size: fcs.size,
+    disabled: fcs.disabled,
+    error: fcs.error,
+    filled: fcs.filled,
+    focused: fcs.focused,
+    required: fcs.required
+  };
+  delete ownerState.ownerState;
+  const classes = useUtilityClasses$e(ownerState);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(FormHelperTextRoot, {
+    as: component,
+    className: clsx(classes.root, className),
+    ref,
+    ...other,
+    ownerState,
+    children: children === " " ? (
+      // notranslate needed while Google Translate will not fix zero-width space issue
+      _span$2 || (_span$2 = /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
+        className: "notranslate",
+        "aria-hidden": true,
+        children: "​"
+      }))
+    ) : children
+  });
+});
+function getFormLabelUtilityClasses(slot) {
+  return generateUtilityClass("MuiFormLabel", slot);
+}
+const formLabelClasses = generateUtilityClasses("MuiFormLabel", ["root", "colorSecondary", "focused", "disabled", "error", "filled", "required", "asterisk"]);
+const useUtilityClasses$d = (ownerState) => {
+  const {
+    classes,
+    color: color2,
+    focused,
+    disabled,
+    error,
+    filled,
+    required
+  } = ownerState;
+  const slots = {
+    root: ["root", `color${capitalize(color2)}`, disabled && "disabled", error && "error", filled && "filled", focused && "focused", required && "required"],
+    asterisk: ["asterisk", error && "error"]
+  };
+  return composeClasses(slots, getFormLabelUtilityClasses, classes);
+};
+const FormLabelRoot = styled("label", {
+  name: "MuiFormLabel",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, ownerState.color === "secondary" && styles2.colorSecondary, ownerState.filled && styles2.filled];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  color: (theme.vars || theme).palette.text.secondary,
+  ...theme.typography.body1,
+  lineHeight: "1.4375em",
+  padding: 0,
+  position: "relative",
+  variants: [...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    props: {
+      color: color2
+    },
+    style: {
+      [`&.${formLabelClasses.focused}`]: {
+        color: (theme.vars || theme).palette[color2].main
+      }
+    }
+  })), {
+    props: {},
+    style: {
+      [`&.${formLabelClasses.disabled}`]: {
+        color: (theme.vars || theme).palette.text.disabled
+      },
+      [`&.${formLabelClasses.error}`]: {
+        color: (theme.vars || theme).palette.error.main
+      }
+    }
+  }]
+})));
+const AsteriskComponent = styled("span", {
+  name: "MuiFormLabel",
+  slot: "Asterisk"
+})(memoTheme(({
+  theme
+}) => ({
+  [`&.${formLabelClasses.error}`]: {
+    color: (theme.vars || theme).palette.error.main
+  }
+})));
+const FormLabel = /* @__PURE__ */ reactExports.forwardRef(function FormLabel2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiFormLabel"
+  });
+  const {
+    children,
+    className,
+    color: color2,
+    component = "label",
+    disabled,
+    error,
+    filled,
+    focused,
+    required,
+    ...other
+  } = props;
+  const muiFormControl = useFormControl();
+  const fcs = formControlState({
+    props,
+    muiFormControl,
+    states: ["color", "required", "focused", "disabled", "error", "filled"]
+  });
+  const ownerState = {
+    ...props,
+    color: fcs.color || "primary",
+    component,
+    disabled: fcs.disabled,
+    error: fcs.error,
+    filled: fcs.filled,
+    focused: fcs.focused,
+    required: fcs.required
+  };
+  const classes = useUtilityClasses$d(ownerState);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(FormLabelRoot, {
+    as: component,
+    ownerState,
+    className: clsx(classes.root, className),
+    ref,
+    ...other,
+    children: [children, fcs.required && /* @__PURE__ */ jsxRuntimeExports.jsxs(AsteriskComponent, {
+      ownerState,
+      "aria-hidden": true,
+      className: classes.asterisk,
+      children: [" ", "*"]
+    })]
+  });
+});
 function getScale(value) {
   return `scale(${value}, ${value ** 2})`;
 }
@@ -24190,7 +24617,7 @@ const Grow = /* @__PURE__ */ reactExports.forwardRef(function Grow2(props, ref) 
 if (Grow) {
   Grow.muiSupportAuto = true;
 }
-const useUtilityClasses$a = (ownerState) => {
+const useUtilityClasses$c = (ownerState) => {
   const {
     classes,
     disableUnderline
@@ -24323,7 +24750,7 @@ const Input = /* @__PURE__ */ reactExports.forwardRef(function Input2(inProps, r
     type = "text",
     ...other
   } = props;
-  const classes = useUtilityClasses$a(props);
+  const classes = useUtilityClasses$c(props);
   const ownerState = {
     disableUnderline
   };
@@ -24351,12 +24778,215 @@ const Input = /* @__PURE__ */ reactExports.forwardRef(function Input2(inProps, r
   });
 });
 Input.muiName = "Input";
+function getInputLabelUtilityClasses(slot) {
+  return generateUtilityClass("MuiInputLabel", slot);
+}
+generateUtilityClasses("MuiInputLabel", ["root", "focused", "disabled", "error", "required", "asterisk", "formControl", "sizeSmall", "shrink", "animated", "standard", "filled", "outlined"]);
+const useUtilityClasses$b = (ownerState) => {
+  const {
+    classes,
+    formControl,
+    size,
+    shrink,
+    disableAnimation,
+    variant,
+    required
+  } = ownerState;
+  const slots = {
+    root: ["root", formControl && "formControl", !disableAnimation && "animated", shrink && "shrink", size && size !== "medium" && `size${capitalize(size)}`, variant],
+    asterisk: [required && "asterisk"]
+  };
+  const composedClasses = composeClasses(slots, getInputLabelUtilityClasses, classes);
+  return {
+    ...classes,
+    // forward the focused, disabled, etc. classes to the FormLabel
+    ...composedClasses
+  };
+};
+const InputLabelRoot = styled(FormLabel, {
+  shouldForwardProp: (prop) => rootShouldForwardProp(prop) || prop === "classes",
+  name: "MuiInputLabel",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [{
+      [`& .${formLabelClasses.asterisk}`]: styles2.asterisk
+    }, styles2.root, ownerState.formControl && styles2.formControl, ownerState.size === "small" && styles2.sizeSmall, ownerState.shrink && styles2.shrink, !ownerState.disableAnimation && styles2.animated, ownerState.focused && styles2.focused, styles2[ownerState.variant]];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  display: "block",
+  transformOrigin: "top left",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "100%",
+  variants: [{
+    props: ({
+      ownerState
+    }) => ownerState.formControl,
+    style: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      // slight alteration to spec spacing to match visual spec result
+      transform: "translate(0, 20px) scale(1)"
+    }
+  }, {
+    props: {
+      size: "small"
+    },
+    style: {
+      // Compensation for the `Input.inputSizeSmall` style.
+      transform: "translate(0, 17px) scale(1)"
+    }
+  }, {
+    props: ({
+      ownerState
+    }) => ownerState.shrink,
+    style: {
+      transform: "translate(0, -1.5px) scale(0.75)",
+      transformOrigin: "top left",
+      maxWidth: "133%"
+    }
+  }, {
+    props: ({
+      ownerState
+    }) => !ownerState.disableAnimation,
+    style: {
+      transition: theme.transitions.create(["color", "transform", "max-width"], {
+        duration: theme.transitions.duration.shorter,
+        easing: theme.transitions.easing.easeOut
+      })
+    }
+  }, {
+    props: {
+      variant: "filled"
+    },
+    style: {
+      // Chrome's autofill feature gives the input field a yellow background.
+      // Since the input field is behind the label in the HTML tree,
+      // the input field is drawn last and hides the label with an opaque background color.
+      // zIndex: 1 will raise the label above opaque background-colors of input.
+      zIndex: 1,
+      pointerEvents: "none",
+      transform: "translate(12px, 16px) scale(1)",
+      maxWidth: "calc(100% - 24px)"
+    }
+  }, {
+    props: {
+      variant: "filled",
+      size: "small"
+    },
+    style: {
+      transform: "translate(12px, 13px) scale(1)"
+    }
+  }, {
+    props: ({
+      variant,
+      ownerState
+    }) => variant === "filled" && ownerState.shrink,
+    style: {
+      userSelect: "none",
+      pointerEvents: "auto",
+      transform: "translate(12px, 7px) scale(0.75)",
+      maxWidth: "calc(133% - 24px)"
+    }
+  }, {
+    props: ({
+      variant,
+      ownerState,
+      size
+    }) => variant === "filled" && ownerState.shrink && size === "small",
+    style: {
+      transform: "translate(12px, 4px) scale(0.75)"
+    }
+  }, {
+    props: {
+      variant: "outlined"
+    },
+    style: {
+      // see comment above on filled.zIndex
+      zIndex: 1,
+      pointerEvents: "none",
+      transform: "translate(14px, 16px) scale(1)",
+      maxWidth: "calc(100% - 24px)"
+    }
+  }, {
+    props: {
+      variant: "outlined",
+      size: "small"
+    },
+    style: {
+      transform: "translate(14px, 9px) scale(1)"
+    }
+  }, {
+    props: ({
+      variant,
+      ownerState
+    }) => variant === "outlined" && ownerState.shrink,
+    style: {
+      userSelect: "none",
+      pointerEvents: "auto",
+      // Theoretically, we should have (8+5)*2/0.75 = 34px
+      // but it feels a better when it bleeds a bit on the left, so 32px.
+      maxWidth: "calc(133% - 32px)",
+      transform: "translate(14px, -9px) scale(0.75)"
+    }
+  }]
+})));
+const InputLabel = /* @__PURE__ */ reactExports.forwardRef(function InputLabel2(inProps, ref) {
+  const props = useDefaultProps({
+    name: "MuiInputLabel",
+    props: inProps
+  });
+  const {
+    disableAnimation = false,
+    margin: margin2,
+    shrink: shrinkProp,
+    variant,
+    className,
+    ...other
+  } = props;
+  const muiFormControl = useFormControl();
+  let shrink = shrinkProp;
+  if (typeof shrink === "undefined" && muiFormControl) {
+    shrink = muiFormControl.filled || muiFormControl.focused || muiFormControl.adornedStart;
+  }
+  const fcs = formControlState({
+    props,
+    muiFormControl,
+    states: ["size", "variant", "required", "focused"]
+  });
+  const ownerState = {
+    ...props,
+    disableAnimation,
+    formControl: muiFormControl,
+    shrink,
+    size: fcs.size,
+    variant: fcs.variant,
+    required: fcs.required,
+    focused: fcs.focused
+  };
+  const classes = useUtilityClasses$b(ownerState);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(InputLabelRoot, {
+    "data-shrink": shrink,
+    ref,
+    className: clsx(classes.root, className),
+    ...other,
+    ownerState,
+    classes
+  });
+});
 const ListContext = /* @__PURE__ */ reactExports.createContext({});
 function getListUtilityClass(slot) {
   return generateUtilityClass("MuiList", slot);
 }
 generateUtilityClasses("MuiList", ["root", "padding", "dense", "subheader"]);
-const useUtilityClasses$9 = (ownerState) => {
+const useUtilityClasses$a = (ownerState) => {
   const {
     classes,
     disablePadding,
@@ -24422,7 +25052,7 @@ const List = /* @__PURE__ */ reactExports.forwardRef(function List2(inProps, ref
     dense,
     disablePadding
   };
-  const classes = useUtilityClasses$9(ownerState);
+  const classes = useUtilityClasses$a(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(ListContext.Provider, {
     value: context,
     children: /* @__PURE__ */ jsxRuntimeExports.jsxs(ListRoot, {
@@ -24662,7 +25292,7 @@ function getTransformOriginValue(transformOrigin) {
 function resolveAnchorEl(anchorEl) {
   return typeof anchorEl === "function" ? anchorEl() : anchorEl;
 }
-const useUtilityClasses$8 = (ownerState) => {
+const useUtilityClasses$9 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -24740,7 +25370,7 @@ const Popover = /* @__PURE__ */ reactExports.forwardRef(function Popover2(inProp
     transitionDuration: transitionDurationProp,
     TransitionProps
   };
-  const classes = useUtilityClasses$8(ownerState);
+  const classes = useUtilityClasses$9(ownerState);
   const getAnchorOffset = reactExports.useCallback(() => {
     if (anchorReference === "anchorPosition") {
       return anchorPosition;
@@ -24962,7 +25592,7 @@ const LTR_ORIGIN = {
   vertical: "top",
   horizontal: "left"
 };
-const useUtilityClasses$7 = (ownerState) => {
+const useUtilityClasses$8 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -25033,7 +25663,7 @@ const Menu = /* @__PURE__ */ reactExports.forwardRef(function Menu2(inProps, ref
     TransitionProps,
     variant
   };
-  const classes = useUtilityClasses$7(ownerState);
+  const classes = useUtilityClasses$8(ownerState);
   const autoFocusItem = autoFocus && !disableAutoFocusItem && open;
   const menuListActionsRef = reactExports.useRef(null);
   const handleEntering = (element, isAppearing) => {
@@ -25158,7 +25788,7 @@ const overridesResolver$1 = (props, styles2) => {
   } = props;
   return [styles2.root, ownerState.dense && styles2.dense, ownerState.divider && styles2.divider, !ownerState.disableGutters && styles2.gutters];
 };
-const useUtilityClasses$6 = (ownerState) => {
+const useUtilityClasses$7 = (ownerState) => {
   const {
     disabled,
     dense,
@@ -25316,7 +25946,7 @@ const MenuItem = /* @__PURE__ */ reactExports.forwardRef(function MenuItem2(inPr
     divider,
     disableGutters
   };
-  const classes = useUtilityClasses$6(props);
+  const classes = useUtilityClasses$7(props);
   const handleRef = useForkRef(menuItemRef, ref);
   let tabIndex;
   if (!props.disabled) {
@@ -25341,7 +25971,7 @@ function getNativeSelectUtilityClasses(slot) {
   return generateUtilityClass("MuiNativeSelect", slot);
 }
 const nativeSelectClasses = generateUtilityClasses("MuiNativeSelect", ["root", "select", "multiple", "filled", "outlined", "standard", "disabled", "icon", "iconOpen", "iconFilled", "iconOutlined", "iconStandard", "nativeInput", "error"]);
-const useUtilityClasses$5 = (ownerState) => {
+const useUtilityClasses$6 = (ownerState) => {
   const {
     classes,
     variant,
@@ -25500,7 +26130,7 @@ const NativeSelectInput = /* @__PURE__ */ reactExports.forwardRef(function Nativ
     variant,
     error
   };
-  const classes = useUtilityClasses$5(ownerState);
+  const classes = useUtilityClasses$6(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
     children: [/* @__PURE__ */ jsxRuntimeExports.jsx(NativeSelectSelect, {
       ownerState,
@@ -25635,7 +26265,7 @@ function NotchedOutline(props) {
     })
   });
 }
-const useUtilityClasses$4 = (ownerState) => {
+const useUtilityClasses$5 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -25813,7 +26443,7 @@ const OutlinedInput = /* @__PURE__ */ reactExports.forwardRef(function OutlinedI
     type = "text",
     ...other
   } = props;
-  const classes = useUtilityClasses$4(props);
+  const classes = useUtilityClasses$5(props);
   const muiFormControl = useFormControl();
   const fcs = formControlState({
     props,
@@ -26012,7 +26642,7 @@ const overridesResolver = (props, styles2) => {
   } = props;
   return [styles2.root, styles2[ownerState.variant], styles2[`size${capitalize(ownerState.size)}`], ownerState.variant === "text" && styles2[`text${capitalize(ownerState.color)}`], ownerState.variant === "outlined" && styles2[`outlined${capitalize(ownerState.color)}`], ownerState.shape === "rounded" && styles2.rounded, ownerState.type === "page" && styles2.page, (ownerState.type === "start-ellipsis" || ownerState.type === "end-ellipsis") && styles2.ellipsis, (ownerState.type === "previous" || ownerState.type === "next") && styles2.previousNext, (ownerState.type === "first" || ownerState.type === "last") && styles2.firstLast];
 };
-const useUtilityClasses$3 = (ownerState) => {
+const useUtilityClasses$4 = (ownerState) => {
   const {
     classes,
     color: color2,
@@ -26285,7 +26915,7 @@ const PaginationItem = /* @__PURE__ */ reactExports.forwardRef(function Paginati
     variant
   };
   const isRtl = useRtl();
-  const classes = useUtilityClasses$3(ownerState);
+  const classes = useUtilityClasses$4(ownerState);
   const externalForwardedProps = {
     slots: {
       previous: slots.previous ?? components.previous,
@@ -26352,7 +26982,7 @@ const PaginationItem = /* @__PURE__ */ reactExports.forwardRef(function Paginati
     }) : null]
   });
 });
-const useUtilityClasses$2 = (ownerState) => {
+const useUtilityClasses$3 = (ownerState) => {
   const {
     classes,
     variant
@@ -26442,7 +27072,7 @@ const Pagination = /* @__PURE__ */ reactExports.forwardRef(function Pagination2(
     size,
     variant
   };
-  const classes = useUtilityClasses$2(ownerState);
+  const classes = useUtilityClasses$3(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(PaginationRoot, {
     "aria-label": "pagination navigation",
     className: clsx(classes.root, className),
@@ -26537,7 +27167,7 @@ function areEqualValues(a, b) {
 function isEmpty(display) {
   return display == null || typeof display === "string" && !display.trim();
 }
-const useUtilityClasses$1 = (ownerState) => {
+const useUtilityClasses$2 = (ownerState) => {
   const {
     classes,
     variant,
@@ -26845,7 +27475,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     open,
     error
   };
-  const classes = useUtilityClasses$1(ownerState);
+  const classes = useUtilityClasses$2(ownerState);
   const paperProps = {
     ...MenuProps.PaperProps,
     ...typeof MenuProps.slotProps?.paper === "function" ? MenuProps.slotProps.paper(ownerState) : MenuProps.slotProps?.paper
@@ -26940,7 +27570,7 @@ const SelectInput = /* @__PURE__ */ reactExports.forwardRef(function SelectInput
     })]
   });
 });
-const useUtilityClasses = (ownerState) => {
+const useUtilityClasses$1 = (ownerState) => {
   const {
     classes
   } = ownerState;
@@ -27003,7 +27633,7 @@ const Select = /* @__PURE__ */ reactExports.forwardRef(function Select2(inProps,
     variant,
     classes: classesProp
   };
-  const classes = useUtilityClasses(ownerState);
+  const classes = useUtilityClasses$1(ownerState);
   const {
     root,
     ...restOfClasses
@@ -27069,6 +27699,204 @@ const Select = /* @__PURE__ */ reactExports.forwardRef(function Select2(inProps,
   });
 });
 Select.muiName = "Select";
+function getTextFieldUtilityClass(slot) {
+  return generateUtilityClass("MuiTextField", slot);
+}
+generateUtilityClasses("MuiTextField", ["root"]);
+const variantComponent = {
+  standard: Input,
+  filled: FilledInput,
+  outlined: OutlinedInput
+};
+const useUtilityClasses = (ownerState) => {
+  const {
+    classes
+  } = ownerState;
+  const slots = {
+    root: ["root"]
+  };
+  return composeClasses(slots, getTextFieldUtilityClass, classes);
+};
+const TextFieldRoot = styled(FormControl, {
+  name: "MuiTextField",
+  slot: "Root"
+})({});
+const TextField = /* @__PURE__ */ reactExports.forwardRef(function TextField2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiTextField"
+  });
+  const {
+    autoComplete,
+    autoFocus = false,
+    children,
+    className,
+    color: color2 = "primary",
+    defaultValue,
+    disabled = false,
+    error = false,
+    FormHelperTextProps: FormHelperTextPropsProp,
+    fullWidth = false,
+    helperText,
+    id: idOverride,
+    InputLabelProps: InputLabelPropsProp,
+    inputProps: inputPropsProp,
+    InputProps: InputPropsProp,
+    inputRef,
+    label,
+    maxRows,
+    minRows,
+    multiline = false,
+    name,
+    onBlur,
+    onChange,
+    onFocus,
+    placeholder,
+    required = false,
+    rows,
+    select = false,
+    SelectProps: SelectPropsProp,
+    slots = {},
+    slotProps = {},
+    type,
+    value,
+    variant = "outlined",
+    ...other
+  } = props;
+  const ownerState = {
+    ...props,
+    autoFocus,
+    color: color2,
+    disabled,
+    error,
+    fullWidth,
+    multiline,
+    required,
+    select,
+    variant
+  };
+  const classes = useUtilityClasses(ownerState);
+  const id = useId(idOverride);
+  const helperTextId = helperText && id ? `${id}-helper-text` : void 0;
+  const inputLabelId = label && id ? `${id}-label` : void 0;
+  const InputComponent = variantComponent[variant];
+  const externalForwardedProps = {
+    slots,
+    slotProps: {
+      input: InputPropsProp,
+      inputLabel: InputLabelPropsProp,
+      htmlInput: inputPropsProp,
+      formHelperText: FormHelperTextPropsProp,
+      select: SelectPropsProp,
+      ...slotProps
+    }
+  };
+  const inputAdditionalProps = {};
+  const inputLabelSlotProps = externalForwardedProps.slotProps.inputLabel;
+  if (variant === "outlined") {
+    if (inputLabelSlotProps && typeof inputLabelSlotProps.shrink !== "undefined") {
+      inputAdditionalProps.notched = inputLabelSlotProps.shrink;
+    }
+    inputAdditionalProps.label = label;
+  }
+  if (select) {
+    if (!SelectPropsProp || !SelectPropsProp.native) {
+      inputAdditionalProps.id = void 0;
+    }
+    inputAdditionalProps["aria-describedby"] = void 0;
+  }
+  const [RootSlot, rootProps] = useSlot("root", {
+    elementType: TextFieldRoot,
+    shouldForwardComponentProp: true,
+    externalForwardedProps: {
+      ...externalForwardedProps,
+      ...other
+    },
+    ownerState,
+    className: clsx(classes.root, className),
+    ref,
+    additionalProps: {
+      disabled,
+      error,
+      fullWidth,
+      required,
+      color: color2,
+      variant
+    }
+  });
+  const [InputSlot, inputProps] = useSlot("input", {
+    elementType: InputComponent,
+    externalForwardedProps,
+    additionalProps: inputAdditionalProps,
+    ownerState
+  });
+  const [InputLabelSlot, inputLabelProps] = useSlot("inputLabel", {
+    elementType: InputLabel,
+    externalForwardedProps,
+    ownerState
+  });
+  const [HtmlInputSlot, htmlInputProps] = useSlot("htmlInput", {
+    elementType: "input",
+    externalForwardedProps,
+    ownerState
+  });
+  const [FormHelperTextSlot, formHelperTextProps] = useSlot("formHelperText", {
+    elementType: FormHelperText,
+    externalForwardedProps,
+    ownerState
+  });
+  const [SelectSlot, selectProps] = useSlot("select", {
+    elementType: Select,
+    externalForwardedProps,
+    ownerState
+  });
+  const InputElement = /* @__PURE__ */ jsxRuntimeExports.jsx(InputSlot, {
+    "aria-describedby": helperTextId,
+    autoComplete,
+    autoFocus,
+    defaultValue,
+    fullWidth,
+    multiline,
+    name,
+    rows,
+    maxRows,
+    minRows,
+    type,
+    value,
+    id,
+    inputRef,
+    onBlur,
+    onChange,
+    onFocus,
+    placeholder,
+    inputProps: htmlInputProps,
+    slots: {
+      input: slots.htmlInput ? HtmlInputSlot : void 0
+    },
+    ...inputProps
+  });
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(RootSlot, {
+    ...rootProps,
+    children: [label != null && label !== "" && /* @__PURE__ */ jsxRuntimeExports.jsx(InputLabelSlot, {
+      htmlFor: id,
+      id: inputLabelId,
+      ...inputLabelProps,
+      children: label
+    }), select ? /* @__PURE__ */ jsxRuntimeExports.jsx(SelectSlot, {
+      "aria-describedby": helperTextId,
+      id,
+      labelId: inputLabelId,
+      value,
+      input: InputElement,
+      ...selectProps,
+      children
+    }) : InputElement, helperText && /* @__PURE__ */ jsxRuntimeExports.jsx(FormHelperTextSlot, {
+      id: helperTextId,
+      ...formHelperTextProps,
+      children: helperText
+    })]
+  });
+});
 function QueuePagination({ info, onPageChange }) {
   if (!info || !(info.last_page > 0)) {
     return null;
@@ -27352,6 +28180,69 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
     ] }) })
   ] });
 }
+const LowPriorityIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M14 5h8v2h-8zm0 5.5h8v2h-8zm0 5.5h8v2h-8zM2 11.5C2 15.08 4.92 18 8.5 18H9v2l3-3-3-3v2h-.5C6.02 16 4 13.98 4 11.5S6.02 7 8.5 7H12V5H8.5C4.92 5 2 7.92 2 11.5"
+}));
+const PRIORITY_MIN = -100;
+const PRIORITY_MAX = 100;
+function PriorityMenu({ dbIds, onDone }) {
+  const [anchorEl, setAnchorEl] = reactExports.useState(null);
+  const [customValue, setCustomValue] = reactExports.useState("");
+  const handleClose = () => setAnchorEl(null);
+  const applyPriority = async (priority) => {
+    await apiCall("queue_manager/priority", { items: dbIds, priority }, "POST");
+    handleClose();
+    setCustomValue("");
+    await onDone();
+  };
+  const handleCustomApply = () => {
+    if (customValue === "") return;
+    const parsed = Math.round(Number(customValue));
+    if (!Number.isFinite(parsed)) return;
+    applyPriority(Math.min(PRIORITY_MAX, Math.max(PRIORITY_MIN, parsed)));
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "button",
+      {
+        className: "qm-btn",
+        onClick: (event) => setAnchorEl(event.currentTarget),
+        title: "Set priority",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(LowPriorityIcon, { fontSize: "small" }),
+          " Priority"
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(Menu, { anchorEl, open: Boolean(anchorEl), onClose: handleClose, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-1), children: "Low (−1)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(0), children: "Normal (0)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(1), children: "High (+1)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        MenuItem,
+        {
+          disableRipple: true,
+          className: "priority-custom",
+          onKeyDown: (event) => event.stopPropagation(),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              TextField,
+              {
+                type: "number",
+                size: "small",
+                label: "Custom",
+                value: customValue,
+                onChange: (event) => setCustomValue(event.target.value),
+                slotProps: { htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "qm-btn qm-btn-primary", onClick: handleCustomApply, disabled: customValue === "", children: "Apply" })
+          ]
+        }
+      )
+    ] })
+  ] });
+}
 const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";
 const QM_PARENT_KEYPRESS = "QM_ParentKeypress";
 const QM_QUEUE_MANAGER_HELLO = "QM_QueueManager_Hello";
@@ -27410,6 +28301,8 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
+  const canSetPriority = (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
+  const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "count qm-badge", children: [
       selected.size,
@@ -27429,6 +28322,7 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
         /* @__PURE__ */ jsxRuntimeExports.jsx(Inventory2SharpIcon, { fontSize: "small" }),
         " Archive"
       ] }),
+      canSetPriority && /* @__PURE__ */ jsxRuntimeExports.jsx(PriorityMenu, { dbIds: priorityDbIds, onDone: finish }),
       canRun && /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
