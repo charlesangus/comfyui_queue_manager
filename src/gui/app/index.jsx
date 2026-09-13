@@ -124,7 +124,7 @@ export default function Home({ onDarkChange }) {
       const isInputLike =
         event.target.tagName === 'INPUT' ||
         event.target.tagName === 'TEXTAREA' ||
-        event.target.contentEditable === 'true';
+        event.target.isContentEditable;
 
       if (event.key === 'Escape') {
         useSelectionStore.getState().clear();

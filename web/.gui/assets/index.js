@@ -19460,7 +19460,8 @@ const QueueCard = reactExports.memo(
     route,
     filters,
     isSelected,
-    onSelect
+    onSelect,
+    itemKey: itemKey2
   }) {
     const { fetchQueueItems } = reactExports.useContext(AppContext);
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
@@ -19507,7 +19508,7 @@ const QueueCard = reactExports.memo(
         {
           className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
           "aria-selected": isSelected,
-          onClick: onSelect,
+          onClick: (event) => onSelect(itemKey2, event),
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
@@ -19561,7 +19562,7 @@ const QueueCard = reactExports.memo(
     const prevId = prev2.item?.[3]?.db_id;
     const nextId = next2.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card;
   }
 );
 const useSelectionStore = create((set) => ({
@@ -19615,15 +19616,19 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
     () => [...running, ...pending].map(itemKey$2),
     [running, pending]
   );
-  const handleSelect = reactExports.useCallback((key) => (event) => {
+  const orderedKeysRef = reactExports.useRef(orderedKeys);
+  reactExports.useEffect(() => {
+    orderedKeysRef.current = orderedKeys;
+  }, [orderedKeys]);
+  const handleSelect = reactExports.useCallback((key, event) => {
     if (event.shiftKey) {
-      useSelectionStore.getState().selectRange(orderedKeys, key);
+      useSelectionStore.getState().selectRange(orderedKeysRef.current, key);
     } else if (event.ctrlKey || event.metaKey) {
       useSelectionStore.getState().toggle(key);
     } else {
       useSelectionStore.getState().select(key);
     }
-  }, [orderedKeys]);
+  }, []);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     running.map((item) => {
       const key = itemKey$2(item);
@@ -19638,7 +19643,8 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
           route,
           filters,
           isSelected: selected.has(key),
-          onSelect: handleSelect(key)
+          onSelect: handleSelect,
+          itemKey: key
         },
         key
       );
@@ -19655,7 +19661,8 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
           route,
           filters,
           isSelected: selected.has(key),
-          onSelect: handleSelect(key)
+          onSelect: handleSelect,
+          itemKey: key
         },
         item?.[3]?.db_id ?? `${item?.[1]}-${index}`
       );
@@ -27400,8 +27407,7 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId });
     await finish();
   };
-  const selectedRunningExternal = selectedRunning.filter((item) => !item?.[3]?.extra_pnginfo);
-  const canLoad = selectedItems.length === 1 && selectedRunningExternal.length === 0;
+  const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", children: [
@@ -27913,7 +27919,7 @@ function Home({ onDarkChange }) {
   reactExports.useEffect(() => {
     if (!queueData) return;
     const handleKeyDown = (event) => {
-      const isInputLike = event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA" || event.target.contentEditable === "true";
+      const isInputLike = event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA" || event.target.isContentEditable;
       if (event.key === "Escape") {
         useSelectionStore.getState().clear();
       } else if ((event.ctrlKey || event.metaKey) && (event.key === "a" || event.key === "A")) {

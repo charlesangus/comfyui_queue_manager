@@ -20,6 +20,7 @@ export const QueueCard = memo(
     filters,
     isSelected,
     onSelect,
+    itemKey,
   }) {
     const { fetchQueueItems } = useContext(AppContext);
 
@@ -79,7 +80,7 @@ const executionTimeLabel = useMemo(() => {
       <article
         className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`}
         aria-selected={isSelected}
-        onClick={onSelect}
+        onClick={(event) => onSelect(itemKey, event)}
       >
         <div className="card-header">
           <span className="serial">{rowIndex}</span>
@@ -166,6 +167,8 @@ const executionTimeLabel = useMemo(() => {
       prev.route === next.route &&
       prev.filters === next.filters &&
       prev.isSelected === next.isSelected &&
+      prev.onSelect === next.onSelect &&
+      prev.itemKey === next.itemKey &&
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size &&
       prev.item?.[3]?.card === next.item?.[3]?.card

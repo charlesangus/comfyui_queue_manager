@@ -57,8 +57,7 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
     await finish();
   };
 
-  const selectedRunningExternal = selectedRunning.filter((item) => !item?.[3]?.extra_pnginfo);
-  const canLoad = selectedItems.length === 1 && selectedRunningExternal.length === 0;
+  const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
 

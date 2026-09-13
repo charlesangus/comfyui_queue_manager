@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import { QueueCard } from "../components/QueueCard";
 import { useAppStore } from "../stores/appStore";
@@ -20,15 +20,23 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
     [running, pending]
   );
 
-  const handleSelect = useCallback((key) => (event) => {
+  // Kept in a ref (rather than a `handleSelect` dependency) so this stable
+  // callback always sees the latest ordered keys without changing identity,
+  // which would otherwise defeat QueueCard's memo comparator.
+  const orderedKeysRef = useRef(orderedKeys);
+  useEffect(() => {
+    orderedKeysRef.current = orderedKeys;
+  }, [orderedKeys]);
+
+  const handleSelect = useCallback((key, event) => {
     if (event.shiftKey) {
-      useSelectionStore.getState().selectRange(orderedKeys, key);
+      useSelectionStore.getState().selectRange(orderedKeysRef.current, key);
     } else if (event.ctrlKey || event.metaKey) {
       useSelectionStore.getState().toggle(key);
     } else {
       useSelectionStore.getState().select(key);
     }
-  }, [orderedKeys]);
+  }, []);
 
   return (
     <>
@@ -45,7 +53,8 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
             route={route}
             filters={filters}
             isSelected={selected.has(key)}
-            onSelect={handleSelect(key)}
+            onSelect={handleSelect}
+            itemKey={key}
           />
         );
       })}
@@ -62,7 +71,8 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
             route={route}
             filters={filters}
             isSelected={selected.has(key)}
-            onSelect={handleSelect(key)}
+            onSelect={handleSelect}
+            itemKey={key}
           />
         );
       })}
