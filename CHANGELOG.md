@@ -1,5 +1,14 @@
 # Release Notes
 
+## v0.4.0
+_Sep 13, 2026_
+### New features and enhancements
+- Failed jobs now show up in Completed with a red **Error** badge and an expandable error message, node, and traceback, instead of looking indistinguishable from a successful completion.
+- Jobs interrupted with ComfyUI's own native Stop button now stay visible in Completed with an **Interrupted** badge, instead of disappearing entirely.
+- Deleting a running job from the Queue Manager's own Delete button still removes it entirely, as before.
+
+---
+
 ## v0.3.0
 _Sep 12, 2026_
 ### New features and enhancements

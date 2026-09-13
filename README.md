@@ -20,6 +20,7 @@ An extension supporting more streamlined prompt queue management.
   - [Queue Card Info node](#queue-card-info-node)
   - [External jobs](#external-jobs)
   - [Comfy API / Partner Nodes](#comfy-api--partner-nodes)
+  - [Failed and interrupted jobs](#failed-and-interrupted-jobs)
   - [Output thumbnails](#output-thumbnails)
   - [Extension Settings](#extension-settings)
 - [Troubleshooting](#troubleshooting)
@@ -166,6 +167,12 @@ The card shows a preview as soon as the job is queued. During execution, image v
 3. When your Comfy API Key is deleted or revoked then all jobs in the queue that were queued with that key and used Partner Nodes, will fail. To run such jobs you need to requeue them; the best way to do it is to export them, log-in with your new Comfy API Key and then import the exported items back.
 4. **IMPORTANT!** When you queue jobs while logged in with Comfy API key then those jobs will get through (and use your credits if you used Partner nodes) even if you log out from ComfyUI or Comfy.org.
 5. Conversely, if you queue jobs with Partner nodes while NOT logged in with Comfy API key then those jobs will NOT be able to use Partner nodes even if you log in later before running them. (See point 3. above for export-import workaround).
+
+### Failed and interrupted jobs
+- Jobs no longer just vanish or look like a success when something goes wrong. A job that errors during execution, or one that is stopped using ComfyUI's own native Stop button, lands in the Completed tab with a red **Error** or **Interrupted** badge, so you can tell it apart from a normal successful completion.
+- Click the error details disclosure on the card to expand it. It shows the failure message (not available for interruptions, since there's no exception to report), which node and node type failed, and a traceback.
+- To re-run a failed or interrupted job, use the **Load** button on its card, same as any other completed job, then run it again from the main ComfyUI window.
+- Deleting a *running* job with the Queue Manager's own **Delete** button still removes it entirely: it interrupts the job and deletes it once it actually stops. This is different from pressing ComfyUI's own native Stop button, which only stops the job and leaves it in Completed as **Interrupted**, so you can still see what was running and why it stopped.
 
 ### Output thumbnails
 - Completed jobs show a strip of output thumbnails (images and videos) below the job details.
