@@ -19314,20 +19314,6 @@ function LoaderSpinner() {
     }
   ) });
 }
-const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";
-const QM_PARENT_KEYPRESS = "QM_ParentKeypress";
-const QM_QUEUE_MANAGER_HELLO = "QM_QueueManager_Hello";
-const QM_SETTING_CHANGED = "QM_Setting_Changed";
-const QM_LOAD_WORKFLOW = "QM_LoadWorkflow";
-const msgLoadWorkflow = (workflow, number) => {
-  window.parent.postMessage(
-    { type: QM_LOAD_WORKFLOW, workflow, number },
-    "*"
-  );
-};
-const PlayArrowOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M10 8.64 15.27 12 10 15.36zM8 5v14l11-7z"
-}));
 function viewURL(file) {
   const { filename, subfolder, type } = file;
   const params = new URLSearchParams({
@@ -19472,35 +19458,15 @@ const QueueCard = reactExports.memo(
     mode,
     info,
     route,
-    filters
+    filters,
+    isSelected,
+    onSelect,
+    itemKey: itemKey2
   }) {
     const { fetchQueueItems } = reactExports.useContext(AppContext);
-    const dbId = item?.[3]?.db_id;
     const workflow = item?.[3]?.extra_pnginfo?.workflow;
-    const cancelQueueItem = reactExports.useCallback(async () => {
-      if (mode === "running" || mode === "external") {
-        await deleteRunningJob(item[1]);
-        return;
-      }
-      await apiCall(`api/queue`, { delete: [item[1]] });
-    }, [mode, item]);
-    const loadQueueItem = reactExports.useCallback(() => {
-      if (workflow) {
-        msgLoadWorkflow(workflow, item[0]);
-      }
-    }, [workflow, item]);
-    const archiveQueueItem = reactExports.useCallback(async () => {
-      await apiCall(`queue_manager/archive`, { archive: [dbId] });
-    }, [dbId]);
-    const playItem = reactExports.useCallback(async () => {
-      const { shiftDown, clientId } = useAppStore.getState();
-      await apiCall(`queue_manager/play`, {
-        items: [dbId],
-        front: shiftDown === true,
-        clientId
-      });
-    }, [dbId]);
-    const filterByWorkflow = reactExports.useCallback(() => {
+    const filterByWorkflow = reactExports.useCallback((event) => {
+      event.stopPropagation();
       if (!workflow?.id) return;
       fetchQueueItems({
         filters: {
@@ -19535,123 +19501,172 @@ const QueueCard = reactExports.memo(
       window.open(viewURL(file), "_blank");
     }, []);
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("article", { className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}`, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
-        loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
-        route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
-        error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,
-        mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
-          route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-            MediaItem,
-            {
-              file,
-              onClick: () => handleThumbnailClick(file),
-              controls: false,
-              autoplay: false,
-              className: "thumbnail"
-            },
-            idx
-          )) }),
-          error ? /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
-              error.kind === "interrupted" ? "Interrupted" : "Error",
-              " details"
+    return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "article",
+        {
+          className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
+          "aria-selected": isSelected,
+          onClick: (event) => onSelect(itemKey2, event),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
+              loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
+              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,
+              mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
             ] }),
-            error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
-              error.node_type,
-              " #",
-              error.node_id
-            ] }),
-            error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
-          ] }) : null
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-actions", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { justifyContent: "flex-end" }, className: "buttons", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "delete qm-btn qm-btn-danger",
-            onClick: cancelQueueItem,
-            title: "Delete workflow from queue",
-            children: "Delete"
-          }
-        ),
-        mode !== "external" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "load qm-btn qm-btn-primary",
-            onClick: loadQueueItem,
-            title: "Load workflow",
-            children: "Load"
-          }
-        ) : null,
-        route === "queue" && mode !== "running" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "archive qm-btn",
-            onClick: archiveQueueItem,
-            title: "Move to the archive",
-            children: "Archive"
-          }
-        ) : null,
-        route === "archive" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            className: "run qm-btn qm-btn-primary",
-            onClick: playItem,
-            title: "Move to queue",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
-              "Run"
-            ]
-          }
-        ) : null
-      ] }) })
-    ] });
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
+                route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  MediaItem,
+                  {
+                    file,
+                    onClick: (event) => {
+                      event.stopPropagation();
+                      handleThumbnailClick(file);
+                    },
+                    controls: false,
+                    autoplay: false,
+                    className: "thumbnail"
+                  },
+                  idx
+                )) }),
+                error ? (
+                  // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", onClick: (event) => event.stopPropagation(), children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
+                      error.kind === "interrupted" ? "Interrupted" : "Error",
+                      " details"
+                    ] }),
+                    error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
+                      error.node_type,
+                      " #",
+                      error.node_id
+                    ] }),
+                    error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
+                  ] })
+                ) : null
+              ] })
+            ] })
+          ]
+        }
+      )
+    );
   },
   (prev2, next2) => {
     const prevId = prev2.item?.[3]?.db_id;
     const nextId = next2.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card;
   }
 );
+const useSelectionStore = create((set) => ({
+  selected: /* @__PURE__ */ new Set(),
+  anchor: null,
+  select: (key) => set(() => ({
+    selected: /* @__PURE__ */ new Set([key]),
+    anchor: key
+  })),
+  toggle: (key) => set((state) => {
+    const next2 = new Set(state.selected);
+    if (next2.has(key)) {
+      next2.delete(key);
+    } else {
+      next2.add(key);
+    }
+    return { selected: next2, anchor: key };
+  }),
+  selectRange: (orderedKeys, key) => set((state) => {
+    const anchorIndex = state.anchor !== null ? orderedKeys.indexOf(state.anchor) : -1;
+    const keyIndex = orderedKeys.indexOf(key);
+    if (anchorIndex === -1 || keyIndex === -1) {
+      return { selected: /* @__PURE__ */ new Set([key]), anchor: key };
+    }
+    const start = Math.min(anchorIndex, keyIndex);
+    const end = Math.max(anchorIndex, keyIndex);
+    return { selected: new Set(orderedKeys.slice(start, end + 1)), anchor: state.anchor };
+  }),
+  selectAll: (orderedKeys) => set(() => ({
+    selected: new Set(orderedKeys),
+    anchor: orderedKeys.length > 0 ? orderedKeys[orderedKeys.length - 1] : null
+  })),
+  clear: () => set(() => ({
+    selected: /* @__PURE__ */ new Set(),
+    anchor: null
+  })),
+  retain: (keys) => set((state) => {
+    const validKeys = keys instanceof Set ? keys : new Set(keys);
+    return {
+      selected: new Set([...state.selected].filter((key) => validKeys.has(key))),
+      anchor: state.anchor !== null && validKeys.has(state.anchor) ? state.anchor : null
+    };
+  })
+}));
+const itemKey$2 = (item) => item?.[3]?.db_id ?? item?.[1];
 const QueueItems = reactExports.memo(function QueueItems2({ running, pending, info }) {
   const route = useAppStore((state) => state.route);
   const filters = useAppStore((state) => state.filters);
+  const selected = useSelectionStore((state) => state.selected);
+  const orderedKeys = reactExports.useMemo(
+    () => [...running, ...pending].map(itemKey$2),
+    [running, pending]
+  );
+  const orderedKeysRef = reactExports.useRef(orderedKeys);
+  reactExports.useEffect(() => {
+    orderedKeysRef.current = orderedKeys;
+  }, [orderedKeys]);
+  const handleSelect = reactExports.useCallback((key, event) => {
+    if (event.shiftKey) {
+      useSelectionStore.getState().selectRange(orderedKeysRef.current, key);
+    } else if (event.ctrlKey || event.metaKey) {
+      useSelectionStore.getState().toggle(key);
+    } else {
+      useSelectionStore.getState().select(key);
+    }
+  }, []);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-    running.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-      QueueCard,
-      {
-        item,
-        className: "running",
-        loader: true,
-        mode: item?.[3]?.extra_pnginfo ? "running" : "external",
-        info,
-        route,
-        filters
-      },
-      item?.[3]?.db_id ?? item?.[1]
-    )),
-    pending.map((item, index) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-      QueueCard,
-      {
-        item,
-        className: "pending",
-        index,
-        info,
-        route,
-        filters
-      },
-      item?.[3]?.db_id ?? `${item?.[1]}-${index}`
-    ))
+    running.map((item) => {
+      const key = itemKey$2(item);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
+        QueueCard,
+        {
+          item,
+          className: "running",
+          loader: true,
+          mode: item?.[3]?.extra_pnginfo ? "running" : "external",
+          info,
+          route,
+          filters,
+          isSelected: selected.has(key),
+          onSelect: handleSelect,
+          itemKey: key
+        },
+        key
+      );
+    }),
+    pending.map((item, index) => {
+      const key = itemKey$2(item);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
+        QueueCard,
+        {
+          item,
+          className: "pending",
+          index,
+          info,
+          route,
+          filters,
+          isSelected: selected.has(key),
+          onSelect: handleSelect,
+          itemKey: key
+        },
+        item?.[3]?.db_id ?? `${item?.[1]}-${index}`
+      );
+    })
   ] });
 });
 const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {
@@ -19679,6 +19694,9 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
 });
 const FileDownloadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5z"
+}));
+const PlayArrowOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M10 8.64 15.27 12 10 15.36zM8 5v14l11-7z"
 }));
 const DeleteOutlineSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M6 21h12V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z"
@@ -27334,6 +27352,112 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
     ] }) })
   ] });
 }
+const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";
+const QM_PARENT_KEYPRESS = "QM_ParentKeypress";
+const QM_QUEUE_MANAGER_HELLO = "QM_QueueManager_Hello";
+const QM_SETTING_CHANGED = "QM_Setting_Changed";
+const QM_LOAD_WORKFLOW = "QM_LoadWorkflow";
+const msgLoadWorkflow = (workflow, number) => {
+  window.parent.postMessage(
+    { type: QM_LOAD_WORKFLOW, workflow, number },
+    "*"
+  );
+};
+async function performDelete(selectedRunning, selectedPending, fetchQueueItems) {
+  await Promise.all(selectedRunning.map((item) => deleteRunningJob(item[1])));
+  if (selectedPending.length > 0) {
+    await apiCall("api/queue", { delete: selectedPending.map((item) => item[1]) });
+  }
+  useSelectionStore.getState().clear();
+  await fetchQueueItems({ reload: true });
+}
+const itemKey$1 = (item) => item?.[3]?.db_id ?? item?.[1];
+function SelectionBar({ route, queueData, fetchQueueItems }) {
+  const selected = useSelectionStore((state) => state.selected);
+  const shiftDown = useAppStore((state) => state.shiftDown);
+  if (selected.size === 0) {
+    return null;
+  }
+  const running = queueData?.running ?? [];
+  const pending = queueData?.pending ?? [];
+  const selectedRunning = running.filter((item) => selected.has(itemKey$1(item)));
+  const selectedPending = pending.filter((item) => selected.has(itemKey$1(item)));
+  const selectedItems = [...selectedRunning, ...selectedPending];
+  const finish = async () => {
+    useSelectionStore.getState().clear();
+    await fetchQueueItems({ reload: true });
+  };
+  const handleDelete = async () => {
+    await performDelete(selectedRunning, selectedPending, fetchQueueItems);
+  };
+  const handleLoad = async () => {
+    const workflow = selectedItems[0]?.[3]?.extra_pnginfo?.workflow;
+    if (!workflow) return;
+    msgLoadWorkflow(workflow, selectedItems[0][0]);
+    await finish();
+  };
+  const handleArchive = async () => {
+    const dbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
+    await apiCall("queue_manager/archive", { archive: dbIds });
+    await finish();
+  };
+  const handleRun = async () => {
+    const { clientId } = useAppStore.getState();
+    const dbIds = selectedItems.map((item) => item?.[3]?.db_id).filter((id) => id != null);
+    await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId });
+    await finish();
+  };
+  const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
+  const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
+  const canRun = route === "archive";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "count qm-badge", children: [
+      selected.size,
+      " selected"
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "buttons", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          className: "qm-btn qm-btn-text",
+          onClick: () => useSelectionStore.getState().clear(),
+          children: "Clear"
+        }
+      ),
+      canLoad && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "qm-btn qm-btn-primary", onClick: handleLoad, title: "Load workflow", children: "Load" }),
+      canArchive && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "qm-btn", onClick: handleArchive, title: "Move to the archive", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Inventory2SharpIcon, { fontSize: "small" }),
+        " Archive"
+      ] }),
+      canRun && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          className: "qm-btn qm-btn-primary",
+          onClick: handleRun,
+          title: shiftDown ? "Move to queue, at the front" : "Move to queue",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
+            shiftDown && /* @__PURE__ */ jsxRuntimeExports.jsx(UploadSharpIcon, { fontSize: "small" }),
+            " Run",
+            shiftDown ? " to front" : ""
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          className: "qm-btn qm-btn-danger delete",
+          onClick: handleDelete,
+          title: "Delete from queue",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(DeleteOutlineSharpIcon, { fontSize: "small" }),
+            " Delete"
+          ]
+        }
+      )
+    ] })
+  ] });
+}
 const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
 }));
@@ -27718,6 +27842,7 @@ function useQueue({ fetchOptions } = {}) {
     onQueueStatusUpdated
   };
 }
+const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
 function Home({ onDarkChange }) {
   const options = useOptionsStore((state) => state);
   const pageSize = useOptionsStore((state) => state.Basic.PageSize);
@@ -27761,6 +27886,15 @@ function Home({ onDarkChange }) {
     onQueueStatusUpdated
   } = useQueue({ fetchOptions });
   reactExports.useEffect(() => {
+    useSelectionStore.getState().clear();
+  }, [route, filters]);
+  reactExports.useEffect(() => {
+    if (!queueData) return;
+    const items = [...queueData.running ?? [], ...queueData.pending ?? []];
+    const currentKeys = items.map((item) => item?.[3]?.db_id ?? item?.[1]);
+    useSelectionStore.getState().retain(currentKeys);
+  }, [queueData]);
+  reactExports.useEffect(() => {
     const pageSizeChanged = pageSize !== previousPageSizeRef.current;
     const listOrderChanged = completedListOrder !== previousListOrderRef.current;
     previousPageSizeRef.current = pageSize;
@@ -27782,6 +27916,42 @@ function Home({ onDarkChange }) {
       apiCall("queue_manager/options", { key: "splash_screen", value: true }, "POST");
     }
   });
+  reactExports.useEffect(() => {
+    if (!queueData) return;
+    const handleKeyDown = (event) => {
+      const isInputLike = event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA" || event.target.isContentEditable;
+      if (event.key === "Escape") {
+        useSelectionStore.getState().clear();
+      } else if ((event.ctrlKey || event.metaKey) && (event.key === "a" || event.key === "A")) {
+        if (!isInputLike) {
+          event.preventDefault();
+          const items = [...queueData.running ?? [], ...queueData.pending ?? []];
+          const orderedKeys = items.map(itemKey);
+          useSelectionStore.getState().selectAll(orderedKeys);
+        }
+      } else if (event.key === "Delete" || event.key === "Backspace") {
+        if (!isInputLike) {
+          const selectedSize = useSelectionStore.getState().selected.size;
+          if (selectedSize > 0) {
+            let shouldDelete = true;
+            if (selectedSize > 5) {
+              shouldDelete = window.confirm(`Delete ${selectedSize} items?`);
+            }
+            if (shouldDelete) {
+              const running = queueData?.running ?? [];
+              const pending = queueData?.pending ?? [];
+              const selected = useSelectionStore.getState().selected;
+              const selectedRunning = running.filter((item) => selected.has(itemKey(item)));
+              const selectedPending = pending.filter((item) => selected.has(itemKey(item)));
+              performDelete(selectedRunning, selectedPending, fetchQueueItems);
+            }
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [queueData, fetchQueueItems]);
   reactExports.useEffect(() => {
     fetchQueueItems({ route: "queue" });
     fetchOptions();
@@ -27913,6 +28083,14 @@ function Home({ onDarkChange }) {
           route
         }
       ) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        SelectionBar,
+        {
+          route,
+          queueData,
+          fetchQueueItems
+        }
+      ),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         Footer,
         {

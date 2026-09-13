@@ -99,22 +99,29 @@ To view the Queue Manager window, click the Queue Manager button in the sidebar 
 
 ![main-window.png](readme-img/main-window.png)
 
-Each job appears as a card. On the right side of each card you have action buttons like Delete, Load, Archive, Run which are applicable to that individual item.
+Each job appears as a card. Click a card to select it. Cards no longer carry per-card action buttons — instead, a selection action bar appears above the footer showing only the actions valid for your current selection and the current tab (Queue, Archive, Completed): **Clear**, **Delete**, **Load**, **Archive**, **Run**. For example, **Load** only shows up when exactly one non-external item is selected, **Archive** only shows up on the Queue tab for pending items, and **Run** only shows up on the Archive tab.
 
-On the bottom you have buttons like Archive All, Export Queue etc. which are applicable to all items in the current tab.
+On the bottom you still have buttons like Archive All, Export Queue etc. which are applicable to all items in the current tab.
 
 When button on the bottom has a asterisk `*` next to it, it means that the action will be applied to the items in filtered view only (see **Filter by workflow** below).
 
+#### Selection
+- **Click** a card to select just that card.
+- **Ctrl/Cmd+Click** a card to toggle it in or out of the current selection.
+- **Shift+Click** a card to select a range from the last card you clicked to this one.
+- **Ctrl/Cmd+A** selects every item currently on the page.
+- **Escape** clears the current selection.
+- **Delete** / **Backspace** deletes the selected items, same as clicking **Delete** on the selection action bar. If more than 5 items are selected you'll be asked to confirm first.
 
 ### Archive
 **Archive** is a place where you can park your queue items to play them later.
 
-When in the **Queue** tab you can archive individual items by clicking the **Archive** button on each card, or you can archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
+When in the **Queue** tab, select one or more pending items and click **Archive** on the selection action bar to archive them, or archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
 
-Similarly, when in **Archive** tab you can play archived items by clicking the **Run** button on each card, or you can play all archived items by clicking the **Run All** button on the bottom of the window.
+Similarly, when in the **Archive** tab, select one or more items and click **Run** on the selection action bar to play them, or play all archived items by clicking the **Run All** button on the bottom of the window.
 
 #### Run at front of the queue
-You can run an item, entire archive or filtered out list of jobs at the front of the queue by pressing and holding the **Shift** while clicking the **Run** or **Run All** buttons.
+You can run a selection, the entire archive, or a filtered-out list of jobs at the front of the queue by pressing and holding **Shift** while clicking the selection action bar's **Run** button, or the **Run All** button.
 
 When holding Shift pressed a small indicator message will appear on top of the window to confirm that the action will run at front of queue.
 

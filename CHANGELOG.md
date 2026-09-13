@@ -1,5 +1,14 @@
 # Release Notes
 
+## v0.5.0
+_Sep 13, 2026_
+### New features and enhancements
+- Queue cards are now selectable: click to select, Ctrl/Cmd+click to toggle, Shift+click to select a range, Ctrl/Cmd+A to select everything on the page, and Escape to clear the selection.
+- Replaced the per-card Delete/Load/Archive/Run buttons with a single selection action bar above the footer, showing only the actions valid for the current selection and tab (Clear, Delete, Load, Archive, Run). Shift-click **Run** on the bar to run the selection at the front of the queue, same as the existing Run All behavior.
+- Delete/Backspace now deletes the current selection from the keyboard, with a confirmation prompt when more than 5 items are selected.
+
+---
+
 ## v0.4.0
 _Sep 13, 2026_
 ### New features and enhancements

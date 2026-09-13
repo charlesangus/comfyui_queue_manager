@@ -2,41 +2,80 @@
 
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import { QueueCard } from "../components/QueueCard";
 import { useAppStore } from "../stores/appStore";
+import { useSelectionStore } from "../stores/selectionStore";
+
+const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
 
 const QueueItems = memo(function QueueItems({ running, pending, info }) {
   const route = useAppStore((state) => state.route);
   const filters = useAppStore((state) => state.filters);
+  const selected = useSelectionStore((state) => state.selected);
+
+  const orderedKeys = useMemo(
+    () => [...running, ...pending].map(itemKey),
+    [running, pending]
+  );
+
+  // Kept in a ref (rather than a `handleSelect` dependency) so this stable
+  // callback always sees the latest ordered keys without changing identity,
+  // which would otherwise defeat QueueCard's memo comparator.
+  const orderedKeysRef = useRef(orderedKeys);
+  useEffect(() => {
+    orderedKeysRef.current = orderedKeys;
+  }, [orderedKeys]);
+
+  const handleSelect = useCallback((key, event) => {
+    if (event.shiftKey) {
+      useSelectionStore.getState().selectRange(orderedKeysRef.current, key);
+    } else if (event.ctrlKey || event.metaKey) {
+      useSelectionStore.getState().toggle(key);
+    } else {
+      useSelectionStore.getState().select(key);
+    }
+  }, []);
 
   return (
     <>
-      {running.map((item) => (
-        <QueueCard
-          key={item?.[3]?.db_id ?? item?.[1]}
-          item={item}
-          className="running"
-          loader={true}
-          mode={item?.[3]?.extra_pnginfo ? "running" : "external"}
-          info={info}
-          route={route}
-          filters={filters}
-        />
-      ))}
+      {running.map((item) => {
+        const key = itemKey(item);
+        return (
+          <QueueCard
+            key={key}
+            item={item}
+            className="running"
+            loader={true}
+            mode={item?.[3]?.extra_pnginfo ? "running" : "external"}
+            info={info}
+            route={route}
+            filters={filters}
+            isSelected={selected.has(key)}
+            onSelect={handleSelect}
+            itemKey={key}
+          />
+        );
+      })}
 
-      {pending.map((item, index) => (
-        <QueueCard
-          key={item?.[3]?.db_id ?? `${item?.[1]}-${index}`}
-          item={item}
-          className="pending"
-          index={index}
-          info={info}
-          route={route}
-          filters={filters}
-        />
-      ))}
+      {pending.map((item, index) => {
+        const key = itemKey(item);
+        return (
+          <QueueCard
+            key={item?.[3]?.db_id ?? `${item?.[1]}-${index}`}
+            item={item}
+            className="pending"
+            index={index}
+            info={info}
+            route={route}
+            filters={filters}
+            isSelected={selected.has(key)}
+            onSelect={handleSelect}
+            itemKey={key}
+          />
+        );
+      })}
     </>
   );
 });
