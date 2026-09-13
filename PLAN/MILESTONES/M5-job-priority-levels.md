@@ -55,7 +55,7 @@ the user range are reserved for M6 (`PRIORITY_INTERACTIVE = 1000`, `PRIORITY_PRE
   - verify: `pytest tests/` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M5.P1.T4 — Priority survives archive/run, export and import
+- [x] M5.P1.T4 — Priority survives archive/run, export and import
   - files: `src/comfyui_queue_manager/qm_queue.py`, `src/comfyui_queue_manager/qm_server.py`, `tests/test_qm_queue.py`
   - approach: `play_items`/`play_archive`/`archive_items` already leave other columns alone —
     confirm with a test that an archived priority-2 item runs as priority 2. Export:
