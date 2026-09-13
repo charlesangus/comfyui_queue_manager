@@ -247,6 +247,56 @@ def test_task_done_records_interruption(qm_queue):
     assert error_meta["traceback"] is None
 
 
+def test_get_current_queue_completed_route_includes_errored_job(qm_queue):
+    history_result = {"outputs": {}}
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_error",
+                {
+                    "prompt_id": "prompt-completed-error-1",
+                    "node_id": "7",
+                    "node_type": "KSampler",
+                    "executed": [],
+                    "exception_message": "CUDA out of memory",
+                    "exception_type": "RuntimeError",
+                    "traceback": ["line 1", "line 2"],
+                    "current_inputs": {},
+                    "current_outputs": [],
+                },
+            ),
+        ],
+    )
+
+    item = _make_item(100, "prompt-completed-error-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    _, task_id = qm_queue.native_queue.get()
+    qm_queue.qm.task_done(task_id, history_result, status)
+
+    success_item = _make_item(100, "prompt-completed-success-1", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(success_item)
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2 WHERE prompt_id = ?", ("prompt-completed-success-1",))
+
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+
+    by_prompt_id = {row[1]: row for row in completed}
+
+    errored = by_prompt_id["prompt-completed-error-1"]
+    assert errored[3]["status"] == -1
+    assert errored[3]["error"]["kind"] == "error"
+    assert errored[3]["error"]["message"] == "CUDA out of memory"
+    assert errored[3]["error"]["node_id"] == "7"
+    assert errored[3]["error"]["node_type"] == "KSampler"
+    assert errored[3]["error"]["traceback"] == ["line 1", "line 2"]
+
+    succeeded = by_prompt_id["prompt-completed-success-1"]
+    assert succeeded[3]["status"] == 2
+    assert succeeded[3]["error"] is None
+
+
 def test_queue_put_exposes_card_metadata_on_pending_item(qm_queue):
     item = _make_item(100, "prompt-card-pending", "Workflow Card", "wf-card")
     item[2] = _card_graph()

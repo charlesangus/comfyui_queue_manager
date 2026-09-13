@@ -111,7 +111,8 @@ class QM_Queue:
 
                     join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
                     join_string += " LEFT JOIN meta as exec_time ON queue.id = exec_time.item_id AND exec_time.key = 'execution_time'"
-                    select_string = f"{select_string}, outputs.value as outputs, exec_time.value as execution_time"
+                    join_string += " LEFT JOIN meta AS error ON queue.id = error.item_id AND error.key = 'error'"
+                    select_string = f"{select_string}, queue.status, outputs.value as outputs, exec_time.value as execution_time, error.value as error"
 
             join_string += """
                 LEFT JOIN meta AS card
@@ -194,6 +195,13 @@ class QM_Queue:
                             item[3]["execution_time"] = float(row["execution_time"])
                         else:
                             item[3]["execution_time"] = None
+
+                        item[3]["status"] = row["status"]
+
+                        if row["error"] is not None:
+                            item[3]["error"] = json.loads(row["error"])
+                        else:
+                            item[3]["error"] = None
 
                     pending.append(tuple(item))
 
@@ -1000,6 +1008,6 @@ class QM_Queue:
             case "archive":
                 return "status = 3"
             case "completed":
-                return "status = 2"  # completed
+                return "status IN (2, -1)"  # completed or errored/interrupted
 
         return ""
