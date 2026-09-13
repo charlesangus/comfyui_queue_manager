@@ -57,7 +57,7 @@ handling sees the job.
   - verify: `pytest tests/test_qm_queue.py` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M6.P2.T2 — `preempt_running()` and requeue in `task_done`
+- [x] M6.P2.T2 — `preempt_running()` and requeue in `task_done`
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`, `tests/fake_comfy.py`
   - approach: `self.preempted = None` in `__init__`. `preempt_running()` (called under the
     mutex): take the first item of `self.native_queue.currently_running.values()`; if none, or
