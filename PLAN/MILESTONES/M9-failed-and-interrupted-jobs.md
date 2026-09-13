@@ -51,7 +51,7 @@ interrupt route.
 
 ## Phase 9.2: Frontend
 
-- [ ] M9.P2.T1 — Cards show failure state; running-job delete uses the new endpoint
+- [x] M9.P2.T1 — Cards show failure state; running-job delete uses the new endpoint
   - files: `src/gui/app/components/QueueCard.jsx`, `src/gui/styles/_queue.scss`, `src/gui/app/internals/functions.js`
   - approach: When `item[3].error` is present, the card gets a `.failed` class, a header badge
     "Interrupted" or "Error" (`kind`), and a collapsible `.error-details` block showing
@@ -80,6 +80,14 @@ M9.P2.T1 pass; rebuilt `web/.gui/` committed.
 
 ## Decisions
 
+- 2026-09-13 — M9.P2.T1's manual QA pass (3 scenarios: error card, interrupted card, delete
+  running leaves nothing behind) all passed against the live ComfyUI test instance. Also
+  surfaced a pre-existing, unrelated bug: ComfyUI 0.35.1's own native `GET /api/jobs` endpoint
+  500s (`too many values to unpack`) whenever a Queue Manager job sits in native history,
+  because the extension has always stored 6-element queue-item tuples (padding logic in
+  `queue_put`/`play_items`, untouched by M9) where the native Jobs API expects 5. Affects
+  ComfyUI's own native Jobs sidebar, not this extension's panel. Logged on the board's
+  `# Open questions` as a follow-up, not fixed here — out of scope for M9.
 - 2026-09-13 — M9.P1.T2's `delete_running` was replaced in place by `delete_running_job`
   rather than kept alongside it: a repo-wide grep showed its only callers were the two
   `/api/interrupt` call sites just removed from `qm_server.py`'s `post_queue` middleware, plus

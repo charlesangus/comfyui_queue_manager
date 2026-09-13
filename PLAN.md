@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: M9.P2.T1
-pm_heartbeat: 2026-09-13T09:32:00-04:00
+current: M9.P2.T2
+pm_heartbeat: 2026-09-13T10:05:00-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -98,6 +98,13 @@ Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 w
 - Should the fork's metadata (`pyproject.toml` `[project.urls] Repository`, `[tool.comfy] Icon`
   URL, README links) be repointed from `QuietNoise/...` to `charlesangus/...`? Only matters if the
   fork will be published to the Comfy registry under its own name; left untouched until answered.
+- Found during M9's manual verification (not caused by M9, pre-existing): ComfyUI 0.35.1's own
+  native `GET /api/jobs` endpoint 500s (`ValueError: too many values to unpack (expected 5)` in
+  `comfy_execution/jobs.py:normalize_history_item`) whenever a Queue Manager job sits in native
+  history, because the extension has always stored 6-element queue-item tuples (see the
+  backwards-compatibility padding in `qm_queue.py`'s `queue_put`/`play_items`) where the native
+  Jobs API expects 5. Affects ComfyUI's own native Jobs sidebar, not this extension's panel.
+  Worth a fix or an upstream-compat shim at some point; not blocking any current milestone.
 - Found during M2's manual verification (not caused by M2, pre-existing): `qm_queue.py`'s
   `queue_get` (~line 472) crashes the `prompt_worker` thread with `KeyError: 'extra_pnginfo'`
   when a prompt is submitted straight to the native `/prompt` endpoint without
