@@ -72,7 +72,7 @@ this milestone is a pure move.
   - verify: `npm test` passes; `npm run lint` passes.
   - size: S
 
-- [ ] M8.P2.T2 — Run the JS tests and lint in CI
+- [x] M8.P2.T2 — Run the JS tests and lint in CI
   - files: `.github/workflows/build-pipeline.yml`
   - approach: Add a job `gui` (ubuntu, `actions/setup-node@v4` with node 24, working directory
     `src/gui`) running `npm ci`, `npm run lint`, `npm test`, `npm run build`, and failing if
@@ -112,3 +112,8 @@ three tabs); `pytest tests/` and `ruff check .` green; both CI jobs green on the
   `appStore` (Zustand setters), `MediaOutputs` (pure model), and `compareVersions`
   (pure helper) — none render a component, so the dependency wasn't needed. Dropped it
   rather than adding an unused devDependency.
+- 2026-09-13 — M8.P2.T2's `git diff --quiet -- ../../web/.gui` staleness check was kept
+  (verified locally: deterministic, byte-identical rebuild, sourcemap uses relative not
+  absolute paths) rather than dropped per the task's fallback clause. Watch the milestone
+  PR's first real CI run for a false positive before trusting it long-term — it's only been
+  verified on one machine/Node version, not GitHub's actual runner.
