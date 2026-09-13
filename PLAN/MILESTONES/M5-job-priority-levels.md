@@ -67,7 +67,7 @@ the user range are reserved for M6 (`PRIORITY_INTERACTIVE = 1000`, `PRIORITY_PRE
 
 ## Phase 5.2: Frontend
 
-- [ ] M5.P2.T1 — Priority badge on cards and "Priority" action on the selection bar
+- [x] M5.P2.T1 — Priority badge on cards and "Priority" action on the selection bar
   - files: `src/gui/app/components/QueueCard.jsx`, `src/gui/app/components/SelectionBar.jsx`, `src/gui/app/components/PriorityMenu.jsx` (new), `src/gui/styles/_queue.scss`
   - approach: The backend exposes `item[3].priority` (add it to `get_current_queue`'s item
     decoration in T2 if not already there). `QueueCard` shows a `.priority-badge` in the header
@@ -102,3 +102,9 @@ level; rebuilt `web/.gui/` committed.
 - 2026-09-11 — Priority is an ordering key *above* the native `number` rather than a rewrite of
   `number`: keeps "run at front" and crash-restore numbering untouched and makes the migration a
   single added column.
+- 2026-09-13 — M5.P2.T1 touched `src/comfyui_queue_manager/qm_queue.py` (not in that task's
+  `files` list): `get_current_queue` only used `priority` for ordering, never stamped it onto
+  `item[3]` the way `db_id` already is, so the frontend badge had no value to read. Added
+  `priority` to the shared `select_string` and the `item[3]["priority"] = row["priority"]` stamp,
+  mirroring the existing `db_id` pattern — anticipated by the task's own approach text ("add it
+  to get_current_queue's item decoration ... if not already there").
