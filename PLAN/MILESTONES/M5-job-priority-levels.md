@@ -81,7 +81,7 @@ the user range are reserved for M6 (`PRIORITY_INTERACTIVE = 1000`, `PRIORITY_PRE
     others in the Queue tab and run first; the badge renders in both themes; lint passes.
   - size: M
 
-- [ ] M5.P2.T2 — Rebuild, docs, changelog
+- [x] M5.P2.T2 — Rebuild, docs, changelog
   - files: `web/.gui/**`, `README.md`, `CHANGELOG.md`
   - approach: `npm run build`; commit `web/.gui/`. README: new manual section "Priority"
     (how levels interact with "run at front": front-of-queue orders within a level; presets
