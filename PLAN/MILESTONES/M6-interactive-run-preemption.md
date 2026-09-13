@@ -81,7 +81,7 @@ handling sees the job.
   - verify: `pytest tests/test_qm_queue.py` passes; `ruff check .` passes.
   - size: M
 
-- [ ] M6.P2.T3 — Interactive prompts run while the queue is paused
+- [x] M6.P2.T3 — Interactive prompts run while the queue is paused
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: In `queue_get`'s `while self.paused:` loop, before waiting, check
     `read_single("SELECT 1 FROM queue WHERE status = 0 AND priority >= ? LIMIT 1",
