@@ -9,7 +9,7 @@ this milestone is a pure move.
 
 ## Phase 8.1: Split `index.jsx`
 
-- [ ] M8.P1.T1 — Extract the parent-window message protocol into `useParentMessages`
+- [x] M8.P1.T1 — Extract the parent-window message protocol into `useParentMessages`
   - files: `src/gui/app/hooks/useParentMessages.js` (new), `src/gui/app/internals/parentBridge.js` (new), `src/gui/app/index.jsx`
   - approach: Move `handleMessage` and the `window.addEventListener("message", …)` effect into
     a hook `useParentMessages({ onQueueStatusUpdated, onSettingChanged, onHello })` that keeps
