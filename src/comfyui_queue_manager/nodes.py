@@ -5,9 +5,6 @@ from typing import Any, Dict
 
 from server import PromptServer
 
-from . import qm_card
-
-
 class AnyType(str):
     def __ne__(self, __value: object) -> bool:
         return False
@@ -73,6 +70,8 @@ class QueueCardInfo:
     def run(self, value, index, label):
         running = current_running_item()
         if running is not None:
+            from . import qm_card
+
             prompt_id = running[1]
             entry = qm_card.capture_runtime_value(prompt_id, index, label, value)
             if entry is not None:

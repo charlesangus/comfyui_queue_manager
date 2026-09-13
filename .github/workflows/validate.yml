@@ -10,4 +10,15 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: comfy-org/node-diff@main
+      - uses: actions/checkout@v4
+        with:
+          path: pr_repo
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base_repo
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compare node metadata
+        run: python -I -S pr_repo/scripts/validate_nodes.py base_repo pr_repo
