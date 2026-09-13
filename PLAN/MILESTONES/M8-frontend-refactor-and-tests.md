@@ -117,3 +117,13 @@ three tabs); `pytest tests/` and `ruff check .` green; both CI jobs green on the
   absolute paths) rather than dropped per the task's fallback clause. Watch the milestone
   PR's first real CI run for a false positive before trusting it long-term — it's only been
   verified on one machine/Node version, not GitHub's actual runner.
+- 2026-09-13 — PR #6 review round (Codex, quota available): 3 minor findings, all fixed in one
+  round — the empty placeholder `<track>` in `MediaItem.jsx` replaced with a narrowly-scoped
+  `eslint-disable-next-line jsx-a11y/media-has-caption` (no caption data exists for generated
+  previews); `eslint.config.mjs`'s `process: "readonly"` moved off the broad browser-globals
+  block onto a `files: ["app/internals/config.js"]`-scoped one (it had accidentally been made
+  global to all JS/JSX, silently permitting stray `process` use in browser code); the CI
+  staleness check switched from `git diff --quiet` to `git status --porcelain
+  --untracked-files=all`, since the former missed newly-generated untracked files under
+  `web/.gui/`. This also superseded the note above about watching for a CI false positive —
+  moot now that the check catches untracked files too, no longer just modified/deleted ones.
