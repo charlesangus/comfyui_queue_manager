@@ -152,3 +152,14 @@ end-to-end scenarios in M6.P3.T2 pass.
      didn't catch this because it calls `queue_get` fresh, after the item is already queued, never
      exercising a worker already blocked in `wait()`.
   Fixes dispatched to a subagent; gate will be re-run once both are fixed and verified.
+- 2026-09-13 — Both bugs fixed (code: 0d0a7b0): `hookQueuePrompt()` now reads a 3rd `options`
+  parameter and checks `options?.partialExecutionTargets` (matching the real
+  `ComfyApi.prototype.queuePrompt(e, t, n)` signature, confirmed against the 1.51.10 bundle) and
+  forwards it through the call-through unchanged. `queue_put` now calls `self.pause_lock.notify()`
+  when it inserts a `priority >= PRIORITY_INTERACTIVE` row while paused; `queue_get`'s pause loop
+  now distinguishes a real timeout from a notify-driven wakeup via `Condition.wait()`'s return
+  value, instead of re-checking `self.paused` (which discarded the wakeup whenever the queue was
+  still paused — the actual bug, since an interactive-item notify by design leaves `paused` true).
+  New threading-based regression test proves this is notify-driven, not timeout-driven. Full
+  backend suite green (107 passed/6 skipped), run 3x with no flakiness. Re-verification of the
+  live end-to-end scenarios follows before the gate closes.
