@@ -22,7 +22,7 @@ the user range are reserved for M6 (`PRIORITY_INTERACTIVE = 1000`, `PRIORITY_PRE
   - verify: `pytest tests/test_qm_db.py` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M5.P1.T2 — Scheduler honours priority (and front-of-queue against the prefetched heap item)
+- [x] M5.P1.T2 — Scheduler honours priority (and front-of-queue against the prefetched heap item)
   - files: `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`
   - approach: Define module constants `PRIORITY_MIN = -100`, `PRIORITY_MAX = 100`,
     `PRIORITY_PREEMPTED = 999`, `PRIORITY_INTERACTIVE = 1000`. Change every pending-item pick to
