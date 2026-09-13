@@ -134,3 +134,7 @@ M3.P2.T2 passes in a ComfyUI instance; `web/docs/Queue Card Info.md` present; re
   first placeholder and otherwise the first match; unmatched entries append with a stable
   index sort. This preserves differently labelled entries that share an index without adding
   node identity to M2's persisted card contract.
+- 2026-09-12 — Replaced the failing `comfy-org/node-diff` action with a repository-owned node
+  metadata comparison that checks the actual base SHA against the PR on Python 3.12. The
+  upstream action imported the historical base package before comparison and failed on its
+  existing ComfyUI-only `execution` dependency, so it could not reach compatibility analysis.
