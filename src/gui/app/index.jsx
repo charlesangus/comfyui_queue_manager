@@ -14,6 +14,7 @@ import {SplashScreen} from "./components/SplashScreen";
 import {compareVersions} from "./internals/functions";
 import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
+import {useSelectionStore} from "./stores/selectionStore";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
 import {useComfyTheme} from "./hooks/useComfyTheme";
 import {useParentMessages} from "./hooks/useParentMessages";
@@ -70,6 +71,18 @@ export default function Home({ onDarkChange }) {
     appendRoute,
     onQueueStatusUpdated,
   } = useQueue({ fetchOptions });
+
+  useEffect(() => {
+    useSelectionStore.getState().clear();
+  }, [route, filters]);
+
+  useEffect(() => {
+    if (!queueData) return;
+
+    const items = [...(queueData.running ?? []), ...(queueData.pending ?? [])];
+    const currentKeys = items.map((item) => item?.[3]?.db_id ?? item?.[1]);
+    useSelectionStore.getState().retain(currentKeys);
+  }, [queueData]);
 
   useEffect(() => {
     const pageSizeChanged = pageSize !== previousPageSizeRef.current;
