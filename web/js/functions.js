@@ -439,12 +439,12 @@ export function registerSidebar() {
 export function hookQueuePrompt() {
   const _apiQueuePrompt = app.api.queuePrompt;
 
-  app.api.queuePrompt = async function(n, data, ...args) {
+  app.api.queuePrompt = async function(n, data, options, ...args) {
     // Inject workflow name
     // SIML: Perhaps add a setting to enable/disable this behaviour (privacy concern? the workflow name will travel all the way to the generated PNG)
     data.workflow.workflow_name = app.extensionManager.workflow.activeWorkflow.filename;
 
-    const isPartialExecution = Array.isArray(data.partialExecutionTargets) && data.partialExecutionTargets.length > 0;
+    const isPartialExecution = Array.isArray(options?.partialExecutionTargets) && options.partialExecutionTargets.length > 0;
     if (isPartialExecution) {
       const interactiveRunMode = app.extensionManager.setting.get('QueueManager.Basic.InteractiveRunMode');
       if (interactiveRunMode === 'Front of queue') {
@@ -454,7 +454,7 @@ export function hookQueuePrompt() {
       }
     }
 
-    return await _apiQueuePrompt.call(app.api, n, data, ...args);
+    return await _apiQueuePrompt.call(app.api, n, data, options, ...args);
   };
 }
 

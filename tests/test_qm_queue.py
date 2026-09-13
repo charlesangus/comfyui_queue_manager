@@ -1,4 +1,5 @@
 import json
+import threading
 
 import pytest
 
@@ -244,6 +245,38 @@ def test_queue_get_lets_interactive_item_bypass_pause(qm_queue):
     assert result[0][1] == "prompt-interactive-paused"
 
     assert qm_queue.native_queue.get(timeout=0.2) is None
+
+
+def test_queue_put_notifies_worker_waiting_on_pause(qm_queue, monkeypatch):
+    qm_queue.qm.paused = True
+
+    waiting = threading.Event()
+    original_wait = qm_queue.qm.pause_lock.wait
+
+    def tracked_wait(timeout=None):
+        waiting.set()
+        return original_wait(timeout)
+
+    monkeypatch.setattr(qm_queue.qm.pause_lock, "wait", tracked_wait)
+
+    result = {}
+
+    def worker():
+        result["item"] = qm_queue.native_queue.get(timeout=5)
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+
+    assert waiting.wait(timeout=2)
+
+    interactive = _make_item(1, "prompt-interactive-notify", "Workflow A", "wf-a")
+    interactive[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "front"
+    qm_queue.native_queue.put(interactive)
+
+    thread.join(timeout=2)
+    assert not thread.is_alive()
+    assert result["item"] is not None
+    assert result["item"][0][1] == "prompt-interactive-notify"
 
 
 def _interrupted_status(prompt_id):

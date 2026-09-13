@@ -526,6 +526,11 @@ class QM_Queue:
             if mode == "interrupt":
                 self.preempt_running()
 
+            # A worker already parked in queue_get's pause wait only re-tests the
+            # interactive bypass after it wakes, so inserting the row is not enough.
+            if self.paused and priority >= PRIORITY_INTERACTIVE:
+                self.pause_lock.notify()
+
             if not self.paused and (
                 head_prompt_id is None
                 or head_prompt_id == item[1]
@@ -619,8 +624,8 @@ class QM_Queue:
             while self.paused:
                 if read_single("SELECT 1 FROM queue WHERE status = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
                     break
-                self.pause_lock.wait(timeout=timeout)
-                if timeout is not None and self.paused:  # if timed out and we are still paused
+                notified = self.pause_lock.wait(timeout=timeout)
+                if timeout is not None and not notified:  # if timed out rather than woken
                     return None  # give up
 
             # if no pending item in the native queue then we get the one from the database
