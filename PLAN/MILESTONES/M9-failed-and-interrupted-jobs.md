@@ -25,7 +25,7 @@ interrupt route.
   - verify: `pytest tests/test_qm_queue.py` passes; `ruff check .` passes.
   - size: S
 
-- [ ] M9.P1.T2 — Explicit "delete running job" endpoint; native interrupt no longer deletes
+- [x] M9.P1.T2 — Explicit "delete running job" endpoint; native interrupt no longer deletes
   - files: `src/comfyui_queue_manager/qm_server.py`, `src/comfyui_queue_manager/qm_queue.py`, `tests/test_qm_queue.py`, `tests/fake_comfy.py`, `tests/conftest.py`
   - approach: Add `DELETE /queue_manager/running` accepting `{prompt_id}` (or none for the
     current job): `QM_Queue.delete_running_job(prompt_id)` adds it to `self.pending_delete`
@@ -79,6 +79,12 @@ interrupt route.
 M9.P2.T1 pass; rebuilt `web/.gui/` committed.
 
 ## Decisions
+
+- 2026-09-13 — M9.P1.T2's `delete_running` was replaced in place by `delete_running_job`
+  rather than kept alongside it: a repo-wide grep showed its only callers were the two
+  `/api/interrupt` call sites just removed from `qm_server.py`'s `post_queue` middleware, plus
+  one test assertion (updated). Matches the task's own fallback instruction ("delete it if
+  nothing else calls it").
 
 - 2026-09-11 — Native Stop/interrupt keeps the job as "Interrupted" in Completed; only the
   Queue Manager's own delete action removes a running job. Rationale: the native button is
