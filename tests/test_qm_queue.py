@@ -366,7 +366,6 @@ def test_deletion_paths_remove_only_their_card_images(qm_queue, monkeypatch, tmp
         ("explicit_1", 0),
         ("explicit", 2),
         ("wipe_pending", 0),
-        ("running_prompt", 1),
         ("archived_prompt", 3),
     ]
     for prompt_id, status in rows:
@@ -382,8 +381,68 @@ def test_deletion_paths_remove_only_their_card_images(qm_queue, monkeypatch, tmp
 
     assert qm_queue.qm.wipe_queue() is None
     assert not (cards_dir / qm_card_module._card_image_name("wipe_pending", 1)).exists()
-    assert qm_queue.qm.delete_running("running_prompt") == 1
-    assert not (cards_dir / qm_card_module._card_image_name("running_prompt", 1)).exists()
     assert qm_queue.qm.delete_from_queue("archive") == 1
     assert not (cards_dir / qm_card_module._card_image_name("archived_prompt", 1)).exists()
     assert (cards_dir / qm_card_module._card_image_name("explicit", 1)).is_file()
+
+
+def test_delete_running_job_marks_pending_delete_and_interrupts(qm_queue):
+    import nodes as nodes_module
+
+    item = _make_item(100, "prompt-delete-running", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.native_queue.get()
+
+    calls_before = len(nodes_module.interrupt_calls)
+
+    assert qm_queue.qm.delete_running_job("prompt-delete-running") == 1
+    assert "prompt-delete-running" in qm_queue.qm.pending_delete
+    assert len(nodes_module.interrupt_calls) == calls_before + 1
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT status FROM queue WHERE prompt_id = ?",
+        ("prompt-delete-running",),
+    )
+    assert row["status"] == 1
+
+
+def test_task_done_deletes_row_for_job_marked_pending_delete(qm_queue, monkeypatch, tmp_path):
+    import src.comfyui_queue_manager.qm_card as qm_card_module
+
+    cards_dir = tmp_path / "cards"
+    cards_dir.mkdir()
+    monkeypatch.setattr(qm_card_module, "CARDS_DIR", cards_dir)
+
+    item = _make_item(100, "prompt-delete-flow", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    (cards_dir / qm_card_module._card_image_name("prompt-delete-flow", 1)).write_bytes(b"png")
+    _, task_id = qm_queue.native_queue.get()
+
+    assert qm_queue.qm.delete_running_job("prompt-delete-flow") == 1
+
+    status = (
+        "error",
+        False,
+        [
+            ("execution_start", {"timestamp": 1000}),
+            (
+                "execution_interrupted",
+                {
+                    "prompt_id": "prompt-delete-flow",
+                    "node_id": "3",
+                    "node_type": "KSampler",
+                    "executed": [],
+                },
+            ),
+        ],
+    )
+    qm_queue.qm.task_done(task_id, {"outputs": {}}, status)
+
+    row = qm_queue.qm_db.read_single(
+        "SELECT id FROM queue WHERE prompt_id = ?",
+        ("prompt-delete-flow",),
+    )
+    assert row is None
+    assert "prompt-delete-flow" not in qm_queue.qm.pending_delete
+    assert not (cards_dir / qm_card_module._card_image_name("prompt-delete-flow", 1)).exists()
+    assert task_id not in qm_queue.native_queue.currently_running

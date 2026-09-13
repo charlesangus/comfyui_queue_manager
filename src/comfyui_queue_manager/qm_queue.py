@@ -3,6 +3,7 @@ from typing import Optional
 
 from execution import PromptQueue
 from server import PromptServer
+import nodes
 
 import json
 import heapq
@@ -52,6 +53,7 @@ class QM_Queue:
         # ===================================================================
         self.native_queue = PromptServer.instance.prompt_queue
         self.pause_lock = threading.Condition(self.native_queue.mutex)
+        self.pending_delete = set()
 
         # Hijack PromptQueue.get() to get the item marked for execution and mark the item as running in the database
         self.original_get = self.native_queue.get
@@ -274,6 +276,19 @@ class QM_Queue:
                 """,
                     (final_status, prompt_id),
                 )
+
+                if prompt_id in self.pending_delete:
+                    write_query(
+                        """
+                        DELETE FROM queue
+                        WHERE prompt_id = ?
+                    """,
+                        (prompt_id,),
+                    )
+                    remove_card_images([prompt_id])
+                    self.pending_delete.discard(prompt_id)
+                    self.original_task_done(item_id, history_result, status)
+                    return
 
                 outputs = {}
                 if history_result is not None and "outputs" in history_result:
@@ -667,7 +682,7 @@ class QM_Queue:
 
             return archived
 
-    def delete_running(self, prompt_id=None):
+    def delete_running_job(self, prompt_id=None):
         with self.native_queue.mutex:
             prompt_ids = [
                 row[0]
@@ -676,16 +691,9 @@ class QM_Queue:
                     (prompt_id, prompt_id),
                 )
             ]
-            # Interrupt the queue
-            deleted = write_query(
-                """
-                DELETE FROM queue
-                WHERE status = 1 AND (? IS NULL OR prompt_id = ?)
-            """,
-                (prompt_id, prompt_id),
-            )
-            remove_card_images(prompt_ids)
-            return deleted
+            self.pending_delete.update(prompt_ids)
+            nodes.interrupt_processing()
+            return len(prompt_ids)
 
     def play_items(self, items, front, client_id=None):
         """
