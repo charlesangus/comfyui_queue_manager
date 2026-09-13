@@ -105,7 +105,7 @@ handling sees the job.
     present; rebuilt bundle in `git status`.
   - size: S
 
-- [ ] M6.P3.T2 — End-to-end check in a ComfyUI instance
+- [x] M6.P3.T2 — End-to-end check in a ComfyUI instance
   - files: none (verification only; fixes go in the file they belong to and are noted in `## Decisions`)
   - approach: Queue three slow background jobs. (a) `Front of queue`: run a single output node
     on the canvas → it starts as soon as the running job ends, before the two pending jobs.
@@ -163,3 +163,9 @@ end-to-end scenarios in M6.P3.T2 pass.
   New threading-based regression test proves this is notify-driven, not timeout-driven. Full
   backend suite green (107 passed/6 skipped), run 3x with no flakiness. Re-verification of the
   live end-to-end scenarios follows before the gate closes.
+- 2026-09-13 — Re-verification against the live ComfyUI instance: all 6 checks pass. Captured
+  `/prompt` request bodies proved `hookQueuePrompt()` now correctly stamps `qm_interactive` on a
+  real partial-execution run (and doesn't on a full run, or when the mode is Off); the paused
+  queue's interactive bypass now fires within milliseconds of submission instead of racing;
+  interrupt→requeue completed end-to-end with zero orphaned `status = 1`/`status = 0` rows. Gate
+  passes.

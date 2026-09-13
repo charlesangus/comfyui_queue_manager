@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
 status: running
-current: M6.P3.T2
-pm_heartbeat: 2026-09-13T20:15:00-04:00
+current: null
+pm_heartbeat: 2026-09-13T21:40:00-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -88,7 +88,7 @@ Done when every milestone below is merged into `main` on the fork with a release
 | M9 | Failed and interrupted jobs are kept | done | [M9-failed-and-interrupted-jobs.md](PLAN/MILESTONES/M9-failed-and-interrupted-jobs.md) |
 | M4 | Card selection and bulk actions | done | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
 | M5 | Job priority levels | done | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
-| M6 | Interactive runs preempt the queue | doing | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
+| M6 | Interactive runs preempt the queue | done | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
 | M11 | Final visual polish pass | todo | [M11-final-visual-polish.md](PLAN/MILESTONES/M11-final-visual-polish.md) |
 
 Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 were planned).
