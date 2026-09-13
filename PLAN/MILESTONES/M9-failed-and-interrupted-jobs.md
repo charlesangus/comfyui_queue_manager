@@ -65,7 +65,7 @@ interrupt route.
     "Interrupted" card; deleting a running job from the Queue Manager leaves nothing behind.
   - size: M
 
-- [ ] M9.P2.T2 — Docs, changelog, release build
+- [x] M9.P2.T2 — Docs, changelog, release build
   - files: `README.md`, `CHANGELOG.md`, `web/.gui/**`
   - approach: README manual: add "Failed and interrupted jobs" (what shows in Completed, how
     to re-run via Load or Run, how deleting a running job differs from native Stop); update
