@@ -80,6 +80,17 @@ M9.P2.T1 pass; rebuilt `web/.gui/` committed.
 
 ## Decisions
 
+- 2026-09-13 — PR #7 review round (Codex, quota available): 5 findings, all fixed in one round
+  — 2 real bugs (`delete_running_job` was calling `nodes.interrupt_processing()` even when the
+  requested `prompt_id` matched no running job, incorrectly interrupting whatever else happened
+  to be running; `task_done`'s pending-delete branch dropped the `process_item` callback that
+  strips sensitive extra_data before ComfyUI's native history stores the prompt), 1 data
+  staleness bug (the `error` meta row was only cleared inside the error branch, so a job that
+  errored once and later succeeded on a resubmitted same-`prompt_id` retry kept showing a stale
+  failure badge — fixed by clearing it on every completion, plus a frontend belt-and-suspenders
+  gate on `status === -1`), and 2 comment-policy nits (a milestone-referencing comment removed,
+  a narrating one shortened to match the file's terser convention).
+
 - 2026-09-13 — M9.P2.T1's manual QA pass (3 scenarios: error card, interrupted card, delete
   running leaves nothing behind) all passed against the live ComfyUI test instance. Also
   surfaced a pre-existing, unrelated bug: ComfyUI 0.35.1's own native `GET /api/jobs` endpoint
