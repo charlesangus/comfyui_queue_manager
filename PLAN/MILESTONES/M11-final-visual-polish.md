@@ -27,7 +27,7 @@ states. No new features.
 
 ## Phase 11.2: Fixes
 
-- [ ] M11.P2.T1 — Structural fixes: layout, density, responsiveness
+- [x] M11.P2.T1 — Structural fixes: layout, density, responsiveness
   - files: `src/gui/styles/_queue.scss`, `src/gui/styles/_footer.scss`, `src/gui/app/components/QueueCard.jsx`, `src/gui/app/components/SelectionBar.jsx`, `src/gui/app/components/CardInfo.jsx`
   - approach: Apply the layout findings from T1: consistent `--qm-space` multiples for card
     padding and gaps; a `container` query (or `min-width` breakpoints on `.qm-cards`) so cards
@@ -150,11 +150,18 @@ used instead and give full coverage of the error-block states.
   `class` on `<html>`) rather than a public event, so a future ComfyUI frontend change could
   silently break it. Neither is in scope for M11.
 
-### Structural (M11.P2.T1)
+### Structural (M11.P2.T1) — all closed 2026-09-13 (code 525365f)
 - Selection: `.qm-card.selected` box-shadow ring invisible behind opaque `.card-header` on
   empty-bodied cards → repaint the selection indicator so it isn't occluded.
 - Priority menu overlaps/collides with the sticky footer at 600px width → collision-aware
   positioning (flip upward).
+- 2026-09-13 — Priority menu flips upward only when there is no room below the anchor and more
+  room above (measured at open time against the iframe viewport), rather than always opening
+  upward: an unconditional flip would trade the footer collision for a header/tabs collision on
+  short panels.
+- 2026-09-13 — Verification note: the sidebar panel's on-screen width is fixed at ~312px
+  regardless of the browser viewport (PrimeVue splitter with a `min-w` constraint); reaching a
+  600px panel in Playwright requires dragging the splitter gutter, not resizing the viewport.
 - Card-info tiles stretch short text tiles to match taller siblings, leaving unwanted empty
   space → `align-items: flex-start` on `.card-info`.
 - Selection bar / footer action buttons isolate the danger button on its own line at 320px width
