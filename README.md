@@ -79,7 +79,19 @@ In no particular order, just some ideas I have for the future of this extension.
 and other things I forgot about.
 
 ## Manual
-*Note: The screenshots below predate the ComfyUI theme and design update and will be retaken.*
+*Note: The screenshots below predate the ComfyUI theme and design update. The following screenshots need retaking to reflect the current design:*
+
+- `readme-img/pause.png` — Pause button in the toolbar with queue in paused state
+- `readme-img/resume.png` — Play/resume button in the toolbar with queue resumed
+- `readme-img/main-window.png` — Queue tab with multiple cards showing selection indicators (outline), unified badge pills (priority, execution time), interactive and resumed badges, delete buttons at normal width, and visible progress fill on running cards
+- `readme-img/shift-pressed.png` — "Run at front of queue" indicator message at the top of the window
+- `readme-img/filters.png` — Workflow filter interface showing filtered card list
+- `readme-img/focus.png` — Three-dot menu with "Take over focus" option visible
+- `readme-img/external-job.png` — Card indicating an external job (from third-party queue submission)
+- `readme-img/settings.png` — ComfyUI Settings panel showing Queue Manager settings section
+- `readme-img/priority-menu.png` — Priority menu dropdown showing presets (Low/Normal/High) and custom input field (new)
+- `readme-img/card-info.png` — Queue card displaying Queue Card Info node output (new)
+- `readme-img/error-details.png` — Completed card with expandable error details showing failure message, node, and traceback (new)
 
 ### Pause / Resume Queue
 Click the pause button to pause the queue.
