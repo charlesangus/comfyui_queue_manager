@@ -124,7 +124,7 @@ const executionTimeLabel = useMemo(() => {
           </div>
 
           {route === "completed" && executionTimeLabel ? (
-            <div className="execution-time" title="Execution time">
+            <div className="qm-badge execution-time" title="Execution time">
               {executionTimeLabel}
             </div>
           ) : null}
@@ -139,7 +139,10 @@ const executionTimeLabel = useMemo(() => {
           ) : null}
 
           {error ? (
-            <span className="qm-badge qm-badge-danger" title="Job outcome">
+            <span
+              className={`qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`}
+              title="Job outcome"
+            >
               {error.kind === "interrupted" ? "Interrupted" : "Error"}
             </span>
           ) : null}

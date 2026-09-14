@@ -19545,7 +19545,7 @@ const QueueCard = reactExports.memo(
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
               loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
-              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
               priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
                 {
@@ -19554,7 +19554,14 @@ const QueueCard = reactExports.memo(
                   children: priorityBadge.label
                 }
               ) : null,
-              error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,
+              error ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`,
+                  title: "Job outcome",
+                  children: error.kind === "interrupted" ? "Interrupted" : "Error"
+                }
+              ) : null,
               mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [

@@ -60,7 +60,7 @@ header.header {
     border: 1px solid var(--qm-border);
     border-radius: var(--qm-radius);
     overflow: hidden;
-    transition: background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
+    transition: background-color 150ms ease, border-color 150ms ease;
 
     &:hover {
       background-color: var(--qm-surface-hover);
@@ -96,12 +96,9 @@ header.header {
     }
 
     .execution-time {
-      font-size: 0.8rem;
       border: 1px solid var(--qm-border);
-      border-radius: var(--qm-radius-sm);
-      padding: 2px 8px;
       background-color: var(--qm-bg);
-      white-space: nowrap;
+      color: var(--qm-fg);
     }
 
     .priority-badge {
@@ -213,8 +210,8 @@ header.header {
       width: var(--job-progress);
       height: 100%;
       background-color: var(--qm-primary);
-      opacity: 0.2;
-      border-right: 2px solid var(--qm-primary);
+      opacity: 0.35;
+      border-right: 3px solid var(--qm-primary);
       transition: width 0.15s ease-in-out;
       pointer-events: none;
     }
@@ -230,7 +227,7 @@ header.header {
     }
 
     .name-cell button {
-      transition: all 0.3s ease;
+      transition: opacity 0.3s ease, color 0.3s ease;
 
       &:hover {
         opacity: 1 !important;
@@ -337,6 +334,11 @@ header.header {
 
     &:hover {
       color: var(--qm-fg);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--qm-primary);
+      outline-offset: 1px;
     }
 
     &.active {
