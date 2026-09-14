@@ -71,7 +71,10 @@
     background: var(--qm-surface-hover);
   }
 
-  &:focus-visible {
+  &:focus-visible,
+  // The hidden file input in ImportExport.jsx is the actual focus target; :has()
+  // lets the visible label it's nested in show the ring instead.
+  &:has(:focus-visible) {
     outline: 2px solid var(--qm-primary);
     outline-offset: 1px;
   }
@@ -121,18 +124,45 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   min-width: 1.25rem;
   height: 1.25rem;
-  padding: 0 0.375rem;
-  border-radius: var(--qm-radius-sm);
+  padding: 0 0.5rem;
+  border-radius: 9999px;
   background: var(--qm-surface-hover);
-  color: var(--qm-fg-muted);
+  color: var(--qm-fg);
   font-family: var(--qm-font);
   font-size: 0.75rem;
   line-height: 1;
+  white-space: nowrap;
 
   &.qm-badge-danger {
     background: var(--qm-danger);
     color: var(--qm-primary-fg);
+  }
+
+  &.qm-badge-warning {
+    background: var(--qm-warning);
+    color: var(--qm-primary-fg);
+  }
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--qm-primary);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
   }
 }

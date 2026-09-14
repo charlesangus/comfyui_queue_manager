@@ -60,7 +60,7 @@ header.header {
     border: 1px solid var(--qm-border);
     border-radius: var(--qm-radius);
     overflow: hidden;
-    transition: background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
+    transition: background-color 150ms ease, border-color 150ms ease;
 
     &:hover {
       background-color: var(--qm-surface-hover);
@@ -96,12 +96,9 @@ header.header {
     }
 
     .execution-time {
-      font-size: 0.8rem;
       border: 1px solid var(--qm-border);
-      border-radius: var(--qm-radius-sm);
-      padding: 2px 8px;
       background-color: var(--qm-bg);
-      white-space: nowrap;
+      color: var(--qm-fg);
     }
 
     .priority-badge {
@@ -140,6 +137,7 @@ header.header {
   .card-info {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
     gap: var(--qm-space);
     padding: 0.5rem 0.75rem;
 
@@ -212,8 +210,8 @@ header.header {
       width: var(--job-progress);
       height: 100%;
       background-color: var(--qm-primary);
-      opacity: 0.2;
-      border-right: 2px solid var(--qm-primary);
+      opacity: 0.35;
+      border-right: 3px solid var(--qm-primary);
       transition: width 0.15s ease-in-out;
       pointer-events: none;
     }
@@ -229,7 +227,7 @@ header.header {
     }
 
     .name-cell button {
-      transition: all 0.3s ease;
+      transition: opacity 0.3s ease, color 0.3s ease;
 
       &:hover {
         opacity: 1 !important;
@@ -252,7 +250,10 @@ header.header {
   }
 
   .qm-card.selected {
-    box-shadow: inset 0 0 0 2px var(--qm-primary);
+    // Outline paints above the card's own children, unlike an inset box-shadow, which
+    // an opaque .card-header (e.g. on a body-less pending/running card) would otherwise hide.
+    outline: 2px solid var(--qm-primary);
+    outline-offset: -2px;
   }
 
   .error-details {
@@ -333,6 +334,11 @@ header.header {
 
     &:hover {
       color: var(--qm-fg);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--qm-primary);
+      outline-offset: 1px;
     }
 
     &.active {

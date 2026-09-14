@@ -19545,7 +19545,7 @@ const QueueCard = reactExports.memo(
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
               loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
-              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
               priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
                 {
@@ -19554,7 +19554,14 @@ const QueueCard = reactExports.memo(
                   children: priorityBadge.label
                 }
               ) : null,
-              error ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge qm-badge-danger", title: "Job outcome", children: error.kind === "interrupted" ? "Interrupted" : "Error" }) : null,
+              error ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`,
+                  title: "Job outcome",
+                  children: error.kind === "interrupted" ? "Interrupted" : "Error"
+                }
+              ) : null,
               mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
@@ -28207,9 +28214,18 @@ const LowPriorityIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("pat
 }));
 const PRIORITY_MIN = -100;
 const PRIORITY_MAX = 100;
+const MENU_HEIGHT_ESTIMATE = 220;
 function PriorityMenu({ dbIds, onDone }) {
   const [anchorEl, setAnchorEl] = reactExports.useState(null);
+  const [openUpward, setOpenUpward] = reactExports.useState(false);
   const [customValue, setCustomValue] = reactExports.useState("");
+  const handleOpen = (event) => {
+    const anchor = event.currentTarget;
+    const { bottom, top } = anchor.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - bottom;
+    setOpenUpward(spaceBelow < MENU_HEIGHT_ESTIMATE && top > spaceBelow);
+    setAnchorEl(anchor);
+  };
   const handleClose = () => setAnchorEl(null);
   const applyPriority = async (priority) => {
     await apiCall("queue_manager/priority", { items: dbIds, priority }, "POST");
@@ -28228,7 +28244,7 @@ function PriorityMenu({ dbIds, onDone }) {
       "button",
       {
         className: "qm-btn",
-        onClick: (event) => setAnchorEl(event.currentTarget),
+        onClick: handleOpen,
         title: "Set priority",
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(LowPriorityIcon, { fontSize: "small" }),
@@ -28236,33 +28252,43 @@ function PriorityMenu({ dbIds, onDone }) {
         ]
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Menu, { anchorEl, open: Boolean(anchorEl), onClose: handleClose, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-1), children: "Low (−1)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(0), children: "Normal (0)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(1), children: "High (+1)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        MenuItem,
-        {
-          disableRipple: true,
-          className: "priority-custom",
-          onKeyDown: (event) => event.stopPropagation(),
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              TextField,
-              {
-                type: "number",
-                size: "small",
-                label: "Custom",
-                value: customValue,
-                onChange: (event) => setCustomValue(event.target.value),
-                slotProps: { htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "qm-btn qm-btn-primary", onClick: handleCustomApply, disabled: customValue === "", children: "Apply" })
-          ]
-        }
-      )
-    ] })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      Menu,
+      {
+        anchorEl,
+        open: Boolean(anchorEl),
+        onClose: handleClose,
+        anchorOrigin: { vertical: openUpward ? "top" : "bottom", horizontal: "left" },
+        transformOrigin: { vertical: openUpward ? "bottom" : "top", horizontal: "left" },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-1), children: "Low (−1)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(0), children: "Normal (0)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(1), children: "High (+1)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            MenuItem,
+            {
+              disableRipple: true,
+              className: "priority-custom",
+              onKeyDown: (event) => event.stopPropagation(),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  TextField,
+                  {
+                    type: "number",
+                    size: "small",
+                    label: "Custom",
+                    value: customValue,
+                    onChange: (event) => setCustomValue(event.target.value),
+                    slotProps: { htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "qm-btn qm-btn-primary", onClick: handleCustomApply, disabled: customValue === "", children: "Apply" })
+              ]
+            }
+          )
+        ]
+      }
+    )
   ] });
 }
 const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";

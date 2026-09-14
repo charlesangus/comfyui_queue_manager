@@ -1,5 +1,22 @@
 # Release Notes
 
+## v0.8.0
+_Sep 14, 2026_
+### Enhancements
+- Selection indicator now displays as an outline for better visibility on body-less cards
+- Priority menu opens upward when space is limited at the bottom to avoid collision with the sticky footer
+- Card-info tiles top-align consistently across all cards
+- Delete buttons wrap properly at narrow widths (under 400px)
+- Unified badge styling with consistent pill appearance across all badges, including execution time
+- Improved Light palette contrast for badge text (4.34:1 → 7.09:1)
+- Interrupted jobs now display an orange warning badge instead of red
+- Running job progress fill is more prominent with increased opacity and a subtle accent edge
+- Consistent keyboard focus rings (primary color) across all interactive elements: links, buttons, inputs, tabs, summaries, and focusable targets
+- Smooth transitions (150ms) on color and border changes; respects `prefers-reduced-motion` for accessibility
+- Splash screen links now use the theme's primary color for consistency
+
+---
+
 ## v0.7.0
 _Sep 13, 2026_
 ### New features and enhancements
