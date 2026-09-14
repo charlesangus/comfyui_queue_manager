@@ -55,7 +55,7 @@ states. No new features.
 
 ## Phase 11.3: Release
 
-- [ ] M11.P3.T1 — Rebuild, changelog, README screenshot list
+- [x] M11.P3.T1 — Rebuild, changelog, README screenshot list
   - files: `web/.gui/**`, `CHANGELOG.md`, `README.md`
   - approach: `npm run build`; commit `web/.gui/`. Changelog entry. Replace the "screenshots
     predate the redesign" note from M10 with an explicit list of the screenshots the README
@@ -191,3 +191,9 @@ used instead and give full coverage of the error-block states.
 - 2026-09-14 — Progress-fill check was done with `--job-progress` forced to 55% via
   `evaluate()`: the live CPU test jobs finish before the websocket progress counter advances
   far enough to screenshot organically. The CSS path is the same; the progress JS was untouched.
+- 2026-09-14 — Gate: `npm run lint` (0 errors, 7 pre-existing warnings), `npm test` 53/53,
+  `npm run build` committed in 954fab0; `ruff check .` clean, `pytest tests/` 115 passed. The
+  manual pass is the union of the T1 and T2 Playwright walks (Queue/Archive/Completed tabs, cards
+  with every badge kind, selection bar, priority menu, error block, tabs, footer/pagination,
+  splash; Dark and Light; 320 px and 600 px) — no regressions observed. No project-wide decisions
+  in this milestone, so nothing to publish under `docs/decisions/`.
