@@ -134,6 +134,21 @@ used instead and give full coverage of the error-block states.
 - Splash screen: the "Queue Manager Manual" / "Changelog" / "Issues" links use a hardcoded
   `color: dodgerblue` instead of `var(--qm-primary)`, so they don't exactly match the app's
   primary blue and won't track future token changes → replace with `var(--qm-primary)`.
+- **Investigated and closed, not a defect**: a full-window screenshot comparison (Dark vs Light
+  palette, `.local/qm-m11-screenshots/full-window-{dark,light}.png`) was suspected to show the
+  panel stuck in Dark when ComfyUI switched to Light. Root-caused with live instrumentation
+  (`document.documentElement`'s `style`/`class` mutations, `QM_Theme` postMessage payloads before/
+  after `Comfy.ToggleTheme`) and confirmed by direct pixel sampling of both screenshots
+  (panel background `srgb(23,23,24)`→`srgb(255,255,255)`, header/tabs `srgb(48,48,48)`→
+  `srgb(238,238,238)` — a full, correct theme flip). The M10 theme bridge
+  (`web/js/functions.js`'s `setupThemeObserver`/`collectTheme`, `useComfyTheme.js`) works as
+  designed; the initial read of the screenshots was a visual misjudgment. No task needed.
+  Two low-risk hardening ideas surfaced but are optional, not required: (1) `collectTheme()` drops
+  vars with empty values and the iframe side never calls `removeProperty`, so a future palette that
+  omits a var one theme defines could leave a stale inline value — not triggered by any palette
+  today; (2) the observer is coupled to ComfyUI 0.35.1's specific mechanism (mutating `style`/
+  `class` on `<html>`) rather than a public event, so a future ComfyUI frontend change could
+  silently break it. Neither is in scope for M11.
 
 ### Structural (M11.P2.T1)
 - Selection: `.qm-card.selected` box-shadow ring invisible behind opaque `.card-header` on
@@ -157,3 +172,6 @@ used instead and give full coverage of the error-block states.
   elsewhere) → apply one shared focus-visible treatment app-wide.
 - Splash-screen links use hardcoded `dodgerblue` instead of `var(--qm-primary)` → swap to the
   token.
+- `_variables.scss`'s `$archive-color`/`$archive-color-light`/`$archive-color-darker` and
+  `--background-light` are hardcoded and unreferenced anywhere in `src/gui/styles/` → dead code,
+  remove (found during the theme-bridge investigation above; file already in this task's scope).
