@@ -28207,9 +28207,18 @@ const LowPriorityIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("pat
 }));
 const PRIORITY_MIN = -100;
 const PRIORITY_MAX = 100;
+const MENU_HEIGHT_ESTIMATE = 220;
 function PriorityMenu({ dbIds, onDone }) {
   const [anchorEl, setAnchorEl] = reactExports.useState(null);
+  const [openUpward, setOpenUpward] = reactExports.useState(false);
   const [customValue, setCustomValue] = reactExports.useState("");
+  const handleOpen = (event) => {
+    const anchor = event.currentTarget;
+    const { bottom, top } = anchor.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - bottom;
+    setOpenUpward(spaceBelow < MENU_HEIGHT_ESTIMATE && top > spaceBelow);
+    setAnchorEl(anchor);
+  };
   const handleClose = () => setAnchorEl(null);
   const applyPriority = async (priority) => {
     await apiCall("queue_manager/priority", { items: dbIds, priority }, "POST");
@@ -28228,7 +28237,7 @@ function PriorityMenu({ dbIds, onDone }) {
       "button",
       {
         className: "qm-btn",
-        onClick: (event) => setAnchorEl(event.currentTarget),
+        onClick: handleOpen,
         title: "Set priority",
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(LowPriorityIcon, { fontSize: "small" }),
@@ -28236,33 +28245,43 @@ function PriorityMenu({ dbIds, onDone }) {
         ]
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Menu, { anchorEl, open: Boolean(anchorEl), onClose: handleClose, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-1), children: "Low (−1)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(0), children: "Normal (0)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(1), children: "High (+1)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        MenuItem,
-        {
-          disableRipple: true,
-          className: "priority-custom",
-          onKeyDown: (event) => event.stopPropagation(),
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              TextField,
-              {
-                type: "number",
-                size: "small",
-                label: "Custom",
-                value: customValue,
-                onChange: (event) => setCustomValue(event.target.value),
-                slotProps: { htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "qm-btn qm-btn-primary", onClick: handleCustomApply, disabled: customValue === "", children: "Apply" })
-          ]
-        }
-      )
-    ] })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      Menu,
+      {
+        anchorEl,
+        open: Boolean(anchorEl),
+        onClose: handleClose,
+        anchorOrigin: { vertical: openUpward ? "top" : "bottom", horizontal: "left" },
+        transformOrigin: { vertical: openUpward ? "bottom" : "top", horizontal: "left" },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-1), children: "Low (−1)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(0), children: "Normal (0)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(1), children: "High (+1)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            MenuItem,
+            {
+              disableRipple: true,
+              className: "priority-custom",
+              onKeyDown: (event) => event.stopPropagation(),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  TextField,
+                  {
+                    type: "number",
+                    size: "small",
+                    label: "Custom",
+                    value: customValue,
+                    onChange: (event) => setCustomValue(event.target.value),
+                    slotProps: { htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "qm-btn qm-btn-primary", onClick: handleCustomApply, disabled: customValue === "", children: "Apply" })
+              ]
+            }
+          )
+        ]
+      }
+    )
   ] });
 }
 const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";

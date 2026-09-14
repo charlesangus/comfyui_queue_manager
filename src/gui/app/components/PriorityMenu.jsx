@@ -11,9 +11,22 @@ import { apiCall } from "../internals/functions";
 const PRIORITY_MIN = -100;
 const PRIORITY_MAX = 100;
 
+// Approximate rendered height of the menu (3 items + the custom-value row), used to
+// decide whether it fits below the anchor before MUI's own window clamp would kick in.
+const MENU_HEIGHT_ESTIMATE = 220;
+
 export function PriorityMenu({ dbIds, onDone }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [openUpward, setOpenUpward] = useState(false);
   const [customValue, setCustomValue] = useState("");
+
+  const handleOpen = (event) => {
+    const anchor = event.currentTarget;
+    const { bottom, top } = anchor.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - bottom;
+    setOpenUpward(spaceBelow < MENU_HEIGHT_ESTIMATE && top > spaceBelow);
+    setAnchorEl(anchor);
+  };
 
   const handleClose = () => setAnchorEl(null);
 
@@ -35,14 +48,20 @@ export function PriorityMenu({ dbIds, onDone }) {
     <>
       <button
         className="qm-btn"
-        onClick={(event) => setAnchorEl(event.currentTarget)}
+        onClick={handleOpen}
         title="Set priority"
       >
         <LowPriorityIcon fontSize="small" />
         &nbsp;Priority
       </button>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: openUpward ? "top" : "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: openUpward ? "bottom" : "top", horizontal: "left" }}
+      >
         <MenuItem onClick={() => applyPriority(-1)}>Low (−1)</MenuItem>
         <MenuItem onClick={() => applyPriority(0)}>Normal (0)</MenuItem>
         <MenuItem onClick={() => applyPriority(1)}>High (+1)</MenuItem>

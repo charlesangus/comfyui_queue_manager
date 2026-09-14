@@ -18,6 +18,10 @@
     align-items: center;
     gap: 5px 1px;
     margin-left: auto;
+
+    @media (max-width: 400px) {
+      margin-left: 0;
+    }
   }
 }
 
@@ -55,6 +59,10 @@ footer.footer {
     button {
       &.delete {
         margin-left: auto;
+
+        @media (max-width: 400px) {
+          margin-left: 0;
+        }
       }
     }
 
