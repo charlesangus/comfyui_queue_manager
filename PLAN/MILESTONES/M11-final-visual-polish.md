@@ -39,7 +39,7 @@ states. No new features.
     re-checked.
   - size: M
 
-- [ ] M11.P2.T2 — Cosmetic fixes: badges, colours, motion, focus
+- [x] M11.P2.T2 — Cosmetic fixes: badges, colours, motion, focus
   - files: `src/gui/styles/_common.scss`, `src/gui/styles/_queue.scss`, `src/gui/styles/_variables.scss`, `src/gui/app/components/QueueCard.jsx`
   - approach: One `.qm-badge` style with colour variants derived from tokens (priority
     positive `--qm-success`, negative `--qm-fg-muted`, interactive `--qm-primary`, resumed
@@ -167,7 +167,7 @@ used instead and give full coverage of the error-block states.
 - Selection bar / footer action buttons isolate the danger button on its own line at 320px width
   due to `margin-left: auto` → fix wrap behavior.
 
-### Cosmetic (M11.P2.T2)
+### Cosmetic (M11.P2.T2) — all closed 2026-09-14 (code 954fab0)
 - Card header badges (execution-time vs. `.qm-badge` pills) don't share a consistent height/
   baseline → unify badge sizing.
 - Default `.qm-badge` (output-count) fails WCAG AA contrast (4.34:1) in the Light palette →
@@ -182,3 +182,12 @@ used instead and give full coverage of the error-block states.
 - `_variables.scss`'s `$archive-color`/`$archive-color-light`/`$archive-color-darker` and
   `--background-light` are hardcoded and unreferenced anywhere in `src/gui/styles/` → dead code,
   remove (found during the theme-bridge investigation above; file already in this task's scope).
+- 2026-09-14 — Interrupted jobs now use a new `qm-badge-warning` variant (`--qm-warning`) instead
+  of sharing the red danger badge with errors: the plan's badge colour mapping calls for
+  interrupted = warning, and the audit's badge pass found this the only variant that deviated.
+- 2026-09-14 — Cards are not keyboard-focusable (no `tabIndex`; selection is mouse-only since
+  M4), so the "focus ring on cards" item is moot; adding keyboard selection would be a functional
+  change outside this milestone's no-new-features scope.
+- 2026-09-14 — Progress-fill check was done with `--job-progress` forced to 55% via
+  `evaluate()`: the live CPU test jobs finish before the websocket progress counter advances
+  far enough to screenshot organically. The CSS path is the same; the progress JS was untouched.
