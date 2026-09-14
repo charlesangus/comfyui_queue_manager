@@ -1,8 +1,8 @@
 ---
 title: Queue Manager upgrades — gallery removal, ComfyUI-native look, rich cards, card-info node, selection, priority, interactive preemption, failure tracking
-status: running
-current: M11.P3.T1
-pm_heartbeat: 2026-09-14T00:09:47-04:00
+status: done
+current: null
+pm_heartbeat: 2026-09-14T00:11:05-04:00
 ship: pr-per-milestone
 publish_decisions: docs/decisions/
 ---
@@ -89,16 +89,15 @@ Done when every milestone below is merged into `main` on the fork with a release
 | M4 | Card selection and bulk actions | done | [M4-card-selection-and-bulk-actions.md](PLAN/MILESTONES/M4-card-selection-and-bulk-actions.md) |
 | M5 | Job priority levels | done | [M5-job-priority-levels.md](PLAN/MILESTONES/M5-job-priority-levels.md) |
 | M6 | Interactive runs preempt the queue | done | [M6-interactive-run-preemption.md](PLAN/MILESTONES/M6-interactive-run-preemption.md) |
-| M11 | Final visual polish pass | doing | [M11-final-visual-polish.md](PLAN/MILESTONES/M11-final-visual-polish.md) |
+| M11 | Final visual polish pass | done | [M11-final-visual-polish.md](PLAN/MILESTONES/M11-final-visual-polish.md) |
 
 Rows are in execution order (IDs are stable; M7–M11 were added after M1–M6 were planned).
 
 # Open questions
 
-- Paused 2026-09-13 at the user's request, after M6 shipped. M4/M5/M6 all merged this session.
-  Only M11 (Final visual polish pass) remains `todo`; it's a stub (not yet elaborated) — read
-  `PLAN/MILESTONES/M11-final-visual-polish.md`'s `Blocked on:` line before starting it. Resume by
-  promoting M11 per the usual `/cat-pm` flow.
+- Plan complete 2026-09-14: M11 merged as PR #11 (`aca3d67`); every milestone is `done`. The
+  items below are pre-existing defects/questions found along the way that still want a human
+  call — none block anything.
 - Found during M4's PR review (not caused by M4, pre-existing): `qm_queue.py`'s
   `delete_running_job` (~line 693) only matches DB rows with `status = 1`
   (`SELECT prompt_id FROM queue WHERE status = 1 AND prompt_id = ?`). External jobs are
