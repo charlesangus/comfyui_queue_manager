@@ -2,6 +2,7 @@
 from aiohttp import web
 
 from server import PromptServer
+import asyncio
 import json
 from datetime import datetime, timezone
 
@@ -66,8 +67,8 @@ class QM_Server:
                 order = None
 
             # pending items
-            running, pending, info = self.queue.get_current_queue(
-                page, page_size, route=route, filters=filters, return_meta=True, order=order
+            running, pending, info = await asyncio.to_thread(
+                self.queue.get_current_queue, page, page_size, route=route, filters=filters, return_meta=True, order=order
             )
 
             # Remove sensitive data
@@ -78,13 +79,31 @@ class QM_Server:
             # Return the archive object as JSON
             return web.json_response({"running": running, "pending": pending, "info": info})
 
+        # Get the full, untrimmed item for a single queue row (used to load a
+        # workflow onto the canvas, since /queue_manager/queue trims it out)
+        @PromptServer.instance.routes.get("/queue_manager/item")
+        async def get_item(request):
+            db_id = request.query.get("db_id")
+            if db_id is None:
+                return web.json_response({"error": "Missing db_id"}, status=400)
+            try:
+                db_id = int(db_id)
+            except ValueError:
+                return web.json_response({"error": "Invalid db_id"}, status=400)
+
+            item = await asyncio.to_thread(self.queue.get_item_full, db_id)
+            if item is None:
+                return web.json_response({"error": "Item not found"}, status=404)
+
+            return web.json_response({"item": item})
+
         # Archive POSTed items
         @PromptServer.instance.routes.post("/queue_manager/archive")
         async def post_archive(request):
             # Get the archived items
             json_data = await request.json()
             if "archive" in json_data:
-                archived = self.queue.archive_items(json_data["archive"])
+                archived = await asyncio.to_thread(self.queue.archive_items, json_data["archive"])
                 return web.json_response({"archived": archived})
             else:
                 return web.json_response({"error": "No items to archive"}, status=400)
@@ -103,14 +122,14 @@ class QM_Server:
 
             front = json_data.get("front", False) == True
 
-            moved = self.queue.play_archive(client_id, filters, front)
+            moved = await asyncio.to_thread(self.queue.play_archive, client_id, filters, front)
             return web.json_response({"queued": moved})
 
         # Toggle Play/Pause of the queue
         @PromptServer.instance.routes.get("/queue_manager/toggle")
         async def toggle_queue(request):
             # Toggle the status of the queue
-            self.queue.toggle_playback()
+            await asyncio.to_thread(self.queue.toggle_playback)
             return web.json_response({"paused": self.queue.paused})
 
         # Return the status of the queue's playback
@@ -127,7 +146,7 @@ class QM_Server:
         @PromptServer.instance.routes.get("/queue_manager/archive-queue")
         async def archive_queue(request):
             filters = self.get_filters(request)
-            total = self.queue.archive_queue(filters)
+            total = await asyncio.to_thread(self.queue.archive_queue, filters)
             return web.json_response({"archived": total})
 
         # Play item from archive
@@ -136,7 +155,9 @@ class QM_Server:
             # Get the item to play
             json_data = await request.json()
             if "items" in json_data:
-                total = self.queue.play_items(json_data["items"], json_data.get("front", False) == True, json_data.get("clientId", None))
+                total = await asyncio.to_thread(
+                    self.queue.play_items, json_data["items"], json_data.get("front", False) == True, json_data.get("clientId", None)
+                )
                 return web.json_response({"moved": total})
             else:
                 return web.json_response({"error": "No item to play"}, status=400)
@@ -146,7 +167,7 @@ class QM_Server:
         async def set_priority(request):
             json_data = await request.json()
             if "items" in json_data and "priority" in json_data:
-                updated = self.queue.set_priority(json_data["items"], json_data["priority"])
+                updated = await asyncio.to_thread(self.queue.set_priority, json_data["items"], json_data["priority"])
                 return web.json_response({"updated": updated})
             else:
                 return web.json_response({"error": "Missing items or priority"}, status=400)
@@ -195,7 +216,9 @@ class QM_Server:
                 api_key_comfy_org = api_key_comfy_org.decode("ascii")
 
             qm_log.info("Importing %s", "to archive." if is_archive else "to queue.")
-            imported, total = self.queue.import_queue(json_data, client_id, 3 if is_archive else 0, api_key_comfy_org)
+            imported, total = await asyncio.to_thread(
+                self.queue.import_queue, json_data, client_id, 3 if is_archive else 0, api_key_comfy_org
+            )
             qm_log.info(
                 "Imported %d of %d total submitted entries %s %s",
                 imported,
@@ -214,7 +237,7 @@ class QM_Server:
             filters = self.get_filters(request)
 
             # Export the queue
-            json_data = self.queue.get_full_queue(route, filters)
+            json_data = await asyncio.to_thread(self.queue.get_full_queue, route, filters)
 
             # Remove sensitive data from items. json_data is a list of lists, check each item if it is 6 elements long and remove the 6th element
             for i in range(len(json_data)):
@@ -248,7 +271,7 @@ class QM_Server:
         async def delete_from_queue(request):
             route = self.get_the_route(request)
             filters = self.get_filters(request)
-            total = self.queue.delete_from_queue(route, filters)
+            total = await asyncio.to_thread(self.queue.delete_from_queue, route, filters)
 
             qm_log.info("Deleted %d items from the archive", total)
 
@@ -259,7 +282,7 @@ class QM_Server:
         async def delete_running(request):
             json_data = await requestJson(request)
             prompt_id = json_data.get("prompt_id")
-            total = self.queue.delete_running_job(prompt_id)
+            total = await asyncio.to_thread(self.queue.delete_running_job, prompt_id)
 
             return web.json_response({"deleted": total})
 
@@ -279,7 +302,7 @@ class QM_Server:
             takeover_client = {"client_id": client_id, "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}
 
             self.queue_manager.queue.takeover_client = takeover_client
-            self.queue_manager.options.set("takeover_client", client_id)
+            await asyncio.to_thread(self.queue_manager.options.set, "takeover_client", client_id)
 
             qm_log.info(f"Client takeover requested by {client_id}")
 
@@ -301,14 +324,14 @@ class QM_Server:
                     return web.json_response({"error": "Option not allowed"}, status=400)
 
                 # Get the specific option
-                value = self.queue_manager.options.get(option, None)
+                value = await asyncio.to_thread(self.queue_manager.options.get, option, None)
                 if value is None:
                     return web.json_response({"error": "Option not found"}, status=404)
 
                 return web.json_response({option: value})
             else:
                 # Get all options
-                options = self.queue_manager.options.get_all()
+                options = await asyncio.to_thread(self.queue_manager.options.get_all)
 
                 # Return only allowed options
                 options = {key: value for key, value in options.items() if key in self.allowed_options}
@@ -345,7 +368,7 @@ class QM_Server:
                 value = self.__version__
 
             # Set the specific option
-            self.queue_manager.options.set(option, value)
+            await asyncio.to_thread(self.queue_manager.options.set, option, value)
             # qm_log.info(f"Set option {option} to {value}")
 
             return web.json_response({"success": True})
@@ -367,9 +390,9 @@ class QM_Server:
                         json_data = await requestJson(request)
                         if "clear" in json_data:
                             if json_data["clear"]:
-                                self.queue.wipe_queue()
+                                await asyncio.to_thread(self.queue.wipe_queue)
                         if "delete" in json_data:
-                            self.queue.delete_items(json_data["delete"])
+                            await asyncio.to_thread(self.queue.delete_items, json_data["delete"])
 
             return await handler(request)
 

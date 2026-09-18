@@ -106,9 +106,16 @@ export default function Home({ onDarkChange }) {
     setShowSplash(true);
   });
 
+  // Stable identity regardless of how often fetchQueueItems itself changes
+  // (it's recreated on pageSize/completedListOrder/route/filters changes) —
+  // QueueCard reads fetchQueueItems via this context directly, and context
+  // reads bypass React.memo, so an unstable reference here would force every
+  // card to re-render on any settings/route/filter change.
+  const stableFetchQueueItems = useEvent((options) => fetchQueueItems(options));
+
   const appContextValue = useMemo(() => {
-    return { openSplash, fetchQueueItems };
-  }, [openSplash, fetchQueueItems]);
+    return { openSplash, fetchQueueItems: stableFetchQueueItems };
+  }, [openSplash, stableFetchQueueItems]);
 
   const closeSplash = useEvent(event => {
     setShowSplash(false);

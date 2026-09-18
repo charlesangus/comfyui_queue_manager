@@ -199,6 +199,22 @@ const executionTimeLabel = useMemo(() => {
     const nextId = next.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
 
+    // `card`/`error` are re-parsed from JSON on every fetch, so the backend
+    // never hands back the same reference twice even when nothing changed —
+    // compare structurally instead of by reference. If a new item[3].* field
+    // gets rendered above, add it to this comparator too.
+    const prevCard = prev.item?.[3]?.card;
+    const nextCard = next.item?.[3]?.card;
+    if (prevCard !== nextCard && JSON.stringify(prevCard) !== JSON.stringify(nextCard)) {
+      return false;
+    }
+
+    const prevError = prev.item?.[3]?.error;
+    const nextError = next.item?.[3]?.error;
+    if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
+      return false;
+    }
+
     return (
       prev.loader === next.loader &&
       prev.index === next.index &&
@@ -210,8 +226,12 @@ const executionTimeLabel = useMemo(() => {
       prev.itemKey === next.itemKey &&
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size &&
-      prev.item?.[3]?.card === next.item?.[3]?.card &&
-      prev.item?.[3]?.priority === next.item?.[3]?.priority
+      prev.item?.[3]?.priority === next.item?.[3]?.priority &&
+      prev.item?.[3]?.status === next.item?.[3]?.status &&
+      prev.item?.[3]?.execution_time === next.item?.[3]?.execution_time &&
+      prev.item?.[3]?.total_files === next.item?.[3]?.total_files &&
+      prev.item?.[3]?.extra_pnginfo?.workflow?.id === next.item?.[3]?.extra_pnginfo?.workflow?.id &&
+      prev.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next.item?.[3]?.extra_pnginfo?.workflow?.workflow_name
     );
   }
 );

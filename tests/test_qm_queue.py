@@ -526,6 +526,84 @@ def test_get_current_queue_reports_priority_of_running_item(qm_queue):
     assert running[0][3]["priority"] == 7
 
 
+def test_get_current_queue_batches_priority_and_card_for_multiple_running_items(qm_queue):
+    first = _make_item(100, "prompt-running-first", "Workflow A", "wf-a")
+    first[2] = _card_graph("first card")
+    first[3]["qm_priority"] = 3
+    qm_queue.native_queue.put(first)
+    qm_queue.native_queue.get()
+
+    second = _make_item(101, "prompt-running-second", "Workflow B", "wf-b")
+    second[2] = _card_graph("second card")
+    second[3]["qm_priority"] = 9
+    qm_queue.native_queue.put(second)
+    qm_queue.native_queue.get()
+
+    running, pending = qm_queue.qm.get_current_queue(page_size=20)
+
+    assert pending == []
+    by_prompt_id = {item[1]: item for item in running}
+    assert by_prompt_id["prompt-running-first"][3]["priority"] == 3
+    assert by_prompt_id["prompt-running-first"][3]["card"][0]["value"] == "first card"
+    assert by_prompt_id["prompt-running-second"][3]["priority"] == 9
+    assert by_prompt_id["prompt-running-second"][3]["card"][0]["value"] == "second card"
+
+
+def test_get_current_queue_trims_workflow_graph_for_pending_but_not_running(qm_queue):
+    running_item = _make_item(100, "prompt-trim-running", "Workflow Running", "wf-running")
+    running_item[3]["extra_pnginfo"]["workflow"]["nodes"] = [{"id": 1}]
+    qm_queue.native_queue.put(running_item)
+    qm_queue.native_queue.get()
+
+    pending_item = _make_item(101, "prompt-trim-pending", "Workflow Pending", "wf-pending")
+    pending_item[3]["extra_pnginfo"]["workflow"]["nodes"] = [{"id": 2}]
+    qm_queue.native_queue.put(pending_item)
+
+    running, pending = qm_queue.qm.get_current_queue(page_size=20)
+
+    # The running branch is served straight from the in-memory native queue
+    # and must not be trimmed — the frontend reads .nodes off it for
+    # per-node execution progress.
+    assert running[0][2] == {"some": "graph"}
+    assert running[0][3]["extra_pnginfo"]["workflow"]["nodes"] == [{"id": 1}]
+    assert running[0][3]["extra_pnginfo"]["workflow"]["workflow_name"] == "Workflow Running"
+
+    # DB-driven pending/archive/completed rows are trimmed: the full
+    # execution-graph (item[2]) and workflow.nodes/links/groups are dropped,
+    # keeping only the fields the list view actually renders.
+    assert pending[0][2] is None
+    assert pending[0][3]["extra_pnginfo"]["workflow"] == {"id": "wf-pending", "workflow_name": "Workflow Pending"}
+
+
+def test_get_current_queue_trims_workflow_graph_for_archive_and_completed(qm_queue):
+    item = _make_item(100, "prompt-trim-routes", "Workflow Routes", "wf-routes")
+    item[3]["extra_pnginfo"]["workflow"]["nodes"] = [{"id": 3}]
+    qm_queue.native_queue.put(item)
+
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 3 WHERE prompt_id = ?", (item[1],))
+    _, archived = qm_queue.qm.get_current_queue(page_size=20, route="archive")
+    assert archived[0][2] is None
+    assert archived[0][3]["extra_pnginfo"]["workflow"] == {"id": "wf-routes", "workflow_name": "Workflow Routes"}
+
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2 WHERE prompt_id = ?", (item[1],))
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+    assert completed[0][2] is None
+    assert completed[0][3]["extra_pnginfo"]["workflow"] == {"id": "wf-routes", "workflow_name": "Workflow Routes"}
+
+
+def test_get_item_full_returns_untrimmed_prompt_by_db_id(qm_queue):
+    item = _make_item(100, "prompt-full-item", "Workflow Full", "wf-full")
+    item[3]["extra_pnginfo"]["workflow"]["nodes"] = [{"id": 4}]
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))["id"]
+
+    full = qm_queue.qm.get_item_full(db_id)
+
+    assert full[2] == {"some": "graph"}
+    assert full[3]["extra_pnginfo"]["workflow"]["nodes"] == [{"id": 4}]
+    assert qm_queue.qm.get_item_full(-1) is None
+
+
 def test_restore_queue_tie_breaks_within_own_priority(qm_queue):
     seeded = (
         ("prompt-restore-high", 100, 50, 0),

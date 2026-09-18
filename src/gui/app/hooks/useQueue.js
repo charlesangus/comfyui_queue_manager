@@ -146,7 +146,7 @@ export function useQueue({ fetchOptions } = {}) {
     switch (event.data.message.name) {
       case "status":
         if (route === 'queue' || route === 'completed') {
-          fetchQueueItems((appStatus.queue && appStatus.queue.info) ? appStatus.queue.info.page : 0);
+          fetchQueueItems({ page: (appStatus.queue && appStatus.queue.info) ? appStatus.queue.info.page : 0 });
         }
         break;
       case "execution_start": {
@@ -155,7 +155,7 @@ export function useQueue({ fetchOptions } = {}) {
           const theJob = getTheJob(prompt_id, appStatus.queue);
 
           if (theJob) {
-            const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
+            const nodeIDs = getNodeIDs(theJob[3]?.extra_pnginfo?.workflow?.nodes ?? []);
             setProgress(prev => ({
               ...prev,
               id: prompt_id,
@@ -238,7 +238,7 @@ export function useQueue({ fetchOptions } = {}) {
     if (currentJob.id && currentJob.integrity === false) {
       const theJob = getTheJob(currentJob.id, appStatus.queue);
       if (theJob) {
-        const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
+        const nodeIDs = getNodeIDs(theJob[3]?.extra_pnginfo?.workflow?.nodes ?? []);
 
         for (const nodeID in currentJob.nodes) {
           if (currentJob.nodes[nodeID] === true) {

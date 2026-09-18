@@ -9,7 +9,7 @@ import json
 import heapq
 
 from .inc.exceptions import BadRouteException
-from .qm_card import load_card_by_prompt_id, remove_card_images, save_static_card
+from .qm_card import load_cards_by_prompt_ids, remove_card_images, save_static_card
 from .qm_db import get_conn, read_query, read_single, write_query, write_many
 from .qm_log import qm_log
 
@@ -108,15 +108,28 @@ class QM_Queue:
 
             match route:
                 case "queue":
-                    for native_item in self.native_queue.currently_running.values():
+                    native_items = list(self.native_queue.currently_running.values())
+                    running_prompt_ids = [native_item[1] for native_item in native_items]
+
+                    priority_by_prompt_id = {}
+                    if running_prompt_ids:
+                        placeholders = ",".join("?" * len(running_prompt_ids))
+                        priority_by_prompt_id = {
+                            row["prompt_id"]: row["priority"]
+                            for row in read_query(
+                                f"SELECT prompt_id, priority FROM queue WHERE prompt_id IN ({placeholders})",
+                                tuple(running_prompt_ids),
+                            )
+                        }
+                    card_by_prompt_id = load_cards_by_prompt_ids(running_prompt_ids)
+
+                    for native_item in native_items:
                         item = list(native_item)
                         item[3] = item[3].copy()
-                        priority_row = read_single("SELECT priority FROM queue WHERE prompt_id = ?", (item[1],))
-                        if priority_row is not None:
-                            item[3]["priority"] = priority_row[0]
-                        card = load_card_by_prompt_id(item[1])
-                        if card is not None:
-                            item[3]["card"] = card
+                        if native_item[1] in priority_by_prompt_id:
+                            item[3]["priority"] = priority_by_prompt_id[native_item[1]]
+                        if native_item[1] in card_by_prompt_id:
+                            item[3]["card"] = card_by_prompt_id[native_item[1]]
                         running.append(tuple(item))
                 case "archive":
                     order_string = "ORDER BY queue.updated_at, number"
@@ -176,6 +189,20 @@ class QM_Queue:
                 # array of prompts
                 for row in rows:
                     item = json.loads(row["prompt"])
+
+                    # The list view never needs the full execution-format prompt
+                    # graph or the full UI workflow graph — this endpoint is
+                    # refetched on nearly every job status change, so trim the
+                    # payload to what's actually rendered. The full item is
+                    # available on demand via get_item_full().
+                    item[2] = None
+                    workflow = item[3].get("extra_pnginfo", {}).get("workflow")
+                    if isinstance(workflow, dict):
+                        item[3]["extra_pnginfo"]["workflow"] = {
+                            "id": workflow.get("id"),
+                            "workflow_name": workflow.get("workflow_name"),
+                        }
+
                     # Add db_id to the item
                     item[3]["db_id"] = row["id"]
                     item[3]["priority"] = row["priority"]
@@ -238,6 +265,17 @@ class QM_Queue:
                 )
             else:
                 return running, pending
+
+    def get_item_full(self, db_id):
+        """
+        Return the full, untrimmed stored prompt for a single queue row.
+        Used by the frontend to load a workflow onto the canvas, since the
+        list endpoint trims item[2]/extra_pnginfo.workflow to keep the hot,
+        frequently-refetched list payload small.
+        """
+        with self.native_queue.mutex:
+            row = read_single("SELECT prompt FROM queue WHERE id = ?", (db_id,))
+            return None if row is None else json.loads(row[0])
 
     def get_full_queue(self, route="queue", filters=None):
         with self.native_queue.mutex:

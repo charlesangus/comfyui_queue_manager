@@ -52,10 +52,47 @@ class FakeUserManager:
         self.settings = FakeSettings(settings)
 
 
+class FakeRouteTable:
+    """Minimal stand-in for aiohttp's RouteTableDef: records handlers by
+    (method, path) instead of registering them with a real HTTP server, so
+    tests can invoke a route's handler function directly."""
+
+    def __init__(self):
+        self.handlers = {}
+
+    def _register(self, method, path):
+        def decorator(fn):
+            self.handlers[(method, path)] = fn
+            return fn
+
+        return decorator
+
+    def get(self, path):
+        return self._register("GET", path)
+
+    def post(self, path):
+        return self._register("POST", path)
+
+    def delete(self, path):
+        return self._register("DELETE", path)
+
+
+class FakeMiddlewares(list):
+    def insert(self, index, middleware):
+        list.insert(self, index, middleware)
+
+
+class FakeApp:
+    def __init__(self):
+        self.middlewares = FakeMiddlewares()
+
+
 class FakePromptServer:
     def __init__(self, prompt_queue=None):
         self.prompt_queue = prompt_queue if prompt_queue is not None else FakePromptQueue()
         self.user_manager = FakeUserManager()
+        self.routes = FakeRouteTable()
+        self.app = FakeApp()
         self.number = 0
         self.messages = []
 

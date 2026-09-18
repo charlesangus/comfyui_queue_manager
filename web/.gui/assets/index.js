@@ -19439,7 +19439,7 @@ function OtherTile({ label, value }) {
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: String(value) })
   ] });
 }
-function CardInfo({ entries }) {
+const CardInfo = reactExports.memo(function CardInfo2({ entries }) {
   if (!entries?.length) return null;
   const sorted = [...entries].sort((a, b) => a.index - b.index);
   const occurrences = /* @__PURE__ */ new Map();
@@ -19456,7 +19456,7 @@ function CardInfo({ entries }) {
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
   });
-}
+});
 const QueueCard = reactExports.memo(
   function QueueCard2({
     item,
@@ -19608,7 +19608,17 @@ const QueueCard = reactExports.memo(
     const prevId = prev2.item?.[3]?.db_id;
     const nextId = next2.item?.[3]?.db_id;
     if (prevId !== nextId) return false;
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.card === next2.item?.[3]?.card && prev2.item?.[3]?.priority === next2.item?.[3]?.priority;
+    const prevCard = prev2.item?.[3]?.card;
+    const nextCard = next2.item?.[3]?.card;
+    if (prevCard !== nextCard && JSON.stringify(prevCard) !== JSON.stringify(nextCard)) {
+      return false;
+    }
+    const prevError = prev2.item?.[3]?.error;
+    const nextError = next2.item?.[3]?.error;
+    if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
+      return false;
+    }
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
   }
 );
 const useSelectionStore = create((set) => ({
@@ -28330,9 +28340,13 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await performDelete(selectedRunning, selectedPending, fetchQueueItems);
   };
   const handleLoad = async () => {
-    const workflow = selectedItems[0]?.[3]?.extra_pnginfo?.workflow;
+    const selected2 = selectedItems[0];
+    const dbId = selected2?.[3]?.db_id;
+    if (!selected2?.[3]?.extra_pnginfo?.workflow || dbId == null) return;
+    const response = await apiCall(`queue_manager/item?db_id=${dbId}`, null, "GET");
+    const workflow = response?.item?.[3]?.extra_pnginfo?.workflow;
     if (!workflow) return;
-    msgLoadWorkflow(workflow, selectedItems[0][0]);
+    msgLoadWorkflow(workflow, selected2[0]);
     await finish();
   };
   const handleArchive = async () => {
@@ -28681,7 +28695,7 @@ function useQueue({ fetchOptions } = {}) {
     switch (event.data.message.name) {
       case "status":
         if (route === "queue" || route === "completed") {
-          fetchQueueItems(appStatus.queue && appStatus.queue.info ? appStatus.queue.info.page : 0);
+          fetchQueueItems({ page: appStatus.queue && appStatus.queue.info ? appStatus.queue.info.page : 0 });
         }
         break;
       case "execution_start":
@@ -28689,7 +28703,7 @@ function useQueue({ fetchOptions } = {}) {
           const { prompt_id } = event.data.message.detail;
           const theJob = getTheJob(prompt_id, appStatus.queue);
           if (theJob) {
-            const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
+            const nodeIDs = getNodeIDs(theJob[3]?.extra_pnginfo?.workflow?.nodes ?? []);
             setProgress((prev2) => ({
               ...prev2,
               id: prompt_id,
@@ -28757,7 +28771,7 @@ function useQueue({ fetchOptions } = {}) {
     if (currentJob.id && currentJob.integrity === false) {
       const theJob = getTheJob(currentJob.id, appStatus.queue);
       if (theJob) {
-        const nodeIDs = getNodeIDs(theJob[3].extra_pnginfo.workflow.nodes);
+        const nodeIDs = getNodeIDs(theJob[3]?.extra_pnginfo?.workflow?.nodes ?? []);
         for (const nodeID in currentJob.nodes) {
           if (currentJob.nodes[nodeID] === true) {
             nodeIDs[nodeID] = true;
@@ -28849,9 +28863,10 @@ function Home({ onDarkChange }) {
   const openSplash = useEvent(() => {
     setShowSplash(true);
   });
+  const stableFetchQueueItems = useEvent((options2) => fetchQueueItems(options2));
   const appContextValue = reactExports.useMemo(() => {
-    return { openSplash, fetchQueueItems };
-  }, [openSplash, fetchQueueItems]);
+    return { openSplash, fetchQueueItems: stableFetchQueueItems };
+  }, [openSplash, stableFetchQueueItems]);
   const closeSplash = useEvent((event) => {
     setShowSplash(false);
     if (!options.splash_screen || options.splash_screen !== options.__version__) {

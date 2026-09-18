@@ -191,6 +191,33 @@ def load_card_by_prompt_id(prompt_id: str) -> list[dict] | None:
     return None if row is None or row[0] is None else json.loads(row[0])
 
 
+def load_cards_by_prompt_ids(prompt_ids) -> dict[str, list[dict]]:
+    """Batched form of load_card_by_prompt_id for a set of prompt_ids in one query."""
+    prompt_ids = list(prompt_ids)
+    if not prompt_ids:
+        return {}
+
+    placeholders = ",".join("?" * len(prompt_ids))
+    rows = read_query(
+        f"""
+        SELECT queue.prompt_id AS prompt_id, card.value AS value
+        FROM queue
+        LEFT JOIN meta AS card
+            ON queue.id = card.item_id
+            AND card.key = 'card'
+            AND card.id = (
+                SELECT MAX(candidate.id)
+                FROM meta AS candidate
+                WHERE candidate.item_id = queue.id AND candidate.key = 'card'
+            )
+        WHERE queue.prompt_id IN ({placeholders})
+    """,
+        tuple(prompt_ids),
+    )
+
+    return {row["prompt_id"]: json.loads(row["value"]) for row in rows if row["value"] is not None}
+
+
 def merge_entry(prompt_id: str, entry: dict) -> list[dict] | None:
     with get_conn() as conn:
         conn.execute("BEGIN IMMEDIATE")

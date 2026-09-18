@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { MediaItem } from "./MediaItem";
 import { baseURL } from "../internals/config";
 
@@ -54,7 +54,7 @@ function OtherTile({ label, value }) {
   );
 }
 
-export function CardInfo({ entries }) {
+export const CardInfo = memo(function CardInfo({ entries }) {
   if (!entries?.length) return null;
 
   const sorted = [...entries].sort((a, b) => a.index - b.index);
@@ -73,4 +73,4 @@ export function CardInfo({ entries }) {
     }
     return <OtherTile key={key} label={entry.label} value={entry.value} />;
   });
-}
+});

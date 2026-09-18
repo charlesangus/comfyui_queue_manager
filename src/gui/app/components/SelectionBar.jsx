@@ -39,9 +39,17 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   };
 
   const handleLoad = async () => {
-    const workflow = selectedItems[0]?.[3]?.extra_pnginfo?.workflow;
+    const selected = selectedItems[0];
+    const dbId = selected?.[3]?.db_id;
+    if (!selected?.[3]?.extra_pnginfo?.workflow || dbId == null) return;
+
+    // The list response only carries a trimmed extra_pnginfo.workflow
+    // (id/workflow_name) — fetch the full item for the actual graph data.
+    const response = await apiCall(`queue_manager/item?db_id=${dbId}`, null, "GET");
+    const workflow = response?.item?.[3]?.extra_pnginfo?.workflow;
     if (!workflow) return;
-    msgLoadWorkflow(workflow, selectedItems[0][0]);
+
+    msgLoadWorkflow(workflow, selected[0]);
     await finish();
   };
 
