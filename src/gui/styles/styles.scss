@@ -1,5 +1,6 @@
 @use 'sass:meta';
 @use 'variables';
+@use 'lightbox';
 
 // The GUI shares the ComfyUI page, so every rule is scoped to the panel root and fonts/colours are inherited from ComfyUI.
 .qm-root {

@@ -18677,7 +18677,7 @@ function getSvgIconUtilityClass(slot) {
   return generateUtilityClass("MuiSvgIcon", slot);
 }
 generateUtilityClasses("MuiSvgIcon", ["root", "colorPrimary", "colorSecondary", "colorAction", "colorError", "colorDisabled", "fontSizeInherit", "fontSizeSmall", "fontSizeMedium", "fontSizeLarge"]);
-const useUtilityClasses$o = (ownerState) => {
+const useUtilityClasses$p = (ownerState) => {
   const {
     color: color2,
     fontSize,
@@ -18816,7 +18816,7 @@ const SvgIcon = /* @__PURE__ */ reactExports.forwardRef(function SvgIcon2(inProp
   if (!inheritViewBox) {
     more.viewBox = viewBox;
   }
-  const classes = useUtilityClasses$o(ownerState);
+  const classes = useUtilityClasses$p(ownerState);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(SvgIconRoot, {
     as: component,
     className: clsx(classes.root, className),
@@ -19303,519 +19303,605 @@ const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autopla
     }
   ) }) });
 });
-class MediaOutputs {
-  files = [];
-  constructor(item) {
-    const nodes = item?.outputs;
-    if (!nodes) return;
-    for (const nodeID of Object.keys(nodes)) {
-      const outputs = nodes[nodeID];
-      const entries = outputs.images || outputs.gifs || outputs.files || [];
-      for (const entry of entries) {
-        this.files.push({
-          filename: entry.filename,
-          subfolder: entry.subfolder,
-          type: entry.type
+function getScrollbarSize(win = window) {
+  const documentWidth = win.document.documentElement.clientWidth;
+  return win.innerWidth - documentWidth;
+}
+function isOverflowing(container) {
+  const doc = ownerDocument(container);
+  if (doc.body === container) {
+    return ownerWindow(container).innerWidth > doc.documentElement.clientWidth;
+  }
+  return container.scrollHeight > container.clientHeight;
+}
+function ariaHidden(element, hide) {
+  if (hide) {
+    element.setAttribute("aria-hidden", "true");
+  } else {
+    element.removeAttribute("aria-hidden");
+  }
+}
+function getPaddingRight(element) {
+  return parseInt(ownerWindow(element).getComputedStyle(element).paddingRight, 10) || 0;
+}
+function isAriaHiddenForbiddenOnElement(element) {
+  const forbiddenTagNames = ["TEMPLATE", "SCRIPT", "STYLE", "LINK", "MAP", "META", "NOSCRIPT", "PICTURE", "COL", "COLGROUP", "PARAM", "SLOT", "SOURCE", "TRACK"];
+  const isForbiddenTagName = forbiddenTagNames.includes(element.tagName);
+  const isInputHidden = element.tagName === "INPUT" && element.getAttribute("type") === "hidden";
+  return isForbiddenTagName || isInputHidden;
+}
+function ariaHiddenSiblings(container, mountElement, currentElement, elementsToExclude, hide) {
+  const blacklist = [mountElement, currentElement, ...elementsToExclude];
+  [].forEach.call(container.children, (element) => {
+    const isNotExcludedElement = !blacklist.includes(element);
+    const isNotForbiddenElement = !isAriaHiddenForbiddenOnElement(element);
+    if (isNotExcludedElement && isNotForbiddenElement) {
+      ariaHidden(element, hide);
+    }
+  });
+}
+function findIndexOf(items, callback) {
+  let idx = -1;
+  items.some((item, index) => {
+    if (callback(item)) {
+      idx = index;
+      return true;
+    }
+    return false;
+  });
+  return idx;
+}
+function handleContainer(containerInfo, props) {
+  const restoreStyle = [];
+  const container = containerInfo.container;
+  if (!props.disableScrollLock) {
+    if (isOverflowing(container)) {
+      const scrollbarSize = getScrollbarSize(ownerWindow(container));
+      restoreStyle.push({
+        value: container.style.paddingRight,
+        property: "padding-right",
+        el: container
+      });
+      container.style.paddingRight = `${getPaddingRight(container) + scrollbarSize}px`;
+      const fixedElements2 = ownerDocument(container).querySelectorAll(".mui-fixed");
+      [].forEach.call(fixedElements2, (element) => {
+        restoreStyle.push({
+          value: element.style.paddingRight,
+          property: "padding-right",
+          el: element
         });
+        element.style.paddingRight = `${getPaddingRight(element) + scrollbarSize}px`;
+      });
+    }
+    let scrollContainer;
+    if (container.parentNode instanceof DocumentFragment) {
+      scrollContainer = ownerDocument(container).body;
+    } else {
+      const parent = container.parentElement;
+      const containerWindow = ownerWindow(container);
+      scrollContainer = parent?.nodeName === "HTML" && containerWindow.getComputedStyle(parent).overflowY === "scroll" ? parent : container;
+    }
+    restoreStyle.push({
+      value: scrollContainer.style.overflow,
+      property: "overflow",
+      el: scrollContainer
+    }, {
+      value: scrollContainer.style.overflowX,
+      property: "overflow-x",
+      el: scrollContainer
+    }, {
+      value: scrollContainer.style.overflowY,
+      property: "overflow-y",
+      el: scrollContainer
+    });
+    scrollContainer.style.overflow = "hidden";
+  }
+  const restore = () => {
+    restoreStyle.forEach(({
+      value,
+      el,
+      property
+    }) => {
+      if (value) {
+        el.style.setProperty(property, value);
+      } else {
+        el.style.removeProperty(property);
+      }
+    });
+  };
+  return restore;
+}
+function getHiddenSiblings(container) {
+  const hiddenSiblings = [];
+  [].forEach.call(container.children, (element) => {
+    if (element.getAttribute("aria-hidden") === "true") {
+      hiddenSiblings.push(element);
+    }
+  });
+  return hiddenSiblings;
+}
+class ModalManager {
+  constructor() {
+    this.modals = [];
+    this.containers = [];
+  }
+  add(modal, container) {
+    let modalIndex = this.modals.indexOf(modal);
+    if (modalIndex !== -1) {
+      return modalIndex;
+    }
+    modalIndex = this.modals.length;
+    this.modals.push(modal);
+    if (modal.modalRef) {
+      ariaHidden(modal.modalRef, false);
+    }
+    const hiddenSiblings = getHiddenSiblings(container);
+    ariaHiddenSiblings(container, modal.mount, modal.modalRef, hiddenSiblings, true);
+    const containerIndex = findIndexOf(this.containers, (item) => item.container === container);
+    if (containerIndex !== -1) {
+      this.containers[containerIndex].modals.push(modal);
+      return modalIndex;
+    }
+    this.containers.push({
+      modals: [modal],
+      container,
+      restore: null,
+      hiddenSiblings
+    });
+    return modalIndex;
+  }
+  mount(modal, props) {
+    const containerIndex = findIndexOf(this.containers, (item) => item.modals.includes(modal));
+    const containerInfo = this.containers[containerIndex];
+    if (!containerInfo.restore) {
+      containerInfo.restore = handleContainer(containerInfo, props);
+    }
+  }
+  remove(modal, ariaHiddenState = true) {
+    const modalIndex = this.modals.indexOf(modal);
+    if (modalIndex === -1) {
+      return modalIndex;
+    }
+    const containerIndex = findIndexOf(this.containers, (item) => item.modals.includes(modal));
+    const containerInfo = this.containers[containerIndex];
+    containerInfo.modals.splice(containerInfo.modals.indexOf(modal), 1);
+    this.modals.splice(modalIndex, 1);
+    if (containerInfo.modals.length === 0) {
+      if (containerInfo.restore) {
+        containerInfo.restore();
+      }
+      if (modal.modalRef) {
+        ariaHidden(modal.modalRef, ariaHiddenState);
+      }
+      ariaHiddenSiblings(containerInfo.container, modal.mount, modal.modalRef, containerInfo.hiddenSiblings, false);
+      this.containers.splice(containerIndex, 1);
+    } else {
+      const nextTop = containerInfo.modals[containerInfo.modals.length - 1];
+      if (nextTop.modalRef) {
+        ariaHidden(nextTop.modalRef, false);
       }
     }
+    return modalIndex;
   }
-  get total() {
-    return this.files.length;
+  isTopModal(modal) {
+    return this.modals.length > 0 && this.modals[this.modals.length - 1] === modal;
   }
 }
-function TextTile({ label, value }) {
-  const [expanded, setExpanded] = reactExports.useState(false);
-  const toggleExpanded = () => setExpanded((prev2) => !prev2);
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      if (event.key === " ") event.preventDefault();
-      toggleExpanded();
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      className: `card-info-tile${expanded ? " expanded" : ""}`,
-      title: value,
-      role: "button",
-      tabIndex: 0,
-      "aria-expanded": expanded,
-      onClick: toggleExpanded,
-      onKeyDown: handleKeyDown,
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: value })
-      ]
-    }
-  );
+function getReactElementRef(element) {
+  if (parseInt(reactExports.version, 10) >= 19) {
+    return element?.props?.ref || null;
+  }
+  return element?.ref || null;
 }
-function ImageTile({ label, value }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
-    value?.filename ? /* @__PURE__ */ jsxRuntimeExports.jsx(MediaItem, { file: value, controls: false, autoplay: false, className: "tile-media" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: baseURL + value?.url, className: "tile-media", alt: label }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label })
-  ] });
+function activeElement(doc) {
+  let element = doc.activeElement;
+  while (element?.shadowRoot?.activeElement != null) {
+    element = element.shadowRoot.activeElement;
+  }
+  return element;
 }
-function OtherTile({ label, value }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: String(value) })
-  ] });
+const candidatesSelector = ["input", "select", "textarea", "a[href]", "button", "[tabindex]", "audio[controls]", "video[controls]", '[contenteditable]:not([contenteditable="false"])'].join(",");
+function getTabIndex(node2) {
+  const tabindexAttr = parseInt(node2.getAttribute("tabindex") || "", 10);
+  if (!Number.isNaN(tabindexAttr)) {
+    return tabindexAttr;
+  }
+  if (node2.contentEditable === "true" || (node2.nodeName === "AUDIO" || node2.nodeName === "VIDEO" || node2.nodeName === "DETAILS") && node2.getAttribute("tabindex") === null) {
+    return 0;
+  }
+  return node2.tabIndex;
 }
-const CardInfo = reactExports.memo(function CardInfo2({ entries }) {
-  if (!entries?.length) return null;
-  const sorted = [...entries].sort((a, b) => a.index - b.index);
-  const occurrences = /* @__PURE__ */ new Map();
-  return sorted.map((entry) => {
-    const identity2 = JSON.stringify([entry.index, entry.label]);
-    const occurrence = occurrences.get(identity2) ?? 0;
-    occurrences.set(identity2, occurrence + 1);
-    const key = JSON.stringify([entry.index, entry.label, occurrence]);
-    if (entry.kind === "image") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, key);
+function isNonTabbableRadio(node2) {
+  if (node2.tagName !== "INPUT" || node2.type !== "radio") {
+    return false;
+  }
+  if (!node2.name) {
+    return false;
+  }
+  const getRadio = (selector) => node2.ownerDocument.querySelector(`input[type="radio"]${selector}`);
+  let roving = getRadio(`[name="${node2.name}"]:checked`);
+  if (!roving) {
+    roving = getRadio(`[name="${node2.name}"]`);
+  }
+  return roving !== node2;
+}
+function isNodeMatchingSelectorFocusable(node2) {
+  if (node2.disabled || node2.tagName === "INPUT" && node2.type === "hidden" || isNonTabbableRadio(node2)) {
+    return false;
+  }
+  return true;
+}
+function defaultGetTabbable(root) {
+  const regularTabNodes = [];
+  const orderedTabNodes = [];
+  Array.from(root.querySelectorAll(candidatesSelector)).forEach((node2, i) => {
+    const nodeTabIndex = getTabIndex(node2);
+    if (nodeTabIndex === -1 || !isNodeMatchingSelectorFocusable(node2)) {
+      return;
     }
-    if (entry.kind === "text") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, key);
+    if (nodeTabIndex === 0) {
+      regularTabNodes.push(node2);
+    } else {
+      orderedTabNodes.push({
+        documentOrder: i,
+        tabIndex: nodeTabIndex,
+        node: node2
+      });
     }
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
   });
-});
-const QueueCard = reactExports.memo(
-  function QueueCard2({
-    item,
-    className,
-    loader,
-    index,
-    mode,
-    info,
-    route,
-    filters,
-    isSelected,
-    onSelect,
-    itemKey: itemKey2
-  }) {
-    const { fetchQueueItems } = reactExports.useContext(AppContext);
-    const workflow = item?.[3]?.extra_pnginfo?.workflow;
-    const filterByWorkflow = reactExports.useCallback((event) => {
-      event.stopPropagation();
-      if (!workflow?.id) return;
-      fetchQueueItems({
-        filters: {
-          ...filters,
-          workflow: {
-            type: "workflow",
-            value: workflow.id,
-            valueLabel: workflow.workflow_name
+  return orderedTabNodes.sort((a, b) => a.tabIndex === b.tabIndex ? a.documentOrder - b.documentOrder : a.tabIndex - b.tabIndex).map((a) => a.node).concat(regularTabNodes);
+}
+function defaultIsEnabled() {
+  return true;
+}
+function FocusTrap(props) {
+  const {
+    children,
+    disableAutoFocus = false,
+    disableEnforceFocus = false,
+    disableRestoreFocus = false,
+    getTabbable = defaultGetTabbable,
+    isEnabled = defaultIsEnabled,
+    open
+  } = props;
+  const ignoreNextEnforceFocus = reactExports.useRef(false);
+  const sentinelStart = reactExports.useRef(null);
+  const sentinelEnd = reactExports.useRef(null);
+  const nodeToRestore = reactExports.useRef(null);
+  const reactFocusEventTarget = reactExports.useRef(null);
+  const activated = reactExports.useRef(false);
+  const rootRef = reactExports.useRef(null);
+  const handleRef = useForkRef(getReactElementRef(children), rootRef);
+  const lastKeydown = reactExports.useRef(null);
+  reactExports.useEffect(() => {
+    if (!open || !rootRef.current) {
+      return;
+    }
+    activated.current = !disableAutoFocus;
+  }, [disableAutoFocus, open]);
+  reactExports.useEffect(() => {
+    if (!open || !rootRef.current) {
+      return;
+    }
+    const doc = ownerDocument(rootRef.current);
+    const activeElement$1 = activeElement(doc);
+    if (!rootRef.current.contains(activeElement$1)) {
+      if (!rootRef.current.hasAttribute("tabIndex")) {
+        rootRef.current.setAttribute("tabIndex", "-1");
+      }
+      if (activated.current) {
+        rootRef.current.focus();
+      }
+    }
+    return () => {
+      if (!disableRestoreFocus) {
+        if (nodeToRestore.current && nodeToRestore.current.focus) {
+          ignoreNextEnforceFocus.current = true;
+          nodeToRestore.current.focus();
+        }
+        nodeToRestore.current = null;
+      }
+    };
+  }, [open]);
+  reactExports.useEffect(() => {
+    if (!open || !rootRef.current) {
+      return;
+    }
+    const doc = ownerDocument(rootRef.current);
+    const activeElement$1 = activeElement(doc);
+    const loopFocus = (nativeEvent) => {
+      lastKeydown.current = nativeEvent;
+      if (disableEnforceFocus || !isEnabled() || nativeEvent.key !== "Tab") {
+        return;
+      }
+      if (activeElement$1 === rootRef.current && nativeEvent.shiftKey) {
+        ignoreNextEnforceFocus.current = true;
+        if (sentinelEnd.current) {
+          sentinelEnd.current.focus();
+        }
+      }
+    };
+    const contain = () => {
+      const rootElement = rootRef.current;
+      if (rootElement === null) {
+        return;
+      }
+      const activeEl = activeElement(doc);
+      if (!doc.hasFocus() || !isEnabled() || ignoreNextEnforceFocus.current) {
+        ignoreNextEnforceFocus.current = false;
+        return;
+      }
+      if (rootElement.contains(activeEl)) {
+        return;
+      }
+      if (disableEnforceFocus && activeEl !== sentinelStart.current && activeEl !== sentinelEnd.current) {
+        return;
+      }
+      if (activeEl !== reactFocusEventTarget.current) {
+        reactFocusEventTarget.current = null;
+      } else if (reactFocusEventTarget.current !== null) {
+        return;
+      }
+      if (!activated.current) {
+        return;
+      }
+      let tabbable = [];
+      if (activeEl === sentinelStart.current || activeEl === sentinelEnd.current) {
+        tabbable = getTabbable(rootRef.current);
+      }
+      if (tabbable.length > 0) {
+        const isShiftTab = Boolean(lastKeydown.current?.shiftKey && lastKeydown.current?.key === "Tab");
+        const focusNext = tabbable[0];
+        const focusPrevious = tabbable[tabbable.length - 1];
+        if (typeof focusNext !== "string" && typeof focusPrevious !== "string") {
+          if (isShiftTab) {
+            focusPrevious.focus();
+          } else {
+            focusNext.focus();
           }
         }
-      });
-    }, [fetchQueueItems, filters, workflow]);
-    const executionTimeLabel = reactExports.useMemo(() => {
-      const t = item?.[3]?.execution_time;
-      if (t == null) return null;
-      const rawSeconds = Number(t);
-      if (!Number.isFinite(rawSeconds) || rawSeconds < 0) return null;
-      const totalSeconds = rawSeconds >= 60 ? Math.round(rawSeconds) : rawSeconds;
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor(totalSeconds % 86400 / 3600);
-      const minutes = Math.floor(totalSeconds % 3600 / 60);
-      const seconds = totalSeconds % 60;
-      const secondsLabel = rawSeconds >= 60 ? `${seconds}s` : `${seconds.toFixed(2)}s`;
-      if (days > 0) return ` ${days}d ${hours}h ${minutes}m ${secondsLabel}`;
-      if (hours > 0) return ` ${hours}h ${minutes}m ${secondsLabel}`;
-      if (minutes > 0) return ` ${minutes}m ${secondsLabel}`;
-      return ` ${rawSeconds.toFixed(2)}s`;
-    }, [item?.[3]?.execution_time]);
-    const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
-    const mediaOutputs = reactExports.useMemo(() => new MediaOutputs(item?.[3]), [item]);
-    const handleThumbnailClick = reactExports.useCallback((file) => {
-      window.open(viewURL(file), "_blank");
-    }, []);
-    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
-    const priority = item?.[3]?.priority;
-    const priorityBadge = reactExports.useMemo(() => {
-      if (!priority) return null;
-      if (priority === 1e3) {
-        return {
-          className: "priority-interactive",
-          label: "Interactive",
-          title: "Interactive: this job jumped the queue because it was run directly from the canvas"
-        };
+      } else {
+        rootElement.focus();
       }
-      if (priority === 999) {
-        return {
-          className: "priority-resumed",
-          label: "Resumed",
-          title: "Resumed: this job was interrupted to let an interactive run through, and will run again next"
-        };
+    };
+    doc.addEventListener("focusin", contain);
+    doc.addEventListener("keydown", loopFocus, true);
+    const interval = setInterval(() => {
+      const activeEl = activeElement(doc);
+      if (activeEl && activeEl.tagName === "BODY") {
+        contain();
       }
-      return {
-        className: priority > 0 ? "priority-positive" : "priority-negative",
-        label: priority > 0 ? `+${priority}` : `${priority}`,
-        title: `Priority ${priority > 0 ? "+" : ""}${priority}`
+    }, 50);
+    return () => {
+      clearInterval(interval);
+      doc.removeEventListener("focusin", contain);
+      doc.removeEventListener("keydown", loopFocus, true);
+    };
+  }, [disableAutoFocus, disableEnforceFocus, disableRestoreFocus, isEnabled, open, getTabbable]);
+  const onFocus = (event) => {
+    if (nodeToRestore.current === null) {
+      nodeToRestore.current = event.relatedTarget;
+    }
+    activated.current = true;
+    reactFocusEventTarget.current = event.target;
+    const childrenPropsHandler = children.props.onFocus;
+    if (childrenPropsHandler) {
+      childrenPropsHandler(event);
+    }
+  };
+  const handleFocusSentinel = (event) => {
+    if (nodeToRestore.current === null) {
+      nodeToRestore.current = event.relatedTarget;
+    }
+    activated.current = true;
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
+    children: [/* @__PURE__ */ jsxRuntimeExports.jsx("div", {
+      tabIndex: open ? 0 : -1,
+      onFocus: handleFocusSentinel,
+      ref: sentinelStart,
+      "data-testid": "sentinelStart"
+    }), /* @__PURE__ */ reactExports.cloneElement(children, {
+      ref: handleRef,
+      onFocus
+    }), /* @__PURE__ */ jsxRuntimeExports.jsx("div", {
+      tabIndex: open ? 0 : -1,
+      onFocus: handleFocusSentinel,
+      ref: sentinelEnd,
+      "data-testid": "sentinelEnd"
+    })]
+  });
+}
+var reactDomExports = requireReactDom();
+const ReactDOM = /* @__PURE__ */ getDefaultExportFromCjs(reactDomExports);
+function getContainer$1(container) {
+  return typeof container === "function" ? container() : container;
+}
+const Portal = /* @__PURE__ */ reactExports.forwardRef(function Portal2(props, forwardedRef) {
+  const {
+    children,
+    container,
+    disablePortal = false
+  } = props;
+  const [mountNode, setMountNode] = reactExports.useState(null);
+  const handleRef = useForkRef(/* @__PURE__ */ reactExports.isValidElement(children) ? getReactElementRef(children) : null, forwardedRef);
+  useEnhancedEffect(() => {
+    if (!disablePortal) {
+      setMountNode(getContainer$1(container) || document.body);
+    }
+  }, [container, disablePortal]);
+  useEnhancedEffect(() => {
+    if (mountNode && !disablePortal) {
+      setRef(forwardedRef, mountNode);
+      return () => {
+        setRef(forwardedRef, null);
       };
-    }, [priority]);
-    return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "article",
-        {
-          className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
-          "aria-selected": isSelected,
-          onClick: (event) => onSelect(itemKey2, event),
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
-              loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
-              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
-              priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "span",
-                {
-                  className: `qm-badge priority-badge ${priorityBadge.className}`,
-                  title: priorityBadge.title,
-                  children: priorityBadge.label
-                }
-              ) : null,
-              error ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "span",
-                {
-                  className: `qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`,
-                  title: "Job outcome",
-                  children: error.kind === "interrupted" ? "Interrupted" : "Error"
-                }
-              ) : null,
-              mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
-                route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  MediaItem,
-                  {
-                    file,
-                    onClick: (event) => {
-                      event.stopPropagation();
-                      handleThumbnailClick(file);
-                    },
-                    controls: false,
-                    autoplay: false,
-                    className: "thumbnail"
-                  },
-                  idx
-                )) }),
-                error ? (
-                  // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", onClick: (event) => event.stopPropagation(), children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
-                      error.kind === "interrupted" ? "Interrupted" : "Error",
-                      " details"
-                    ] }),
-                    error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
-                      error.node_type,
-                      " #",
-                      error.node_id
-                    ] }),
-                    error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
-                  ] })
-                ) : null
-              ] })
-            ] })
-          ]
-        }
-      )
-    );
-  },
-  (prev2, next2) => {
-    const prevId = prev2.item?.[3]?.db_id;
-    const nextId = next2.item?.[3]?.db_id;
-    if (prevId !== nextId) return false;
-    const prevCard = prev2.item?.[3]?.card;
-    const nextCard = next2.item?.[3]?.card;
-    if (prevCard !== nextCard && JSON.stringify(prevCard) !== JSON.stringify(nextCard)) {
-      return false;
     }
-    const prevError = prev2.item?.[3]?.error;
-    const nextError = next2.item?.[3]?.error;
-    if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
-      return false;
+    return void 0;
+  }, [forwardedRef, mountNode, disablePortal]);
+  if (disablePortal) {
+    if (/* @__PURE__ */ reactExports.isValidElement(children)) {
+      const newProps = {
+        ref: handleRef
+      };
+      return /* @__PURE__ */ reactExports.cloneElement(children, newProps);
     }
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
+    return children;
   }
-);
-const createStoreImpl = (createState) => {
-  let state;
-  const listeners = /* @__PURE__ */ new Set();
-  const setState = (partial, replace2) => {
-    const nextState = typeof partial === "function" ? partial(state) : partial;
-    if (!Object.is(nextState, state)) {
-      const previousState = state;
-      state = (replace2 != null ? replace2 : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
-      listeners.forEach((listener) => listener(state, previousState));
-    }
-  };
-  const getState = () => state;
-  const getInitialState = () => initialState;
-  const subscribe = (listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  };
-  const api = { setState, getState, getInitialState, subscribe };
-  const initialState = state = createState(setState, getState, api);
-  return api;
-};
-const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
-const identity = (arg2) => arg2;
-function useStore(api, selector = identity) {
-  const slice2 = React.useSyncExternalStore(
-    api.subscribe,
-    React.useCallback(() => selector(api.getState()), [api, selector]),
-    React.useCallback(() => selector(api.getInitialState()), [api, selector])
-  );
-  React.useDebugValue(slice2);
-  return slice2;
+  return mountNode ? /* @__PURE__ */ reactDomExports.createPortal(children, mountNode) : mountNode;
+});
+function isHostComponent(element) {
+  return typeof element === "string";
 }
-const createImpl = (createState) => {
-  const api = createStore(createState);
-  const useBoundStore = (selector) => useStore(api, selector);
-  Object.assign(useBoundStore, api);
-  return useBoundStore;
-};
-const create = ((createState) => createState ? createImpl(createState) : createImpl);
-const useAppStore = create((set) => ({
-  filters: null,
-  route: "queue",
-  shiftDown: false,
-  setFilters: (filters) => set((state) => ({ ...state, filters })),
-  setRoute: (route) => set((state) => ({ ...state, route })),
-  setShiftDown: (shiftDown) => set((state) => ({ ...state, shiftDown }))
-}));
-const useSelectionStore = create((set) => ({
-  selected: /* @__PURE__ */ new Set(),
-  anchor: null,
-  select: (key) => set(() => ({
-    selected: /* @__PURE__ */ new Set([key]),
-    anchor: key
-  })),
-  toggle: (key) => set((state) => {
-    const next2 = new Set(state.selected);
-    if (next2.has(key)) {
-      next2.delete(key);
-    } else {
-      next2.add(key);
+function appendOwnerState(elementType, otherProps, ownerState) {
+  if (elementType === void 0 || isHostComponent(elementType)) {
+    return otherProps;
+  }
+  return {
+    ...otherProps,
+    ownerState: {
+      ...otherProps.ownerState,
+      ...ownerState
     }
-    return { selected: next2, anchor: key };
-  }),
-  selectRange: (orderedKeys, key) => set((state) => {
-    const anchorIndex = state.anchor !== null ? orderedKeys.indexOf(state.anchor) : -1;
-    const keyIndex = orderedKeys.indexOf(key);
-    if (anchorIndex === -1 || keyIndex === -1) {
-      return { selected: /* @__PURE__ */ new Set([key]), anchor: key };
+  };
+}
+function resolveComponentProps(componentProps, ownerState, slotState) {
+  if (typeof componentProps === "function") {
+    return componentProps(ownerState, slotState);
+  }
+  return componentProps;
+}
+function extractEventHandlers(object, excludeKeys = []) {
+  if (object === void 0) {
+    return {};
+  }
+  const result = {};
+  Object.keys(object).filter((prop) => prop.match(/^on[A-Z]/) && typeof object[prop] === "function" && !excludeKeys.includes(prop)).forEach((prop) => {
+    result[prop] = object[prop];
+  });
+  return result;
+}
+function omitEventHandlers(object) {
+  if (object === void 0) {
+    return {};
+  }
+  const result = {};
+  Object.keys(object).filter((prop) => !(prop.match(/^on[A-Z]/) && typeof object[prop] === "function")).forEach((prop) => {
+    result[prop] = object[prop];
+  });
+  return result;
+}
+function mergeSlotProps(parameters) {
+  const {
+    getSlotProps,
+    additionalProps,
+    externalSlotProps,
+    externalForwardedProps,
+    className
+  } = parameters;
+  if (!getSlotProps) {
+    const joinedClasses2 = clsx(additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
+    const mergedStyle2 = {
+      ...additionalProps?.style,
+      ...externalForwardedProps?.style,
+      ...externalSlotProps?.style
+    };
+    const props2 = {
+      ...additionalProps,
+      ...externalForwardedProps,
+      ...externalSlotProps
+    };
+    if (joinedClasses2.length > 0) {
+      props2.className = joinedClasses2;
     }
-    const start = Math.min(anchorIndex, keyIndex);
-    const end = Math.max(anchorIndex, keyIndex);
-    return { selected: new Set(orderedKeys.slice(start, end + 1)), anchor: state.anchor };
-  }),
-  selectAll: (orderedKeys) => set(() => ({
-    selected: new Set(orderedKeys),
-    anchor: orderedKeys.length > 0 ? orderedKeys[orderedKeys.length - 1] : null
-  })),
-  clear: () => set(() => ({
-    selected: /* @__PURE__ */ new Set(),
-    anchor: null
-  })),
-  retain: (keys) => set((state) => {
-    const validKeys = keys instanceof Set ? keys : new Set(keys);
+    if (Object.keys(mergedStyle2).length > 0) {
+      props2.style = mergedStyle2;
+    }
     return {
-      selected: new Set([...state.selected].filter((key) => validKeys.has(key))),
-      anchor: state.anchor !== null && validKeys.has(state.anchor) ? state.anchor : null
+      props: props2,
+      internalRef: void 0
     };
-  })
-}));
-const itemKey$2 = (item) => item?.[3]?.db_id ?? item?.[1];
-const QueueItems = reactExports.memo(function QueueItems2({ running, pending, info }) {
-  const route = useAppStore((state) => state.route);
-  const filters = useAppStore((state) => state.filters);
-  const selected = useSelectionStore((state) => state.selected);
-  const orderedKeys = reactExports.useMemo(
-    () => [...running, ...pending].map(itemKey$2),
-    [running, pending]
-  );
-  const orderedKeysRef = reactExports.useRef(orderedKeys);
-  reactExports.useEffect(() => {
-    orderedKeysRef.current = orderedKeys;
-  }, [orderedKeys]);
-  const handleSelect = reactExports.useCallback((key, event) => {
-    if (event.shiftKey) {
-      useSelectionStore.getState().selectRange(orderedKeysRef.current, key);
-    } else if (event.ctrlKey || event.metaKey) {
-      useSelectionStore.getState().toggle(key);
-    } else {
-      useSelectionStore.getState().select(key);
-    }
-  }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-    running.map((item) => {
-      const key = itemKey$2(item);
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(
-        QueueCard,
-        {
-          item,
-          className: "running",
-          loader: true,
-          mode: item?.[3]?.extra_pnginfo ? "running" : "external",
-          info,
-          route,
-          filters,
-          isSelected: selected.has(key),
-          onSelect: handleSelect,
-          itemKey: key
-        },
-        key
-      );
-    }),
-    pending.map((item, index) => {
-      const key = itemKey$2(item);
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(
-        QueueCard,
-        {
-          item,
-          className: "pending",
-          index,
-          info,
-          route,
-          filters,
-          isSelected: selected.has(key),
-          onSelect: handleSelect,
-          itemKey: key
-        },
-        item?.[3]?.db_id ?? `${item?.[1]}-${index}`
-      );
-    })
-  ] });
-});
-const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {
-  const running = data?.running ?? [];
-  const pending = data?.pending ?? [];
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : ""),
-      style: { "--job-progress": progress + "%" },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-cards", children: [
-        error && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell text-red-500 text-center", children: [
-          "Loading failed: ",
-          error
-        ] }),
-        !isLoading && (!data || !running.length && !pending.length) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "info-cell italic text-center", style: { color: "var(--qm-fg-muted)" }, children: "No items." }),
-        isLoading && !data && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell italic text-center", style: { color: "var(--qm-fg-muted)" }, children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}),
-          " Loading..."
-        ] }),
-        data && /* @__PURE__ */ jsxRuntimeExports.jsx(QueueItems, { running, pending, info: data.info })
-      ] }) })
-    }
-  );
-});
-const FileDownloadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5z"
-}));
-const PlayArrowOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M10 8.64 15.27 12 10 15.36zM8 5v14l11-7z"
-}));
-const DeleteOutlineSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M6 21h12V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z"
-}));
-const Inventory2SharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M2 2v6.7h1V22h18V8.7h1V2zm13 12H9v-2h6zm5-7H4V4h16z"
-}));
-const Stack = createStack({
-  createStyledComponent: styled("div", {
-    name: "MuiStack",
-    slot: "Root"
-  }),
-  useThemeProps: (inProps) => useDefaultProps({
-    props: inProps,
-    name: "MuiStack"
-  })
-});
-function ThemeProviderNoVars({
-  theme: themeInput,
-  ...props
-}) {
-  const scopedTheme = THEME_ID in themeInput ? themeInput[THEME_ID] : void 0;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider$1, {
-    ...props,
-    themeId: scopedTheme ? THEME_ID : void 0,
-    theme: scopedTheme || themeInput
+  }
+  const eventHandlers = extractEventHandlers({
+    ...externalForwardedProps,
+    ...externalSlotProps
   });
+  const componentsPropsWithoutEventHandlers = omitEventHandlers(externalSlotProps);
+  const otherPropsWithoutEventHandlers = omitEventHandlers(externalForwardedProps);
+  const internalSlotProps = getSlotProps(eventHandlers);
+  const joinedClasses = clsx(internalSlotProps?.className, additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
+  const mergedStyle = {
+    ...internalSlotProps?.style,
+    ...additionalProps?.style,
+    ...externalForwardedProps?.style,
+    ...externalSlotProps?.style
+  };
+  const props = {
+    ...internalSlotProps,
+    ...additionalProps,
+    ...otherPropsWithoutEventHandlers,
+    ...componentsPropsWithoutEventHandlers
+  };
+  if (joinedClasses.length > 0) {
+    props.className = joinedClasses;
+  }
+  if (Object.keys(mergedStyle).length > 0) {
+    props.style = mergedStyle;
+  }
+  return {
+    props,
+    internalRef: internalSlotProps.ref
+  };
 }
-const defaultConfig = {
-  colorSchemeStorageKey: "mui-color-scheme",
-  defaultLightColorScheme: "light",
-  defaultDarkColorScheme: "dark",
-  modeStorageKey: "mui-mode"
-};
-const {
-  CssVarsProvider: InternalCssVarsProvider
-} = createCssVarsProvider({
-  themeId: THEME_ID,
-  // @ts-ignore ignore module augmentation tests
-  theme: () => createTheme({
-    cssVariables: true
-  }),
-  colorSchemeStorageKey: defaultConfig.colorSchemeStorageKey,
-  modeStorageKey: defaultConfig.modeStorageKey,
-  defaultColorScheme: {
-    light: defaultConfig.defaultLightColorScheme,
-    dark: defaultConfig.defaultDarkColorScheme
-  },
-  resolveTheme: (theme) => {
-    const newTheme = {
-      ...theme,
-      typography: createTypography(theme.palette, theme.typography)
-    };
-    newTheme.unstable_sx = function sx(props) {
-      return styleFunctionSx({
-        sx: props,
-        theme: this
-      });
-    };
-    return newTheme;
-  }
-});
-const CssVarsProvider = InternalCssVarsProvider;
-function ThemeProvider({
-  theme,
-  ...props
-}) {
-  const noVarsTheme = reactExports.useMemo(() => {
-    if (typeof theme === "function") {
-      return theme;
-    }
-    const muiTheme = THEME_ID in theme ? theme[THEME_ID] : theme;
-    if (!("colorSchemes" in muiTheme)) {
-      if (!("vars" in muiTheme)) {
-        return {
-          ...theme,
-          vars: null
-        };
-      }
-      return theme;
-    }
-    return null;
-  }, [theme]);
-  if (noVarsTheme) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProviderNoVars, {
-      theme: noVarsTheme,
-      ...props
-    });
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(CssVarsProvider, {
-    theme,
-    ...props
+function useSlot(name, parameters) {
+  const {
+    className,
+    elementType: initialElementType,
+    ownerState,
+    externalForwardedProps,
+    internalForwardedProps,
+    shouldForwardComponentProp = false,
+    ...useSlotPropsParams
+  } = parameters;
+  const {
+    component: rootComponent,
+    slots = {
+      [name]: void 0
+    },
+    slotProps = {
+      [name]: void 0
+    },
+    ...other
+  } = externalForwardedProps;
+  const elementType = slots[name] || initialElementType;
+  const resolvedComponentsProps = resolveComponentProps(slotProps[name], ownerState);
+  const {
+    props: {
+      component: slotComponent,
+      ...mergedProps
+    },
+    internalRef
+  } = mergeSlotProps({
+    className,
+    ...useSlotPropsParams,
+    externalForwardedProps: name === "root" ? other : void 0,
+    externalSlotProps: resolvedComponentsProps
   });
+  const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.ref);
+  const LeafComponent = name === "root" ? slotComponent || rootComponent : slotComponent;
+  const props = appendOwnerState(elementType, {
+    ...name === "root" && !rootComponent && !slots[name] && internalForwardedProps,
+    ...name !== "root" && !slots[name] && internalForwardedProps,
+    ...mergedProps,
+    ...LeafComponent && !shouldForwardComponentProp && {
+      as: LeafComponent
+    },
+    ...LeafComponent && shouldForwardComponentProp && {
+      component: LeafComponent
+    },
+    ref
+  }, ownerState);
+  return [elementType, props];
 }
 function _objectWithoutPropertiesLoose(r2, e) {
   if (null == r2) return {};
@@ -19834,8 +19920,6 @@ function _setPrototypeOf(t, e) {
 function _inheritsLoose(t, o) {
   t.prototype = Object.create(o.prototype), t.prototype.constructor = t, _setPrototypeOf(t, o);
 }
-var reactDomExports = requireReactDom();
-const ReactDOM = /* @__PURE__ */ getDefaultExportFromCjs(reactDomExports);
 const config = {
   disabled: false
 };
@@ -20273,48 +20357,6 @@ var TransitionGroup = /* @__PURE__ */ (function(_React$Component) {
 })(React.Component);
 TransitionGroup.propTypes = {};
 TransitionGroup.defaultProps = defaultProps;
-const UNINITIALIZED = {};
-function useLazyRef(init, initArg) {
-  const ref = reactExports.useRef(UNINITIALIZED);
-  if (ref.current === UNINITIALIZED) {
-    ref.current = init(initArg);
-  }
-  return ref;
-}
-const EMPTY = [];
-function useOnMount(fn) {
-  reactExports.useEffect(fn, EMPTY);
-}
-class Timeout {
-  static create() {
-    return new Timeout();
-  }
-  currentId = null;
-  /**
-   * Executes `fn` after `delay`, clearing any previously scheduled call.
-   */
-  start(delay, fn) {
-    this.clear();
-    this.currentId = setTimeout(() => {
-      this.currentId = null;
-      fn();
-    }, delay);
-  }
-  clear = () => {
-    if (this.currentId !== null) {
-      clearTimeout(this.currentId);
-      this.currentId = null;
-    }
-  };
-  disposeEffect = () => {
-    return this.clear;
-  };
-}
-function useTimeout() {
-  const timeout = useLazyRef(Timeout.create).current;
-  useOnMount(timeout.disposeEffect);
-  return timeout;
-}
 const reflow = (node2) => node2.scrollTop;
 function getTransitionProps(props, options) {
   const {
@@ -20328,262 +20370,609 @@ function getTransitionProps(props, options) {
     delay: style2.transitionDelay
   };
 }
-function isHostComponent(element) {
-  return typeof element === "string";
-}
-function appendOwnerState(elementType, otherProps, ownerState) {
-  if (elementType === void 0 || isHostComponent(elementType)) {
-    return otherProps;
+const styles$2 = {
+  entering: {
+    opacity: 1
+  },
+  entered: {
+    opacity: 1
   }
-  return {
-    ...otherProps,
-    ownerState: {
-      ...otherProps.ownerState,
-      ...ownerState
-    }
+};
+const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) {
+  const theme = useTheme();
+  const defaultTimeout = {
+    enter: theme.transitions.duration.enteringScreen,
+    exit: theme.transitions.duration.leavingScreen
   };
-}
-function resolveComponentProps(componentProps, ownerState, slotState) {
-  if (typeof componentProps === "function") {
-    return componentProps(ownerState, slotState);
-  }
-  return componentProps;
-}
-function extractEventHandlers(object, excludeKeys = []) {
-  if (object === void 0) {
-    return {};
-  }
-  const result = {};
-  Object.keys(object).filter((prop) => prop.match(/^on[A-Z]/) && typeof object[prop] === "function" && !excludeKeys.includes(prop)).forEach((prop) => {
-    result[prop] = object[prop];
-  });
-  return result;
-}
-function omitEventHandlers(object) {
-  if (object === void 0) {
-    return {};
-  }
-  const result = {};
-  Object.keys(object).filter((prop) => !(prop.match(/^on[A-Z]/) && typeof object[prop] === "function")).forEach((prop) => {
-    result[prop] = object[prop];
-  });
-  return result;
-}
-function mergeSlotProps(parameters) {
   const {
-    getSlotProps,
-    additionalProps,
-    externalSlotProps,
-    externalForwardedProps,
-    className
-  } = parameters;
-  if (!getSlotProps) {
-    const joinedClasses2 = clsx(additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
-    const mergedStyle2 = {
-      ...additionalProps?.style,
-      ...externalForwardedProps?.style,
-      ...externalSlotProps?.style
-    };
-    const props2 = {
-      ...additionalProps,
-      ...externalForwardedProps,
-      ...externalSlotProps
-    };
-    if (joinedClasses2.length > 0) {
-      props2.className = joinedClasses2;
-    }
-    if (Object.keys(mergedStyle2).length > 0) {
-      props2.style = mergedStyle2;
-    }
-    return {
-      props: props2,
-      internalRef: void 0
-    };
-  }
-  const eventHandlers = extractEventHandlers({
-    ...externalForwardedProps,
-    ...externalSlotProps
-  });
-  const componentsPropsWithoutEventHandlers = omitEventHandlers(externalSlotProps);
-  const otherPropsWithoutEventHandlers = omitEventHandlers(externalForwardedProps);
-  const internalSlotProps = getSlotProps(eventHandlers);
-  const joinedClasses = clsx(internalSlotProps?.className, additionalProps?.className, className, externalForwardedProps?.className, externalSlotProps?.className);
-  const mergedStyle = {
-    ...internalSlotProps?.style,
-    ...additionalProps?.style,
-    ...externalForwardedProps?.style,
-    ...externalSlotProps?.style
-  };
-  const props = {
-    ...internalSlotProps,
-    ...additionalProps,
-    ...otherPropsWithoutEventHandlers,
-    ...componentsPropsWithoutEventHandlers
-  };
-  if (joinedClasses.length > 0) {
-    props.className = joinedClasses;
-  }
-  if (Object.keys(mergedStyle).length > 0) {
-    props.style = mergedStyle;
-  }
-  return {
-    props,
-    internalRef: internalSlotProps.ref
-  };
-}
-function useSlot(name, parameters) {
-  const {
-    className,
-    elementType: initialElementType,
-    ownerState,
-    externalForwardedProps,
-    internalForwardedProps,
-    shouldForwardComponentProp = false,
-    ...useSlotPropsParams
-  } = parameters;
-  const {
-    component: rootComponent,
-    slots = {
-      [name]: void 0
-    },
-    slotProps = {
-      [name]: void 0
-    },
+    addEndListener,
+    appear = true,
+    children,
+    easing: easing2,
+    in: inProp,
+    onEnter,
+    onEntered,
+    onEntering,
+    onExit,
+    onExited,
+    onExiting,
+    style: style2,
+    timeout = defaultTimeout,
+    // eslint-disable-next-line react/prop-types
+    TransitionComponent = Transition,
     ...other
-  } = externalForwardedProps;
-  const elementType = slots[name] || initialElementType;
-  const resolvedComponentsProps = resolveComponentProps(slotProps[name], ownerState);
-  const {
-    props: {
-      component: slotComponent,
-      ...mergedProps
-    },
-    internalRef
-  } = mergeSlotProps({
-    className,
-    ...useSlotPropsParams,
-    externalForwardedProps: name === "root" ? other : void 0,
-    externalSlotProps: resolvedComponentsProps
+  } = props;
+  const nodeRef = reactExports.useRef(null);
+  const handleRef = useForkRef(nodeRef, getReactElementRef(children), ref);
+  const normalizedTransitionCallback = (callback) => (maybeIsAppearing) => {
+    if (callback) {
+      const node2 = nodeRef.current;
+      if (maybeIsAppearing === void 0) {
+        callback(node2);
+      } else {
+        callback(node2, maybeIsAppearing);
+      }
+    }
+  };
+  const handleEntering = normalizedTransitionCallback(onEntering);
+  const handleEnter = normalizedTransitionCallback((node2, isAppearing) => {
+    reflow(node2);
+    const transitionProps = getTransitionProps({
+      style: style2,
+      timeout,
+      easing: easing2
+    }, {
+      mode: "enter"
+    });
+    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
+    node2.style.transition = theme.transitions.create("opacity", transitionProps);
+    if (onEnter) {
+      onEnter(node2, isAppearing);
+    }
   });
-  const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.ref);
-  const LeafComponent = name === "root" ? slotComponent || rootComponent : slotComponent;
-  const props = appendOwnerState(elementType, {
-    ...name === "root" && !rootComponent && !slots[name] && internalForwardedProps,
-    ...name !== "root" && !slots[name] && internalForwardedProps,
-    ...mergedProps,
-    ...LeafComponent && !shouldForwardComponentProp && {
-      as: LeafComponent
-    },
-    ...LeafComponent && shouldForwardComponentProp && {
-      component: LeafComponent
-    },
-    ref
-  }, ownerState);
-  return [elementType, props];
+  const handleEntered = normalizedTransitionCallback(onEntered);
+  const handleExiting = normalizedTransitionCallback(onExiting);
+  const handleExit = normalizedTransitionCallback((node2) => {
+    const transitionProps = getTransitionProps({
+      style: style2,
+      timeout,
+      easing: easing2
+    }, {
+      mode: "exit"
+    });
+    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
+    node2.style.transition = theme.transitions.create("opacity", transitionProps);
+    if (onExit) {
+      onExit(node2);
+    }
+  });
+  const handleExited = normalizedTransitionCallback(onExited);
+  const handleAddEndListener = (next2) => {
+    if (addEndListener) {
+      addEndListener(nodeRef.current, next2);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionComponent, {
+    appear,
+    in: inProp,
+    nodeRef,
+    onEnter: handleEnter,
+    onEntered: handleEntered,
+    onEntering: handleEntering,
+    onExit: handleExit,
+    onExited: handleExited,
+    onExiting: handleExiting,
+    addEndListener: handleAddEndListener,
+    timeout,
+    ...other,
+    children: (state, {
+      ownerState,
+      ...restChildProps
+    }) => {
+      return /* @__PURE__ */ reactExports.cloneElement(children, {
+        style: {
+          opacity: 0,
+          visibility: state === "exited" && !inProp ? "hidden" : void 0,
+          ...styles$2[state],
+          ...style2,
+          ...children.props.style
+        },
+        ref: handleRef,
+        ...restChildProps
+      });
+    }
+  });
+});
+function getBackdropUtilityClass(slot) {
+  return generateUtilityClass("MuiBackdrop", slot);
 }
-function getPaperUtilityClass(slot) {
-  return generateUtilityClass("MuiPaper", slot);
-}
-generateUtilityClasses("MuiPaper", ["root", "rounded", "outlined", "elevation", "elevation0", "elevation1", "elevation2", "elevation3", "elevation4", "elevation5", "elevation6", "elevation7", "elevation8", "elevation9", "elevation10", "elevation11", "elevation12", "elevation13", "elevation14", "elevation15", "elevation16", "elevation17", "elevation18", "elevation19", "elevation20", "elevation21", "elevation22", "elevation23", "elevation24"]);
-const useUtilityClasses$n = (ownerState) => {
+generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
+const useUtilityClasses$o = (ownerState) => {
   const {
-    square,
-    elevation,
-    variant,
-    classes
+    classes,
+    invisible
   } = ownerState;
   const slots = {
-    root: ["root", variant, !square && "rounded", variant === "elevation" && `elevation${elevation}`]
+    root: ["root", invisible && "invisible"]
   };
-  return composeClasses(slots, getPaperUtilityClass, classes);
+  return composeClasses(slots, getBackdropUtilityClass, classes);
 };
-const PaperRoot = styled("div", {
-  name: "MuiPaper",
+const BackdropRoot = styled("div", {
+  name: "MuiBackdrop",
   slot: "Root",
   overridesResolver: (props, styles2) => {
     const {
       ownerState
     } = props;
-    return [styles2.root, styles2[ownerState.variant], !ownerState.square && styles2.rounded, ownerState.variant === "elevation" && styles2[`elevation${ownerState.elevation}`]];
+    return [styles2.root, ownerState.invisible && styles2.invisible];
   }
-})(memoTheme(({
-  theme
-}) => ({
-  backgroundColor: (theme.vars || theme).palette.background.paper,
-  color: (theme.vars || theme).palette.text.primary,
-  transition: theme.transitions.create("box-shadow"),
+})({
+  position: "fixed",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  right: 0,
+  bottom: 0,
+  top: 0,
+  left: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  WebkitTapHighlightColor: "transparent",
   variants: [{
-    props: ({
-      ownerState
-    }) => !ownerState.square,
-    style: {
-      borderRadius: theme.shape.borderRadius
-    }
-  }, {
     props: {
-      variant: "outlined"
+      invisible: true
     },
     style: {
-      border: `1px solid ${(theme.vars || theme).palette.divider}`
-    }
-  }, {
-    props: {
-      variant: "elevation"
-    },
-    style: {
-      boxShadow: "var(--Paper-shadow)",
-      backgroundImage: "var(--Paper-overlay)"
+      backgroundColor: "transparent"
     }
   }]
-})));
-const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, ref) {
+});
+const Backdrop = /* @__PURE__ */ reactExports.forwardRef(function Backdrop2(inProps, ref) {
   const props = useDefaultProps({
     props: inProps,
-    name: "MuiPaper"
+    name: "MuiBackdrop"
   });
-  const theme = useTheme();
   const {
+    children,
     className,
     component = "div",
-    elevation = 1,
-    square = false,
-    variant = "elevation",
+    invisible = false,
+    open,
+    components = {},
+    componentsProps = {},
+    slotProps = {},
+    slots = {},
+    TransitionComponent: TransitionComponentProp,
+    transitionDuration,
     ...other
   } = props;
   const ownerState = {
     ...props,
     component,
-    elevation,
-    square,
-    variant
+    invisible
   };
-  const classes = useUtilityClasses$n(ownerState);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(PaperRoot, {
-    as: component,
-    ownerState,
+  const classes = useUtilityClasses$o(ownerState);
+  const backwardCompatibleSlots = {
+    transition: TransitionComponentProp,
+    root: components.Root,
+    ...slots
+  };
+  const backwardCompatibleSlotProps = {
+    ...componentsProps,
+    ...slotProps
+  };
+  const externalForwardedProps = {
+    component,
+    slots: backwardCompatibleSlots,
+    slotProps: backwardCompatibleSlotProps
+  };
+  const [RootSlot, rootProps] = useSlot("root", {
+    elementType: BackdropRoot,
+    externalForwardedProps,
     className: clsx(classes.root, className),
-    ref,
+    ownerState
+  });
+  const [TransitionSlot, transitionProps] = useSlot("transition", {
+    elementType: Fade,
+    externalForwardedProps,
+    ownerState
+  });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionSlot, {
+    in: open,
+    timeout: transitionDuration,
     ...other,
-    style: {
-      ...variant === "elevation" && {
-        "--Paper-shadow": (theme.vars || theme).shadows[elevation],
-        ...theme.vars && {
-          "--Paper-overlay": theme.vars.overlays?.[elevation]
-        },
-        ...!theme.vars && theme.palette.mode === "dark" && {
-          "--Paper-overlay": `linear-gradient(${alpha("#fff", getOverlayAlpha(elevation))}, ${alpha("#fff", getOverlayAlpha(elevation))})`
-        }
-      },
-      ...other.style
-    }
+    ...transitionProps,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(RootSlot, {
+      "aria-hidden": true,
+      ...rootProps,
+      classes,
+      ref,
+      children
+    })
   });
 });
+function getContainer(container) {
+  return typeof container === "function" ? container() : container;
+}
+function getHasTransition(children) {
+  return children ? children.props.hasOwnProperty("in") : false;
+}
+const noop = () => {
+};
+const manager = new ModalManager();
+function useModal(parameters) {
+  const {
+    container,
+    disableEscapeKeyDown = false,
+    disableScrollLock = false,
+    closeAfterTransition = false,
+    onTransitionEnter,
+    onTransitionExited,
+    children,
+    onClose,
+    open,
+    rootRef
+  } = parameters;
+  const modal = reactExports.useRef({});
+  const mountNodeRef = reactExports.useRef(null);
+  const modalRef = reactExports.useRef(null);
+  const handleRef = useForkRef(modalRef, rootRef);
+  const [exited, setExited] = reactExports.useState(!open);
+  const hasTransition = getHasTransition(children);
+  let ariaHiddenProp = true;
+  if (parameters["aria-hidden"] === "false" || parameters["aria-hidden"] === false) {
+    ariaHiddenProp = false;
+  }
+  const getDoc = () => ownerDocument(mountNodeRef.current);
+  const getModal = () => {
+    modal.current.modalRef = modalRef.current;
+    modal.current.mount = mountNodeRef.current;
+    return modal.current;
+  };
+  const handleMounted = () => {
+    manager.mount(getModal(), {
+      disableScrollLock
+    });
+    if (modalRef.current) {
+      modalRef.current.scrollTop = 0;
+    }
+  };
+  const handleOpen = useEventCallback(() => {
+    const resolvedContainer = getContainer(container) || getDoc().body;
+    manager.add(getModal(), resolvedContainer);
+    if (modalRef.current) {
+      handleMounted();
+    }
+  });
+  const isTopModal = () => manager.isTopModal(getModal());
+  const handlePortalRef = useEventCallback((node2) => {
+    mountNodeRef.current = node2;
+    if (!node2) {
+      return;
+    }
+    if (open && isTopModal()) {
+      handleMounted();
+    } else if (modalRef.current) {
+      ariaHidden(modalRef.current, ariaHiddenProp);
+    }
+  });
+  const handleClose = reactExports.useCallback(() => {
+    manager.remove(getModal(), ariaHiddenProp);
+  }, [ariaHiddenProp]);
+  reactExports.useEffect(() => {
+    return () => {
+      handleClose();
+    };
+  }, [handleClose]);
+  reactExports.useEffect(() => {
+    if (open) {
+      handleOpen();
+    } else if (!hasTransition || !closeAfterTransition) {
+      handleClose();
+    }
+  }, [open, handleClose, hasTransition, closeAfterTransition, handleOpen]);
+  const createHandleKeyDown = (otherHandlers) => (event) => {
+    otherHandlers.onKeyDown?.(event);
+    if (event.key !== "Escape" || event.which === 229 || // Wait until IME is settled.
+    !isTopModal()) {
+      return;
+    }
+    if (!disableEscapeKeyDown) {
+      event.stopPropagation();
+      if (onClose) {
+        onClose(event, "escapeKeyDown");
+      }
+    }
+  };
+  const createHandleBackdropClick = (otherHandlers) => (event) => {
+    otherHandlers.onClick?.(event);
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    if (onClose) {
+      onClose(event, "backdropClick");
+    }
+  };
+  const getRootProps = (otherHandlers = {}) => {
+    const propsEventHandlers = extractEventHandlers(parameters);
+    delete propsEventHandlers.onTransitionEnter;
+    delete propsEventHandlers.onTransitionExited;
+    const externalEventHandlers = {
+      ...propsEventHandlers,
+      ...otherHandlers
+    };
+    return {
+      /*
+       * Marking an element with the role presentation indicates to assistive technology
+       * that this element should be ignored; it exists to support the web application and
+       * is not meant for humans to interact with directly.
+       * https://github.com/evcohen/eslint-plugin-jsx-a11y/blob/master/docs/rules/no-static-element-interactions.md
+       */
+      role: "presentation",
+      ...externalEventHandlers,
+      onKeyDown: createHandleKeyDown(externalEventHandlers),
+      ref: handleRef
+    };
+  };
+  const getBackdropProps = (otherHandlers = {}) => {
+    const externalEventHandlers = otherHandlers;
+    return {
+      "aria-hidden": true,
+      ...externalEventHandlers,
+      onClick: createHandleBackdropClick(externalEventHandlers),
+      open
+    };
+  };
+  const getTransitionProps2 = () => {
+    const handleEnter = () => {
+      setExited(false);
+      if (onTransitionEnter) {
+        onTransitionEnter();
+      }
+    };
+    const handleExited = () => {
+      setExited(true);
+      if (onTransitionExited) {
+        onTransitionExited();
+      }
+      if (closeAfterTransition) {
+        handleClose();
+      }
+    };
+    return {
+      onEnter: createChainedFunction(handleEnter, children?.props.onEnter ?? noop),
+      onExited: createChainedFunction(handleExited, children?.props.onExited ?? noop)
+    };
+  };
+  return {
+    getRootProps,
+    getBackdropProps,
+    getTransitionProps: getTransitionProps2,
+    rootRef: handleRef,
+    portalRef: handlePortalRef,
+    isTopModal,
+    exited,
+    hasTransition
+  };
+}
+function getModalUtilityClass(slot) {
+  return generateUtilityClass("MuiModal", slot);
+}
+generateUtilityClasses("MuiModal", ["root", "hidden", "backdrop"]);
+const useUtilityClasses$n = (ownerState) => {
+  const {
+    open,
+    exited,
+    classes
+  } = ownerState;
+  const slots = {
+    root: ["root", !open && exited && "hidden"],
+    backdrop: ["backdrop"]
+  };
+  return composeClasses(slots, getModalUtilityClass, classes);
+};
+const ModalRoot = styled("div", {
+  name: "MuiModal",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, !ownerState.open && ownerState.exited && styles2.hidden];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  position: "fixed",
+  zIndex: (theme.vars || theme).zIndex.modal,
+  right: 0,
+  bottom: 0,
+  top: 0,
+  left: 0,
+  variants: [{
+    props: ({
+      ownerState
+    }) => !ownerState.open && ownerState.exited,
+    style: {
+      visibility: "hidden"
+    }
+  }]
+})));
+const ModalBackdrop = styled(Backdrop, {
+  name: "MuiModal",
+  slot: "Backdrop"
+})({
+  zIndex: -1
+});
+const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, ref) {
+  const props = useDefaultProps({
+    name: "MuiModal",
+    props: inProps
+  });
+  const {
+    BackdropComponent = ModalBackdrop,
+    BackdropProps,
+    classes: classesProp,
+    className,
+    closeAfterTransition = false,
+    children,
+    container,
+    component,
+    components = {},
+    componentsProps = {},
+    disableAutoFocus = false,
+    disableEnforceFocus = false,
+    disableEscapeKeyDown = false,
+    disablePortal = false,
+    disableRestoreFocus = false,
+    disableScrollLock = false,
+    hideBackdrop = false,
+    keepMounted = false,
+    onClose,
+    onTransitionEnter,
+    onTransitionExited,
+    open,
+    slotProps = {},
+    slots = {},
+    // eslint-disable-next-line react/prop-types
+    theme,
+    ...other
+  } = props;
+  const propsWithDefaults = {
+    ...props,
+    closeAfterTransition,
+    disableAutoFocus,
+    disableEnforceFocus,
+    disableEscapeKeyDown,
+    disablePortal,
+    disableRestoreFocus,
+    disableScrollLock,
+    hideBackdrop,
+    keepMounted
+  };
+  const {
+    getRootProps,
+    getBackdropProps,
+    getTransitionProps: getTransitionProps2,
+    portalRef,
+    isTopModal,
+    exited,
+    hasTransition
+  } = useModal({
+    ...propsWithDefaults,
+    rootRef: ref
+  });
+  const ownerState = {
+    ...propsWithDefaults,
+    exited
+  };
+  const classes = useUtilityClasses$n(ownerState);
+  const childProps = {};
+  if (children.props.tabIndex === void 0) {
+    childProps.tabIndex = "-1";
+  }
+  if (hasTransition) {
+    const {
+      onEnter,
+      onExited
+    } = getTransitionProps2();
+    childProps.onEnter = onEnter;
+    childProps.onExited = onExited;
+  }
+  const externalForwardedProps = {
+    slots: {
+      root: components.Root,
+      backdrop: components.Backdrop,
+      ...slots
+    },
+    slotProps: {
+      ...componentsProps,
+      ...slotProps
+    }
+  };
+  const [RootSlot, rootProps] = useSlot("root", {
+    ref,
+    elementType: ModalRoot,
+    externalForwardedProps: {
+      ...externalForwardedProps,
+      ...other,
+      component
+    },
+    getSlotProps: getRootProps,
+    ownerState,
+    className: clsx(className, classes?.root, !ownerState.open && ownerState.exited && classes?.hidden)
+  });
+  const [BackdropSlot, backdropProps] = useSlot("backdrop", {
+    ref: BackdropProps?.ref,
+    elementType: BackdropComponent,
+    externalForwardedProps,
+    shouldForwardComponentProp: true,
+    additionalProps: BackdropProps,
+    getSlotProps: (otherHandlers) => {
+      return getBackdropProps({
+        ...otherHandlers,
+        onClick: (event) => {
+          if (otherHandlers?.onClick) {
+            otherHandlers.onClick(event);
+          }
+        }
+      });
+    },
+    className: clsx(BackdropProps?.className, classes?.backdrop),
+    ownerState
+  });
+  if (!keepMounted && !open && (!hasTransition || exited)) {
+    return null;
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, {
+    ref: portalRef,
+    container,
+    disablePortal,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsxs(RootSlot, {
+      ...rootProps,
+      children: [!hideBackdrop && BackdropComponent ? /* @__PURE__ */ jsxRuntimeExports.jsx(BackdropSlot, {
+        ...backdropProps
+      }) : null, /* @__PURE__ */ jsxRuntimeExports.jsx(FocusTrap, {
+        disableEnforceFocus,
+        disableAutoFocus,
+        disableRestoreFocus,
+        isEnabled: isTopModal,
+        open,
+        children: /* @__PURE__ */ reactExports.cloneElement(children, childProps)
+      })]
+    })
+  });
+});
+function hasCorrectMainProperty(obj) {
+  return typeof obj.main === "string";
+}
+function checkSimplePaletteColorValues(obj, additionalPropertiesToCheck = []) {
+  if (!hasCorrectMainProperty(obj)) {
+    return false;
+  }
+  for (const value of additionalPropertiesToCheck) {
+    if (!obj.hasOwnProperty(value) || typeof obj[value] !== "string") {
+      return false;
+    }
+  }
+  return true;
+}
+function createSimplePaletteValueFilter(additionalPropertiesToCheck = []) {
+  return ([, value]) => value && checkSimplePaletteColorValues(value, additionalPropertiesToCheck);
+}
 function isFocusVisible(element) {
   try {
     return element.matches(":focus-visible");
   } catch (error) {
   }
   return false;
+}
+const UNINITIALIZED = {};
+function useLazyRef(init, initArg) {
+  const ref = reactExports.useRef(UNINITIALIZED);
+  if (ref.current === UNINITIALIZED) {
+    ref.current = init(initArg);
+  }
+  return ref;
 }
 class LazyRipple {
   /** React ref to the ripple instance */
@@ -20651,6 +21040,40 @@ function createControlledPromise() {
   p.resolve = resolve;
   p.reject = reject;
   return p;
+}
+const EMPTY = [];
+function useOnMount(fn) {
+  reactExports.useEffect(fn, EMPTY);
+}
+class Timeout {
+  static create() {
+    return new Timeout();
+  }
+  currentId = null;
+  /**
+   * Executes `fn` after `delay`, clearing any previously scheduled call.
+   */
+  start(delay, fn) {
+    this.clear();
+    this.currentId = setTimeout(() => {
+      this.currentId = null;
+      fn();
+    }, delay);
+  }
+  clear = () => {
+    if (this.currentId !== null) {
+      clearTimeout(this.currentId);
+      this.currentId = null;
+    }
+  };
+  disposeEffect = () => {
+    return this.clear;
+  };
+}
+function useTimeout() {
+  const timeout = useLazyRef(Timeout.create).current;
+  useOnMount(timeout.disposeEffect);
+  return timeout;
 }
 function Ripple(props) {
   const {
@@ -21224,23 +21647,6 @@ function useRippleHandler(ripple, rippleAction, eventCallback, skipRippleAction 
     return true;
   });
 }
-function hasCorrectMainProperty(obj) {
-  return typeof obj.main === "string";
-}
-function checkSimplePaletteColorValues(obj, additionalPropertiesToCheck = []) {
-  if (!hasCorrectMainProperty(obj)) {
-    return false;
-  }
-  for (const value of additionalPropertiesToCheck) {
-    if (!obj.hasOwnProperty(value) || typeof obj[value] !== "string") {
-      return false;
-    }
-  }
-  return true;
-}
-function createSimplePaletteValueFilter(additionalPropertiesToCheck = []) {
-  return ([, value]) => value && checkSimplePaletteColorValues(value, additionalPropertiesToCheck);
-}
 function getCircularProgressUtilityClass(slot) {
   return generateUtilityClass("MuiCircularProgress", slot);
 }
@@ -21461,6 +21867,882 @@ const CircularProgress = /* @__PURE__ */ reactExports.forwardRef(function Circul
     })
   });
 });
+function getIconButtonUtilityClass(slot) {
+  return generateUtilityClass("MuiIconButton", slot);
+}
+const iconButtonClasses = generateUtilityClasses("MuiIconButton", ["root", "disabled", "colorInherit", "colorPrimary", "colorSecondary", "colorError", "colorInfo", "colorSuccess", "colorWarning", "edgeStart", "edgeEnd", "sizeSmall", "sizeMedium", "sizeLarge", "loading", "loadingIndicator", "loadingWrapper"]);
+const useUtilityClasses$k = (ownerState) => {
+  const {
+    classes,
+    disabled,
+    color: color2,
+    edge,
+    size,
+    loading
+  } = ownerState;
+  const slots = {
+    root: ["root", loading && "loading", disabled && "disabled", color2 !== "default" && `color${capitalize(color2)}`, edge && `edge${capitalize(edge)}`, `size${capitalize(size)}`],
+    loadingIndicator: ["loadingIndicator"],
+    loadingWrapper: ["loadingWrapper"]
+  };
+  return composeClasses(slots, getIconButtonUtilityClass, classes);
+};
+const IconButtonRoot = styled(ButtonBase, {
+  name: "MuiIconButton",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, ownerState.loading && styles2.loading, ownerState.color !== "default" && styles2[`color${capitalize(ownerState.color)}`], ownerState.edge && styles2[`edge${capitalize(ownerState.edge)}`], styles2[`size${capitalize(ownerState.size)}`]];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  textAlign: "center",
+  flex: "0 0 auto",
+  fontSize: theme.typography.pxToRem(24),
+  padding: 8,
+  borderRadius: "50%",
+  color: (theme.vars || theme).palette.action.active,
+  transition: theme.transitions.create("background-color", {
+    duration: theme.transitions.duration.shortest
+  }),
+  variants: [{
+    props: (props) => !props.disableRipple,
+    style: {
+      "--IconButton-hoverBg": theme.alpha((theme.vars || theme).palette.action.active, (theme.vars || theme).palette.action.hoverOpacity),
+      "&:hover": {
+        backgroundColor: "var(--IconButton-hoverBg)",
+        // Reset on touch devices, it doesn't add specificity
+        "@media (hover: none)": {
+          backgroundColor: "transparent"
+        }
+      }
+    }
+  }, {
+    props: {
+      edge: "start"
+    },
+    style: {
+      marginLeft: -12
+    }
+  }, {
+    props: {
+      edge: "start",
+      size: "small"
+    },
+    style: {
+      marginLeft: -3
+    }
+  }, {
+    props: {
+      edge: "end"
+    },
+    style: {
+      marginRight: -12
+    }
+  }, {
+    props: {
+      edge: "end",
+      size: "small"
+    },
+    style: {
+      marginRight: -3
+    }
+  }]
+})), memoTheme(({
+  theme
+}) => ({
+  variants: [{
+    props: {
+      color: "inherit"
+    },
+    style: {
+      color: "inherit"
+    }
+  }, ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    props: {
+      color: color2
+    },
+    style: {
+      color: (theme.vars || theme).palette[color2].main
+    }
+  })), ...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color2]) => ({
+    props: {
+      color: color2
+    },
+    style: {
+      "--IconButton-hoverBg": theme.alpha((theme.vars || theme).palette[color2].main, (theme.vars || theme).palette.action.hoverOpacity)
+    }
+  })), {
+    props: {
+      size: "small"
+    },
+    style: {
+      padding: 5,
+      fontSize: theme.typography.pxToRem(18)
+    }
+  }, {
+    props: {
+      size: "large"
+    },
+    style: {
+      padding: 12,
+      fontSize: theme.typography.pxToRem(28)
+    }
+  }],
+  [`&.${iconButtonClasses.disabled}`]: {
+    backgroundColor: "transparent",
+    color: (theme.vars || theme).palette.action.disabled
+  },
+  [`&.${iconButtonClasses.loading}`]: {
+    color: "transparent"
+  }
+})));
+const IconButtonLoadingIndicator = styled("span", {
+  name: "MuiIconButton",
+  slot: "LoadingIndicator"
+})(({
+  theme
+}) => ({
+  display: "none",
+  position: "absolute",
+  visibility: "visible",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  color: (theme.vars || theme).palette.action.disabled,
+  variants: [{
+    props: {
+      loading: true
+    },
+    style: {
+      display: "flex"
+    }
+  }]
+}));
+const IconButton = /* @__PURE__ */ reactExports.forwardRef(function IconButton2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiIconButton"
+  });
+  const {
+    edge = false,
+    children,
+    className,
+    color: color2 = "default",
+    disabled = false,
+    disableFocusRipple = false,
+    size = "medium",
+    id: idProp,
+    loading = null,
+    loadingIndicator: loadingIndicatorProp,
+    ...other
+  } = props;
+  const loadingId = useId(idProp);
+  const loadingIndicator = loadingIndicatorProp ?? /* @__PURE__ */ jsxRuntimeExports.jsx(CircularProgress, {
+    "aria-labelledby": loadingId,
+    color: "inherit",
+    size: 16
+  });
+  const ownerState = {
+    ...props,
+    edge,
+    color: color2,
+    disabled,
+    disableFocusRipple,
+    loading,
+    loadingIndicator,
+    size
+  };
+  const classes = useUtilityClasses$k(ownerState);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(IconButtonRoot, {
+    id: loading ? loadingId : idProp,
+    className: clsx(classes.root, className),
+    centerRipple: true,
+    focusRipple: !disableFocusRipple,
+    disabled: disabled || loading,
+    ref,
+    ...other,
+    ownerState,
+    children: [typeof loading === "boolean" && // use plain HTML span to minimize the runtime overhead
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
+      className: classes.loadingWrapper,
+      style: {
+        display: "contents"
+      },
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(IconButtonLoadingIndicator, {
+        className: classes.loadingIndicator,
+        ownerState,
+        children: loading && loadingIndicator
+      })
+    }), children]
+  });
+});
+const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+}));
+const OpenInNewSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M19 19H5V5h7V3H3v18h18v-9h-2zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3z"
+}));
+const ArrowBackIosNewSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M17.77 3.77 16 2 6 12l10 10 1.77-1.77L9.54 12z"
+}));
+const ArrowForwardIosSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M6.23 20.23 8 22l10-10L8 2 6.23 3.77 14.46 12z"
+}));
+function Lightbox({ files, index, onIndexChange, onClose }) {
+  const file = files[index];
+  const count = files.length;
+  const step = (delta) => onIndexChange((index + delta + count) % count);
+  function handleKeyDown(event) {
+    if (event.key === "Escape") return;
+    event.stopPropagation();
+    if (event.key === "ArrowLeft") step(-1);
+    else if (event.key === "ArrowRight") step(1);
+  }
+  function handleClick(event) {
+    event.stopPropagation();
+    if (!event.target.closest("img, video, .lightbox-toolbar, .lightbox-nav")) onClose();
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { open: true, onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-lightbox", onClick: handleClick, onKeyDown: handleKeyDown, tabIndex: -1, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "lightbox-toolbar", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "lightbox-title", title: file.filename, children: file.filename }),
+      count > 1 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "lightbox-counter", children: [
+        index + 1,
+        " / ",
+        count
+      ] }) : null,
+      /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { size: "small", color: "inherit", title: "Open in new tab", onClick: () => window.open(viewURL(file), "_blank"), children: /* @__PURE__ */ jsxRuntimeExports.jsx(OpenInNewSharpIcon, { fontSize: "small" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { size: "small", color: "inherit", title: "Close (Esc)", onClick: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsx(CloseSharpIcon, { fontSize: "small" }) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "lightbox-stage", children: [
+      count > 1 ? /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { className: "lightbox-nav prev", color: "inherit", title: "Previous (←)", onClick: () => step(-1), children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowBackIosNewSharpIcon, {}) }) : null,
+      /* @__PURE__ */ jsxRuntimeExports.jsx(MediaItem, { file, autoplay: true, className: "lightbox-media" }),
+      count > 1 ? /* @__PURE__ */ jsxRuntimeExports.jsx(IconButton, { className: "lightbox-nav next", color: "inherit", title: "Next (→)", onClick: () => step(1), children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowForwardIosSharpIcon, {}) }) : null
+    ] })
+  ] }) });
+}
+class MediaOutputs {
+  files = [];
+  constructor(item) {
+    const nodes = item?.outputs;
+    if (!nodes) return;
+    for (const nodeID of Object.keys(nodes)) {
+      const outputs = nodes[nodeID];
+      const entries = outputs.images || outputs.gifs || outputs.files || [];
+      for (const entry of entries) {
+        this.files.push({
+          filename: entry.filename,
+          subfolder: entry.subfolder,
+          type: entry.type
+        });
+      }
+    }
+  }
+  get total() {
+    return this.files.length;
+  }
+}
+function TextTile({ label, value }) {
+  const [expanded, setExpanded] = reactExports.useState(false);
+  const toggleExpanded = () => setExpanded((prev2) => !prev2);
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      if (event.key === " ") event.preventDefault();
+      toggleExpanded();
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: `card-info-tile${expanded ? " expanded" : ""}`,
+      title: value,
+      role: "button",
+      tabIndex: 0,
+      "aria-expanded": expanded,
+      onClick: toggleExpanded,
+      onKeyDown: handleKeyDown,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: value })
+      ]
+    }
+  );
+}
+function ImageTile({ label, value }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
+    value?.filename ? /* @__PURE__ */ jsxRuntimeExports.jsx(MediaItem, { file: value, controls: false, autoplay: false, className: "tile-media" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: baseURL + value?.url, className: "tile-media", alt: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label })
+  ] });
+}
+function OtherTile({ label, value }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: String(value) })
+  ] });
+}
+const CardInfo = reactExports.memo(function CardInfo2({ entries }) {
+  if (!entries?.length) return null;
+  const sorted = [...entries].sort((a, b) => a.index - b.index);
+  const occurrences = /* @__PURE__ */ new Map();
+  return sorted.map((entry) => {
+    const identity2 = JSON.stringify([entry.index, entry.label]);
+    const occurrence = occurrences.get(identity2) ?? 0;
+    occurrences.set(identity2, occurrence + 1);
+    const key = JSON.stringify([entry.index, entry.label, occurrence]);
+    if (entry.kind === "image") {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, key);
+    }
+    if (entry.kind === "text") {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, key);
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
+  });
+});
+const QueueCard = reactExports.memo(
+  function QueueCard2({
+    item,
+    className,
+    loader,
+    index,
+    mode,
+    info,
+    route,
+    filters,
+    isSelected,
+    onSelect,
+    itemKey: itemKey2
+  }) {
+    const { fetchQueueItems } = reactExports.useContext(AppContext);
+    const workflow = item?.[3]?.extra_pnginfo?.workflow;
+    const filterByWorkflow = reactExports.useCallback((event) => {
+      event.stopPropagation();
+      if (!workflow?.id) return;
+      fetchQueueItems({
+        filters: {
+          ...filters,
+          workflow: {
+            type: "workflow",
+            value: workflow.id,
+            valueLabel: workflow.workflow_name
+          }
+        }
+      });
+    }, [fetchQueueItems, filters, workflow]);
+    const executionTimeLabel = reactExports.useMemo(() => {
+      const t = item?.[3]?.execution_time;
+      if (t == null) return null;
+      const rawSeconds = Number(t);
+      if (!Number.isFinite(rawSeconds) || rawSeconds < 0) return null;
+      const totalSeconds = rawSeconds >= 60 ? Math.round(rawSeconds) : rawSeconds;
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor(totalSeconds % 86400 / 3600);
+      const minutes = Math.floor(totalSeconds % 3600 / 60);
+      const seconds = totalSeconds % 60;
+      const secondsLabel = rawSeconds >= 60 ? `${seconds}s` : `${seconds.toFixed(2)}s`;
+      if (days > 0) return ` ${days}d ${hours}h ${minutes}m ${secondsLabel}`;
+      if (hours > 0) return ` ${hours}h ${minutes}m ${secondsLabel}`;
+      if (minutes > 0) return ` ${minutes}m ${secondsLabel}`;
+      return ` ${rawSeconds.toFixed(2)}s`;
+    }, [item?.[3]?.execution_time]);
+    const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
+    const mediaOutputs = reactExports.useMemo(() => new MediaOutputs(item?.[3]), [item]);
+    const [lightboxIndex, setLightboxIndex] = reactExports.useState(null);
+    const closeLightbox = reactExports.useCallback(() => setLightboxIndex(null), []);
+    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    const priority = item?.[3]?.priority;
+    const priorityBadge = reactExports.useMemo(() => {
+      if (!priority) return null;
+      if (priority === 1e3) {
+        return {
+          className: "priority-interactive",
+          label: "Interactive",
+          title: "Interactive: this job jumped the queue because it was run directly from the canvas"
+        };
+      }
+      if (priority === 999) {
+        return {
+          className: "priority-resumed",
+          label: "Resumed",
+          title: "Resumed: this job was interrupted to let an interactive run through, and will run again next"
+        };
+      }
+      return {
+        className: priority > 0 ? "priority-positive" : "priority-negative",
+        label: priority > 0 ? `+${priority}` : `${priority}`,
+        title: `Priority ${priority > 0 ? "+" : ""}${priority}`
+      };
+    }, [priority]);
+    return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "article",
+        {
+          className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
+          "aria-selected": isSelected,
+          onClick: (event) => onSelect(itemKey2, event),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
+              loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
+              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge priority-badge ${priorityBadge.className}`,
+                  title: priorityBadge.title,
+                  children: priorityBadge.label
+                }
+              ) : null,
+              error ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`,
+                  title: "Job outcome",
+                  children: error.kind === "interrupted" ? "Interrupted" : "Error"
+                }
+              ) : null,
+              mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
+                route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  MediaItem,
+                  {
+                    file,
+                    onClick: (event) => {
+                      event.stopPropagation();
+                      setLightboxIndex(idx);
+                    },
+                    controls: false,
+                    autoplay: false,
+                    className: "thumbnail"
+                  },
+                  idx
+                )) }),
+                lightboxIndex !== null ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  Lightbox,
+                  {
+                    files: mediaOutputs.files,
+                    index: lightboxIndex,
+                    onIndexChange: setLightboxIndex,
+                    onClose: closeLightbox
+                  }
+                ) : null,
+                error ? (
+                  // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", onClick: (event) => event.stopPropagation(), children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
+                      error.kind === "interrupted" ? "Interrupted" : "Error",
+                      " details"
+                    ] }),
+                    error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
+                      error.node_type,
+                      " #",
+                      error.node_id
+                    ] }),
+                    error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
+                  ] })
+                ) : null
+              ] })
+            ] })
+          ]
+        }
+      )
+    );
+  },
+  (prev2, next2) => {
+    const prevId = prev2.item?.[3]?.db_id;
+    const nextId = next2.item?.[3]?.db_id;
+    if (prevId !== nextId) return false;
+    const prevCard = prev2.item?.[3]?.card;
+    const nextCard = next2.item?.[3]?.card;
+    if (prevCard !== nextCard && JSON.stringify(prevCard) !== JSON.stringify(nextCard)) {
+      return false;
+    }
+    const prevError = prev2.item?.[3]?.error;
+    const nextError = next2.item?.[3]?.error;
+    if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
+      return false;
+    }
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
+  }
+);
+const createStoreImpl = (createState) => {
+  let state;
+  const listeners = /* @__PURE__ */ new Set();
+  const setState = (partial, replace2) => {
+    const nextState = typeof partial === "function" ? partial(state) : partial;
+    if (!Object.is(nextState, state)) {
+      const previousState = state;
+      state = (replace2 != null ? replace2 : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+      listeners.forEach((listener) => listener(state, previousState));
+    }
+  };
+  const getState = () => state;
+  const getInitialState = () => initialState;
+  const subscribe = (listener) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  };
+  const api = { setState, getState, getInitialState, subscribe };
+  const initialState = state = createState(setState, getState, api);
+  return api;
+};
+const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
+const identity = (arg2) => arg2;
+function useStore(api, selector = identity) {
+  const slice2 = React.useSyncExternalStore(
+    api.subscribe,
+    React.useCallback(() => selector(api.getState()), [api, selector]),
+    React.useCallback(() => selector(api.getInitialState()), [api, selector])
+  );
+  React.useDebugValue(slice2);
+  return slice2;
+}
+const createImpl = (createState) => {
+  const api = createStore(createState);
+  const useBoundStore = (selector) => useStore(api, selector);
+  Object.assign(useBoundStore, api);
+  return useBoundStore;
+};
+const create = ((createState) => createState ? createImpl(createState) : createImpl);
+const useAppStore = create((set) => ({
+  filters: null,
+  route: "queue",
+  shiftDown: false,
+  setFilters: (filters) => set((state) => ({ ...state, filters })),
+  setRoute: (route) => set((state) => ({ ...state, route })),
+  setShiftDown: (shiftDown) => set((state) => ({ ...state, shiftDown }))
+}));
+const useSelectionStore = create((set) => ({
+  selected: /* @__PURE__ */ new Set(),
+  anchor: null,
+  select: (key) => set(() => ({
+    selected: /* @__PURE__ */ new Set([key]),
+    anchor: key
+  })),
+  toggle: (key) => set((state) => {
+    const next2 = new Set(state.selected);
+    if (next2.has(key)) {
+      next2.delete(key);
+    } else {
+      next2.add(key);
+    }
+    return { selected: next2, anchor: key };
+  }),
+  selectRange: (orderedKeys, key) => set((state) => {
+    const anchorIndex = state.anchor !== null ? orderedKeys.indexOf(state.anchor) : -1;
+    const keyIndex = orderedKeys.indexOf(key);
+    if (anchorIndex === -1 || keyIndex === -1) {
+      return { selected: /* @__PURE__ */ new Set([key]), anchor: key };
+    }
+    const start = Math.min(anchorIndex, keyIndex);
+    const end = Math.max(anchorIndex, keyIndex);
+    return { selected: new Set(orderedKeys.slice(start, end + 1)), anchor: state.anchor };
+  }),
+  selectAll: (orderedKeys) => set(() => ({
+    selected: new Set(orderedKeys),
+    anchor: orderedKeys.length > 0 ? orderedKeys[orderedKeys.length - 1] : null
+  })),
+  clear: () => set(() => ({
+    selected: /* @__PURE__ */ new Set(),
+    anchor: null
+  })),
+  retain: (keys) => set((state) => {
+    const validKeys = keys instanceof Set ? keys : new Set(keys);
+    return {
+      selected: new Set([...state.selected].filter((key) => validKeys.has(key))),
+      anchor: state.anchor !== null && validKeys.has(state.anchor) ? state.anchor : null
+    };
+  })
+}));
+const itemKey$2 = (item) => item?.[3]?.db_id ?? item?.[1];
+const QueueItems = reactExports.memo(function QueueItems2({ running, pending, info }) {
+  const route = useAppStore((state) => state.route);
+  const filters = useAppStore((state) => state.filters);
+  const selected = useSelectionStore((state) => state.selected);
+  const orderedKeys = reactExports.useMemo(
+    () => [...running, ...pending].map(itemKey$2),
+    [running, pending]
+  );
+  const orderedKeysRef = reactExports.useRef(orderedKeys);
+  reactExports.useEffect(() => {
+    orderedKeysRef.current = orderedKeys;
+  }, [orderedKeys]);
+  const handleSelect = reactExports.useCallback((key, event) => {
+    if (event.shiftKey) {
+      useSelectionStore.getState().selectRange(orderedKeysRef.current, key);
+    } else if (event.ctrlKey || event.metaKey) {
+      useSelectionStore.getState().toggle(key);
+    } else {
+      useSelectionStore.getState().select(key);
+    }
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    running.map((item) => {
+      const key = itemKey$2(item);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
+        QueueCard,
+        {
+          item,
+          className: "running",
+          loader: true,
+          mode: item?.[3]?.extra_pnginfo ? "running" : "external",
+          info,
+          route,
+          filters,
+          isSelected: selected.has(key),
+          onSelect: handleSelect,
+          itemKey: key
+        },
+        key
+      );
+    }),
+    pending.map((item, index) => {
+      const key = itemKey$2(item);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
+        QueueCard,
+        {
+          item,
+          className: "pending",
+          index,
+          info,
+          route,
+          filters,
+          isSelected: selected.has(key),
+          onSelect: handleSelect,
+          itemKey: key
+        },
+        item?.[3]?.db_id ?? `${item?.[1]}-${index}`
+      );
+    })
+  ] });
+});
+const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {
+  const running = data?.running ?? [];
+  const pending = data?.pending ?? [];
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "div",
+    {
+      className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : ""),
+      style: { "--job-progress": progress + "%" },
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-cards", children: [
+        error && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell text-red-500 text-center", children: [
+          "Loading failed: ",
+          error
+        ] }),
+        !isLoading && (!data || !running.length && !pending.length) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "info-cell italic text-center", style: { color: "var(--qm-fg-muted)" }, children: "No items." }),
+        isLoading && !data && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell italic text-center", style: { color: "var(--qm-fg-muted)" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}),
+          " Loading..."
+        ] }),
+        data && /* @__PURE__ */ jsxRuntimeExports.jsx(QueueItems, { running, pending, info: data.info })
+      ] }) })
+    }
+  );
+});
+const FileDownloadOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5z"
+}));
+const PlayArrowOutlinedIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M10 8.64 15.27 12 10 15.36zM8 5v14l11-7z"
+}));
+const DeleteOutlineSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M6 21h12V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z"
+}));
+const Inventory2SharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M2 2v6.7h1V22h18V8.7h1V2zm13 12H9v-2h6zm5-7H4V4h16z"
+}));
+const Stack = createStack({
+  createStyledComponent: styled("div", {
+    name: "MuiStack",
+    slot: "Root"
+  }),
+  useThemeProps: (inProps) => useDefaultProps({
+    props: inProps,
+    name: "MuiStack"
+  })
+});
+function ThemeProviderNoVars({
+  theme: themeInput,
+  ...props
+}) {
+  const scopedTheme = THEME_ID in themeInput ? themeInput[THEME_ID] : void 0;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider$1, {
+    ...props,
+    themeId: scopedTheme ? THEME_ID : void 0,
+    theme: scopedTheme || themeInput
+  });
+}
+const defaultConfig = {
+  colorSchemeStorageKey: "mui-color-scheme",
+  defaultLightColorScheme: "light",
+  defaultDarkColorScheme: "dark",
+  modeStorageKey: "mui-mode"
+};
+const {
+  CssVarsProvider: InternalCssVarsProvider
+} = createCssVarsProvider({
+  themeId: THEME_ID,
+  // @ts-ignore ignore module augmentation tests
+  theme: () => createTheme({
+    cssVariables: true
+  }),
+  colorSchemeStorageKey: defaultConfig.colorSchemeStorageKey,
+  modeStorageKey: defaultConfig.modeStorageKey,
+  defaultColorScheme: {
+    light: defaultConfig.defaultLightColorScheme,
+    dark: defaultConfig.defaultDarkColorScheme
+  },
+  resolveTheme: (theme) => {
+    const newTheme = {
+      ...theme,
+      typography: createTypography(theme.palette, theme.typography)
+    };
+    newTheme.unstable_sx = function sx(props) {
+      return styleFunctionSx({
+        sx: props,
+        theme: this
+      });
+    };
+    return newTheme;
+  }
+});
+const CssVarsProvider = InternalCssVarsProvider;
+function ThemeProvider({
+  theme,
+  ...props
+}) {
+  const noVarsTheme = reactExports.useMemo(() => {
+    if (typeof theme === "function") {
+      return theme;
+    }
+    const muiTheme = THEME_ID in theme ? theme[THEME_ID] : theme;
+    if (!("colorSchemes" in muiTheme)) {
+      if (!("vars" in muiTheme)) {
+        return {
+          ...theme,
+          vars: null
+        };
+      }
+      return theme;
+    }
+    return null;
+  }, [theme]);
+  if (noVarsTheme) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProviderNoVars, {
+      theme: noVarsTheme,
+      ...props
+    });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(CssVarsProvider, {
+    theme,
+    ...props
+  });
+}
+function getPaperUtilityClass(slot) {
+  return generateUtilityClass("MuiPaper", slot);
+}
+generateUtilityClasses("MuiPaper", ["root", "rounded", "outlined", "elevation", "elevation0", "elevation1", "elevation2", "elevation3", "elevation4", "elevation5", "elevation6", "elevation7", "elevation8", "elevation9", "elevation10", "elevation11", "elevation12", "elevation13", "elevation14", "elevation15", "elevation16", "elevation17", "elevation18", "elevation19", "elevation20", "elevation21", "elevation22", "elevation23", "elevation24"]);
+const useUtilityClasses$j = (ownerState) => {
+  const {
+    square,
+    elevation,
+    variant,
+    classes
+  } = ownerState;
+  const slots = {
+    root: ["root", variant, !square && "rounded", variant === "elevation" && `elevation${elevation}`]
+  };
+  return composeClasses(slots, getPaperUtilityClass, classes);
+};
+const PaperRoot = styled("div", {
+  name: "MuiPaper",
+  slot: "Root",
+  overridesResolver: (props, styles2) => {
+    const {
+      ownerState
+    } = props;
+    return [styles2.root, styles2[ownerState.variant], !ownerState.square && styles2.rounded, ownerState.variant === "elevation" && styles2[`elevation${ownerState.elevation}`]];
+  }
+})(memoTheme(({
+  theme
+}) => ({
+  backgroundColor: (theme.vars || theme).palette.background.paper,
+  color: (theme.vars || theme).palette.text.primary,
+  transition: theme.transitions.create("box-shadow"),
+  variants: [{
+    props: ({
+      ownerState
+    }) => !ownerState.square,
+    style: {
+      borderRadius: theme.shape.borderRadius
+    }
+  }, {
+    props: {
+      variant: "outlined"
+    },
+    style: {
+      border: `1px solid ${(theme.vars || theme).palette.divider}`
+    }
+  }, {
+    props: {
+      variant: "elevation"
+    },
+    style: {
+      boxShadow: "var(--Paper-shadow)",
+      backgroundImage: "var(--Paper-overlay)"
+    }
+  }]
+})));
+const Paper = /* @__PURE__ */ reactExports.forwardRef(function Paper2(inProps, ref) {
+  const props = useDefaultProps({
+    props: inProps,
+    name: "MuiPaper"
+  });
+  const theme = useTheme();
+  const {
+    className,
+    component = "div",
+    elevation = 1,
+    square = false,
+    variant = "elevation",
+    ...other
+  } = props;
+  const ownerState = {
+    ...props,
+    component,
+    elevation,
+    square,
+    variant
+  };
+  const classes = useUtilityClasses$j(ownerState);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PaperRoot, {
+    as: component,
+    ownerState,
+    className: clsx(classes.root, className),
+    ref,
+    ...other,
+    style: {
+      ...variant === "elevation" && {
+        "--Paper-shadow": (theme.vars || theme).shadows[elevation],
+        ...theme.vars && {
+          "--Paper-overlay": theme.vars.overlays?.[elevation]
+        },
+        ...!theme.vars && theme.palette.mode === "dark" && {
+          "--Paper-overlay": `linear-gradient(${alpha("#fff", getOverlayAlpha(elevation))}, ${alpha("#fff", getOverlayAlpha(elevation))})`
+        }
+      },
+      ...other.style
+    }
+  });
+});
 function useSlotProps(parameters) {
   const {
     elementType,
@@ -21484,52 +22766,10 @@ function useSlotProps(parameters) {
   }, ownerState);
   return props;
 }
-function getReactElementRef(element) {
-  if (parseInt(reactExports.version, 10) >= 19) {
-    return element?.props?.ref || null;
-  }
-  return element?.ref || null;
-}
-function getContainer$1(container) {
-  return typeof container === "function" ? container() : container;
-}
-const Portal = /* @__PURE__ */ reactExports.forwardRef(function Portal2(props, forwardedRef) {
-  const {
-    children,
-    container,
-    disablePortal = false
-  } = props;
-  const [mountNode, setMountNode] = reactExports.useState(null);
-  const handleRef = useForkRef(/* @__PURE__ */ reactExports.isValidElement(children) ? getReactElementRef(children) : null, forwardedRef);
-  useEnhancedEffect(() => {
-    if (!disablePortal) {
-      setMountNode(getContainer$1(container) || document.body);
-    }
-  }, [container, disablePortal]);
-  useEnhancedEffect(() => {
-    if (mountNode && !disablePortal) {
-      setRef(forwardedRef, mountNode);
-      return () => {
-        setRef(forwardedRef, null);
-      };
-    }
-    return void 0;
-  }, [forwardedRef, mountNode, disablePortal]);
-  if (disablePortal) {
-    if (/* @__PURE__ */ reactExports.isValidElement(children)) {
-      const newProps = {
-        ref: handleRef
-      };
-      return /* @__PURE__ */ reactExports.cloneElement(children, newProps);
-    }
-    return children;
-  }
-  return mountNode ? /* @__PURE__ */ reactDomExports.createPortal(children, mountNode) : mountNode;
-});
 function getStyleValue(value) {
   return parseInt(value, 10) || 0;
 }
-const styles$2 = {
+const styles$1 = {
   shadow: {
     // Visibility needed to hide the extra text area on iPads
     visibility: "hidden",
@@ -21696,7 +22936,7 @@ const TextareaAutosize = /* @__PURE__ */ reactExports.forwardRef(function Textar
       ref: hiddenTextareaRef,
       tabIndex: -1,
       style: {
-        ...styles$2.shadow,
+        ...styles$1.shadow,
         ...style2,
         paddingTop: 0,
         paddingBottom: 0
@@ -21749,7 +22989,7 @@ const inputOverridesResolver = (props, styles2) => {
   } = props;
   return [styles2.input, ownerState.size === "small" && styles2.inputSizeSmall, ownerState.multiline && styles2.inputMultiline, ownerState.type === "search" && styles2.inputTypeSearch, ownerState.startAdornment && styles2.inputAdornedStart, ownerState.endAdornment && styles2.inputAdornedEnd, ownerState.hiddenLabel && styles2.inputHiddenLabel];
 };
-const useUtilityClasses$k = (ownerState) => {
+const useUtilityClasses$i = (ownerState) => {
   const {
     classes,
     color: color2,
@@ -22135,7 +23375,7 @@ const InputBase = /* @__PURE__ */ reactExports.forwardRef(function InputBase2(in
     startAdornment,
     type
   };
-  const classes = useUtilityClasses$k(ownerState);
+  const classes = useUtilityClasses$i(ownerState);
   const Root = slots.root || components.Root || InputBaseRoot;
   const rootProps = slotProps.root || componentsProps.root || {};
   const Input3 = slots.input || components.Input || InputBaseInput;
@@ -22223,233 +23463,13 @@ const filledInputClasses = {
 const ArrowDropDownIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M7 10l5 5 5-5z"
 }));
-const styles$1 = {
-  entering: {
-    opacity: 1
-  },
-  entered: {
-    opacity: 1
-  }
-};
-const Fade = /* @__PURE__ */ reactExports.forwardRef(function Fade2(props, ref) {
-  const theme = useTheme();
-  const defaultTimeout = {
-    enter: theme.transitions.duration.enteringScreen,
-    exit: theme.transitions.duration.leavingScreen
-  };
-  const {
-    addEndListener,
-    appear = true,
-    children,
-    easing: easing2,
-    in: inProp,
-    onEnter,
-    onEntered,
-    onEntering,
-    onExit,
-    onExited,
-    onExiting,
-    style: style2,
-    timeout = defaultTimeout,
-    // eslint-disable-next-line react/prop-types
-    TransitionComponent = Transition,
-    ...other
-  } = props;
-  const nodeRef = reactExports.useRef(null);
-  const handleRef = useForkRef(nodeRef, getReactElementRef(children), ref);
-  const normalizedTransitionCallback = (callback) => (maybeIsAppearing) => {
-    if (callback) {
-      const node2 = nodeRef.current;
-      if (maybeIsAppearing === void 0) {
-        callback(node2);
-      } else {
-        callback(node2, maybeIsAppearing);
-      }
-    }
-  };
-  const handleEntering = normalizedTransitionCallback(onEntering);
-  const handleEnter = normalizedTransitionCallback((node2, isAppearing) => {
-    reflow(node2);
-    const transitionProps = getTransitionProps({
-      style: style2,
-      timeout,
-      easing: easing2
-    }, {
-      mode: "enter"
-    });
-    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
-    node2.style.transition = theme.transitions.create("opacity", transitionProps);
-    if (onEnter) {
-      onEnter(node2, isAppearing);
-    }
-  });
-  const handleEntered = normalizedTransitionCallback(onEntered);
-  const handleExiting = normalizedTransitionCallback(onExiting);
-  const handleExit = normalizedTransitionCallback((node2) => {
-    const transitionProps = getTransitionProps({
-      style: style2,
-      timeout,
-      easing: easing2
-    }, {
-      mode: "exit"
-    });
-    node2.style.webkitTransition = theme.transitions.create("opacity", transitionProps);
-    node2.style.transition = theme.transitions.create("opacity", transitionProps);
-    if (onExit) {
-      onExit(node2);
-    }
-  });
-  const handleExited = normalizedTransitionCallback(onExited);
-  const handleAddEndListener = (next2) => {
-    if (addEndListener) {
-      addEndListener(nodeRef.current, next2);
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionComponent, {
-    appear,
-    in: inProp,
-    nodeRef,
-    onEnter: handleEnter,
-    onEntered: handleEntered,
-    onEntering: handleEntering,
-    onExit: handleExit,
-    onExited: handleExited,
-    onExiting: handleExiting,
-    addEndListener: handleAddEndListener,
-    timeout,
-    ...other,
-    children: (state, {
-      ownerState,
-      ...restChildProps
-    }) => {
-      return /* @__PURE__ */ reactExports.cloneElement(children, {
-        style: {
-          opacity: 0,
-          visibility: state === "exited" && !inProp ? "hidden" : void 0,
-          ...styles$1[state],
-          ...style2,
-          ...children.props.style
-        },
-        ref: handleRef,
-        ...restChildProps
-      });
-    }
-  });
-});
-function getBackdropUtilityClass(slot) {
-  return generateUtilityClass("MuiBackdrop", slot);
-}
-generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
-const useUtilityClasses$j = (ownerState) => {
-  const {
-    classes,
-    invisible
-  } = ownerState;
-  const slots = {
-    root: ["root", invisible && "invisible"]
-  };
-  return composeClasses(slots, getBackdropUtilityClass, classes);
-};
-const BackdropRoot = styled("div", {
-  name: "MuiBackdrop",
-  slot: "Root",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.root, ownerState.invisible && styles2.invisible];
-  }
-})({
-  position: "fixed",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  right: 0,
-  bottom: 0,
-  top: 0,
-  left: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  WebkitTapHighlightColor: "transparent",
-  variants: [{
-    props: {
-      invisible: true
-    },
-    style: {
-      backgroundColor: "transparent"
-    }
-  }]
-});
-const Backdrop = /* @__PURE__ */ reactExports.forwardRef(function Backdrop2(inProps, ref) {
-  const props = useDefaultProps({
-    props: inProps,
-    name: "MuiBackdrop"
-  });
-  const {
-    children,
-    className,
-    component = "div",
-    invisible = false,
-    open,
-    components = {},
-    componentsProps = {},
-    slotProps = {},
-    slots = {},
-    TransitionComponent: TransitionComponentProp,
-    transitionDuration,
-    ...other
-  } = props;
-  const ownerState = {
-    ...props,
-    component,
-    invisible
-  };
-  const classes = useUtilityClasses$j(ownerState);
-  const backwardCompatibleSlots = {
-    transition: TransitionComponentProp,
-    root: components.Root,
-    ...slots
-  };
-  const backwardCompatibleSlotProps = {
-    ...componentsProps,
-    ...slotProps
-  };
-  const externalForwardedProps = {
-    component,
-    slots: backwardCompatibleSlots,
-    slotProps: backwardCompatibleSlotProps
-  };
-  const [RootSlot, rootProps] = useSlot("root", {
-    elementType: BackdropRoot,
-    externalForwardedProps,
-    className: clsx(classes.root, className),
-    ownerState
-  });
-  const [TransitionSlot, transitionProps] = useSlot("transition", {
-    elementType: Fade,
-    externalForwardedProps,
-    ownerState
-  });
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(TransitionSlot, {
-    in: open,
-    timeout: transitionDuration,
-    ...other,
-    ...transitionProps,
-    children: /* @__PURE__ */ jsxRuntimeExports.jsx(RootSlot, {
-      "aria-hidden": true,
-      ...rootProps,
-      classes,
-      ref,
-      children
-    })
-  });
-});
 function getButtonUtilityClass(slot) {
   return generateUtilityClass("MuiButton", slot);
 }
 const buttonClasses = generateUtilityClasses("MuiButton", ["root", "text", "textInherit", "textPrimary", "textSecondary", "textSuccess", "textError", "textInfo", "textWarning", "outlined", "outlinedInherit", "outlinedPrimary", "outlinedSecondary", "outlinedSuccess", "outlinedError", "outlinedInfo", "outlinedWarning", "contained", "containedInherit", "containedPrimary", "containedSecondary", "containedSuccess", "containedError", "containedInfo", "containedWarning", "disableElevation", "focusVisible", "disabled", "colorInherit", "colorPrimary", "colorSecondary", "colorSuccess", "colorError", "colorInfo", "colorWarning", "textSizeSmall", "textSizeMedium", "textSizeLarge", "outlinedSizeSmall", "outlinedSizeMedium", "outlinedSizeLarge", "containedSizeSmall", "containedSizeMedium", "containedSizeLarge", "sizeMedium", "sizeSmall", "sizeLarge", "fullWidth", "startIcon", "endIcon", "icon", "iconSizeSmall", "iconSizeMedium", "iconSizeLarge", "loading", "loadingWrapper", "loadingIconPlaceholder", "loadingIndicator", "loadingPositionCenter", "loadingPositionStart", "loadingPositionEnd"]);
 const ButtonGroupContext = /* @__PURE__ */ reactExports.createContext({});
 const ButtonGroupButtonContext = /* @__PURE__ */ reactExports.createContext(void 0);
-const useUtilityClasses$i = (ownerState) => {
+const useUtilityClasses$h = (ownerState) => {
   const {
     color: color2,
     disableElevation,
@@ -22949,7 +23969,7 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     type,
     variant
   };
-  const classes = useUtilityClasses$i(ownerState);
+  const classes = useUtilityClasses$h(ownerState);
   const startIcon = (startIconProp || loading && loadingPosition === "start") && /* @__PURE__ */ jsxRuntimeExports.jsx(ButtonStartIcon, {
     className: classes.startIcon,
     ownerState,
@@ -22994,761 +24014,6 @@ const Button = /* @__PURE__ */ reactExports.forwardRef(function Button2(inProps,
     ...other,
     classes,
     children: [startIcon, loadingPosition !== "end" && loader, children, loadingPosition === "end" && loader, endIcon]
-  });
-});
-function getScrollbarSize(win = window) {
-  const documentWidth = win.document.documentElement.clientWidth;
-  return win.innerWidth - documentWidth;
-}
-function isOverflowing(container) {
-  const doc = ownerDocument(container);
-  if (doc.body === container) {
-    return ownerWindow(container).innerWidth > doc.documentElement.clientWidth;
-  }
-  return container.scrollHeight > container.clientHeight;
-}
-function ariaHidden(element, hide) {
-  if (hide) {
-    element.setAttribute("aria-hidden", "true");
-  } else {
-    element.removeAttribute("aria-hidden");
-  }
-}
-function getPaddingRight(element) {
-  return parseInt(ownerWindow(element).getComputedStyle(element).paddingRight, 10) || 0;
-}
-function isAriaHiddenForbiddenOnElement(element) {
-  const forbiddenTagNames = ["TEMPLATE", "SCRIPT", "STYLE", "LINK", "MAP", "META", "NOSCRIPT", "PICTURE", "COL", "COLGROUP", "PARAM", "SLOT", "SOURCE", "TRACK"];
-  const isForbiddenTagName = forbiddenTagNames.includes(element.tagName);
-  const isInputHidden = element.tagName === "INPUT" && element.getAttribute("type") === "hidden";
-  return isForbiddenTagName || isInputHidden;
-}
-function ariaHiddenSiblings(container, mountElement, currentElement, elementsToExclude, hide) {
-  const blacklist = [mountElement, currentElement, ...elementsToExclude];
-  [].forEach.call(container.children, (element) => {
-    const isNotExcludedElement = !blacklist.includes(element);
-    const isNotForbiddenElement = !isAriaHiddenForbiddenOnElement(element);
-    if (isNotExcludedElement && isNotForbiddenElement) {
-      ariaHidden(element, hide);
-    }
-  });
-}
-function findIndexOf(items, callback) {
-  let idx = -1;
-  items.some((item, index) => {
-    if (callback(item)) {
-      idx = index;
-      return true;
-    }
-    return false;
-  });
-  return idx;
-}
-function handleContainer(containerInfo, props) {
-  const restoreStyle = [];
-  const container = containerInfo.container;
-  if (!props.disableScrollLock) {
-    if (isOverflowing(container)) {
-      const scrollbarSize = getScrollbarSize(ownerWindow(container));
-      restoreStyle.push({
-        value: container.style.paddingRight,
-        property: "padding-right",
-        el: container
-      });
-      container.style.paddingRight = `${getPaddingRight(container) + scrollbarSize}px`;
-      const fixedElements2 = ownerDocument(container).querySelectorAll(".mui-fixed");
-      [].forEach.call(fixedElements2, (element) => {
-        restoreStyle.push({
-          value: element.style.paddingRight,
-          property: "padding-right",
-          el: element
-        });
-        element.style.paddingRight = `${getPaddingRight(element) + scrollbarSize}px`;
-      });
-    }
-    let scrollContainer;
-    if (container.parentNode instanceof DocumentFragment) {
-      scrollContainer = ownerDocument(container).body;
-    } else {
-      const parent = container.parentElement;
-      const containerWindow = ownerWindow(container);
-      scrollContainer = parent?.nodeName === "HTML" && containerWindow.getComputedStyle(parent).overflowY === "scroll" ? parent : container;
-    }
-    restoreStyle.push({
-      value: scrollContainer.style.overflow,
-      property: "overflow",
-      el: scrollContainer
-    }, {
-      value: scrollContainer.style.overflowX,
-      property: "overflow-x",
-      el: scrollContainer
-    }, {
-      value: scrollContainer.style.overflowY,
-      property: "overflow-y",
-      el: scrollContainer
-    });
-    scrollContainer.style.overflow = "hidden";
-  }
-  const restore = () => {
-    restoreStyle.forEach(({
-      value,
-      el,
-      property
-    }) => {
-      if (value) {
-        el.style.setProperty(property, value);
-      } else {
-        el.style.removeProperty(property);
-      }
-    });
-  };
-  return restore;
-}
-function getHiddenSiblings(container) {
-  const hiddenSiblings = [];
-  [].forEach.call(container.children, (element) => {
-    if (element.getAttribute("aria-hidden") === "true") {
-      hiddenSiblings.push(element);
-    }
-  });
-  return hiddenSiblings;
-}
-class ModalManager {
-  constructor() {
-    this.modals = [];
-    this.containers = [];
-  }
-  add(modal, container) {
-    let modalIndex = this.modals.indexOf(modal);
-    if (modalIndex !== -1) {
-      return modalIndex;
-    }
-    modalIndex = this.modals.length;
-    this.modals.push(modal);
-    if (modal.modalRef) {
-      ariaHidden(modal.modalRef, false);
-    }
-    const hiddenSiblings = getHiddenSiblings(container);
-    ariaHiddenSiblings(container, modal.mount, modal.modalRef, hiddenSiblings, true);
-    const containerIndex = findIndexOf(this.containers, (item) => item.container === container);
-    if (containerIndex !== -1) {
-      this.containers[containerIndex].modals.push(modal);
-      return modalIndex;
-    }
-    this.containers.push({
-      modals: [modal],
-      container,
-      restore: null,
-      hiddenSiblings
-    });
-    return modalIndex;
-  }
-  mount(modal, props) {
-    const containerIndex = findIndexOf(this.containers, (item) => item.modals.includes(modal));
-    const containerInfo = this.containers[containerIndex];
-    if (!containerInfo.restore) {
-      containerInfo.restore = handleContainer(containerInfo, props);
-    }
-  }
-  remove(modal, ariaHiddenState = true) {
-    const modalIndex = this.modals.indexOf(modal);
-    if (modalIndex === -1) {
-      return modalIndex;
-    }
-    const containerIndex = findIndexOf(this.containers, (item) => item.modals.includes(modal));
-    const containerInfo = this.containers[containerIndex];
-    containerInfo.modals.splice(containerInfo.modals.indexOf(modal), 1);
-    this.modals.splice(modalIndex, 1);
-    if (containerInfo.modals.length === 0) {
-      if (containerInfo.restore) {
-        containerInfo.restore();
-      }
-      if (modal.modalRef) {
-        ariaHidden(modal.modalRef, ariaHiddenState);
-      }
-      ariaHiddenSiblings(containerInfo.container, modal.mount, modal.modalRef, containerInfo.hiddenSiblings, false);
-      this.containers.splice(containerIndex, 1);
-    } else {
-      const nextTop = containerInfo.modals[containerInfo.modals.length - 1];
-      if (nextTop.modalRef) {
-        ariaHidden(nextTop.modalRef, false);
-      }
-    }
-    return modalIndex;
-  }
-  isTopModal(modal) {
-    return this.modals.length > 0 && this.modals[this.modals.length - 1] === modal;
-  }
-}
-function activeElement(doc) {
-  let element = doc.activeElement;
-  while (element?.shadowRoot?.activeElement != null) {
-    element = element.shadowRoot.activeElement;
-  }
-  return element;
-}
-const candidatesSelector = ["input", "select", "textarea", "a[href]", "button", "[tabindex]", "audio[controls]", "video[controls]", '[contenteditable]:not([contenteditable="false"])'].join(",");
-function getTabIndex(node2) {
-  const tabindexAttr = parseInt(node2.getAttribute("tabindex") || "", 10);
-  if (!Number.isNaN(tabindexAttr)) {
-    return tabindexAttr;
-  }
-  if (node2.contentEditable === "true" || (node2.nodeName === "AUDIO" || node2.nodeName === "VIDEO" || node2.nodeName === "DETAILS") && node2.getAttribute("tabindex") === null) {
-    return 0;
-  }
-  return node2.tabIndex;
-}
-function isNonTabbableRadio(node2) {
-  if (node2.tagName !== "INPUT" || node2.type !== "radio") {
-    return false;
-  }
-  if (!node2.name) {
-    return false;
-  }
-  const getRadio = (selector) => node2.ownerDocument.querySelector(`input[type="radio"]${selector}`);
-  let roving = getRadio(`[name="${node2.name}"]:checked`);
-  if (!roving) {
-    roving = getRadio(`[name="${node2.name}"]`);
-  }
-  return roving !== node2;
-}
-function isNodeMatchingSelectorFocusable(node2) {
-  if (node2.disabled || node2.tagName === "INPUT" && node2.type === "hidden" || isNonTabbableRadio(node2)) {
-    return false;
-  }
-  return true;
-}
-function defaultGetTabbable(root) {
-  const regularTabNodes = [];
-  const orderedTabNodes = [];
-  Array.from(root.querySelectorAll(candidatesSelector)).forEach((node2, i) => {
-    const nodeTabIndex = getTabIndex(node2);
-    if (nodeTabIndex === -1 || !isNodeMatchingSelectorFocusable(node2)) {
-      return;
-    }
-    if (nodeTabIndex === 0) {
-      regularTabNodes.push(node2);
-    } else {
-      orderedTabNodes.push({
-        documentOrder: i,
-        tabIndex: nodeTabIndex,
-        node: node2
-      });
-    }
-  });
-  return orderedTabNodes.sort((a, b) => a.tabIndex === b.tabIndex ? a.documentOrder - b.documentOrder : a.tabIndex - b.tabIndex).map((a) => a.node).concat(regularTabNodes);
-}
-function defaultIsEnabled() {
-  return true;
-}
-function FocusTrap(props) {
-  const {
-    children,
-    disableAutoFocus = false,
-    disableEnforceFocus = false,
-    disableRestoreFocus = false,
-    getTabbable = defaultGetTabbable,
-    isEnabled = defaultIsEnabled,
-    open
-  } = props;
-  const ignoreNextEnforceFocus = reactExports.useRef(false);
-  const sentinelStart = reactExports.useRef(null);
-  const sentinelEnd = reactExports.useRef(null);
-  const nodeToRestore = reactExports.useRef(null);
-  const reactFocusEventTarget = reactExports.useRef(null);
-  const activated = reactExports.useRef(false);
-  const rootRef = reactExports.useRef(null);
-  const handleRef = useForkRef(getReactElementRef(children), rootRef);
-  const lastKeydown = reactExports.useRef(null);
-  reactExports.useEffect(() => {
-    if (!open || !rootRef.current) {
-      return;
-    }
-    activated.current = !disableAutoFocus;
-  }, [disableAutoFocus, open]);
-  reactExports.useEffect(() => {
-    if (!open || !rootRef.current) {
-      return;
-    }
-    const doc = ownerDocument(rootRef.current);
-    const activeElement$1 = activeElement(doc);
-    if (!rootRef.current.contains(activeElement$1)) {
-      if (!rootRef.current.hasAttribute("tabIndex")) {
-        rootRef.current.setAttribute("tabIndex", "-1");
-      }
-      if (activated.current) {
-        rootRef.current.focus();
-      }
-    }
-    return () => {
-      if (!disableRestoreFocus) {
-        if (nodeToRestore.current && nodeToRestore.current.focus) {
-          ignoreNextEnforceFocus.current = true;
-          nodeToRestore.current.focus();
-        }
-        nodeToRestore.current = null;
-      }
-    };
-  }, [open]);
-  reactExports.useEffect(() => {
-    if (!open || !rootRef.current) {
-      return;
-    }
-    const doc = ownerDocument(rootRef.current);
-    const activeElement$1 = activeElement(doc);
-    const loopFocus = (nativeEvent) => {
-      lastKeydown.current = nativeEvent;
-      if (disableEnforceFocus || !isEnabled() || nativeEvent.key !== "Tab") {
-        return;
-      }
-      if (activeElement$1 === rootRef.current && nativeEvent.shiftKey) {
-        ignoreNextEnforceFocus.current = true;
-        if (sentinelEnd.current) {
-          sentinelEnd.current.focus();
-        }
-      }
-    };
-    const contain = () => {
-      const rootElement = rootRef.current;
-      if (rootElement === null) {
-        return;
-      }
-      const activeEl = activeElement(doc);
-      if (!doc.hasFocus() || !isEnabled() || ignoreNextEnforceFocus.current) {
-        ignoreNextEnforceFocus.current = false;
-        return;
-      }
-      if (rootElement.contains(activeEl)) {
-        return;
-      }
-      if (disableEnforceFocus && activeEl !== sentinelStart.current && activeEl !== sentinelEnd.current) {
-        return;
-      }
-      if (activeEl !== reactFocusEventTarget.current) {
-        reactFocusEventTarget.current = null;
-      } else if (reactFocusEventTarget.current !== null) {
-        return;
-      }
-      if (!activated.current) {
-        return;
-      }
-      let tabbable = [];
-      if (activeEl === sentinelStart.current || activeEl === sentinelEnd.current) {
-        tabbable = getTabbable(rootRef.current);
-      }
-      if (tabbable.length > 0) {
-        const isShiftTab = Boolean(lastKeydown.current?.shiftKey && lastKeydown.current?.key === "Tab");
-        const focusNext = tabbable[0];
-        const focusPrevious = tabbable[tabbable.length - 1];
-        if (typeof focusNext !== "string" && typeof focusPrevious !== "string") {
-          if (isShiftTab) {
-            focusPrevious.focus();
-          } else {
-            focusNext.focus();
-          }
-        }
-      } else {
-        rootElement.focus();
-      }
-    };
-    doc.addEventListener("focusin", contain);
-    doc.addEventListener("keydown", loopFocus, true);
-    const interval = setInterval(() => {
-      const activeEl = activeElement(doc);
-      if (activeEl && activeEl.tagName === "BODY") {
-        contain();
-      }
-    }, 50);
-    return () => {
-      clearInterval(interval);
-      doc.removeEventListener("focusin", contain);
-      doc.removeEventListener("keydown", loopFocus, true);
-    };
-  }, [disableAutoFocus, disableEnforceFocus, disableRestoreFocus, isEnabled, open, getTabbable]);
-  const onFocus = (event) => {
-    if (nodeToRestore.current === null) {
-      nodeToRestore.current = event.relatedTarget;
-    }
-    activated.current = true;
-    reactFocusEventTarget.current = event.target;
-    const childrenPropsHandler = children.props.onFocus;
-    if (childrenPropsHandler) {
-      childrenPropsHandler(event);
-    }
-  };
-  const handleFocusSentinel = (event) => {
-    if (nodeToRestore.current === null) {
-      nodeToRestore.current = event.relatedTarget;
-    }
-    activated.current = true;
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(reactExports.Fragment, {
-    children: [/* @__PURE__ */ jsxRuntimeExports.jsx("div", {
-      tabIndex: open ? 0 : -1,
-      onFocus: handleFocusSentinel,
-      ref: sentinelStart,
-      "data-testid": "sentinelStart"
-    }), /* @__PURE__ */ reactExports.cloneElement(children, {
-      ref: handleRef,
-      onFocus
-    }), /* @__PURE__ */ jsxRuntimeExports.jsx("div", {
-      tabIndex: open ? 0 : -1,
-      onFocus: handleFocusSentinel,
-      ref: sentinelEnd,
-      "data-testid": "sentinelEnd"
-    })]
-  });
-}
-function getContainer(container) {
-  return typeof container === "function" ? container() : container;
-}
-function getHasTransition(children) {
-  return children ? children.props.hasOwnProperty("in") : false;
-}
-const noop = () => {
-};
-const manager = new ModalManager();
-function useModal(parameters) {
-  const {
-    container,
-    disableEscapeKeyDown = false,
-    disableScrollLock = false,
-    closeAfterTransition = false,
-    onTransitionEnter,
-    onTransitionExited,
-    children,
-    onClose,
-    open,
-    rootRef
-  } = parameters;
-  const modal = reactExports.useRef({});
-  const mountNodeRef = reactExports.useRef(null);
-  const modalRef = reactExports.useRef(null);
-  const handleRef = useForkRef(modalRef, rootRef);
-  const [exited, setExited] = reactExports.useState(!open);
-  const hasTransition = getHasTransition(children);
-  let ariaHiddenProp = true;
-  if (parameters["aria-hidden"] === "false" || parameters["aria-hidden"] === false) {
-    ariaHiddenProp = false;
-  }
-  const getDoc = () => ownerDocument(mountNodeRef.current);
-  const getModal = () => {
-    modal.current.modalRef = modalRef.current;
-    modal.current.mount = mountNodeRef.current;
-    return modal.current;
-  };
-  const handleMounted = () => {
-    manager.mount(getModal(), {
-      disableScrollLock
-    });
-    if (modalRef.current) {
-      modalRef.current.scrollTop = 0;
-    }
-  };
-  const handleOpen = useEventCallback(() => {
-    const resolvedContainer = getContainer(container) || getDoc().body;
-    manager.add(getModal(), resolvedContainer);
-    if (modalRef.current) {
-      handleMounted();
-    }
-  });
-  const isTopModal = () => manager.isTopModal(getModal());
-  const handlePortalRef = useEventCallback((node2) => {
-    mountNodeRef.current = node2;
-    if (!node2) {
-      return;
-    }
-    if (open && isTopModal()) {
-      handleMounted();
-    } else if (modalRef.current) {
-      ariaHidden(modalRef.current, ariaHiddenProp);
-    }
-  });
-  const handleClose = reactExports.useCallback(() => {
-    manager.remove(getModal(), ariaHiddenProp);
-  }, [ariaHiddenProp]);
-  reactExports.useEffect(() => {
-    return () => {
-      handleClose();
-    };
-  }, [handleClose]);
-  reactExports.useEffect(() => {
-    if (open) {
-      handleOpen();
-    } else if (!hasTransition || !closeAfterTransition) {
-      handleClose();
-    }
-  }, [open, handleClose, hasTransition, closeAfterTransition, handleOpen]);
-  const createHandleKeyDown = (otherHandlers) => (event) => {
-    otherHandlers.onKeyDown?.(event);
-    if (event.key !== "Escape" || event.which === 229 || // Wait until IME is settled.
-    !isTopModal()) {
-      return;
-    }
-    if (!disableEscapeKeyDown) {
-      event.stopPropagation();
-      if (onClose) {
-        onClose(event, "escapeKeyDown");
-      }
-    }
-  };
-  const createHandleBackdropClick = (otherHandlers) => (event) => {
-    otherHandlers.onClick?.(event);
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-    if (onClose) {
-      onClose(event, "backdropClick");
-    }
-  };
-  const getRootProps = (otherHandlers = {}) => {
-    const propsEventHandlers = extractEventHandlers(parameters);
-    delete propsEventHandlers.onTransitionEnter;
-    delete propsEventHandlers.onTransitionExited;
-    const externalEventHandlers = {
-      ...propsEventHandlers,
-      ...otherHandlers
-    };
-    return {
-      /*
-       * Marking an element with the role presentation indicates to assistive technology
-       * that this element should be ignored; it exists to support the web application and
-       * is not meant for humans to interact with directly.
-       * https://github.com/evcohen/eslint-plugin-jsx-a11y/blob/master/docs/rules/no-static-element-interactions.md
-       */
-      role: "presentation",
-      ...externalEventHandlers,
-      onKeyDown: createHandleKeyDown(externalEventHandlers),
-      ref: handleRef
-    };
-  };
-  const getBackdropProps = (otherHandlers = {}) => {
-    const externalEventHandlers = otherHandlers;
-    return {
-      "aria-hidden": true,
-      ...externalEventHandlers,
-      onClick: createHandleBackdropClick(externalEventHandlers),
-      open
-    };
-  };
-  const getTransitionProps2 = () => {
-    const handleEnter = () => {
-      setExited(false);
-      if (onTransitionEnter) {
-        onTransitionEnter();
-      }
-    };
-    const handleExited = () => {
-      setExited(true);
-      if (onTransitionExited) {
-        onTransitionExited();
-      }
-      if (closeAfterTransition) {
-        handleClose();
-      }
-    };
-    return {
-      onEnter: createChainedFunction(handleEnter, children?.props.onEnter ?? noop),
-      onExited: createChainedFunction(handleExited, children?.props.onExited ?? noop)
-    };
-  };
-  return {
-    getRootProps,
-    getBackdropProps,
-    getTransitionProps: getTransitionProps2,
-    rootRef: handleRef,
-    portalRef: handlePortalRef,
-    isTopModal,
-    exited,
-    hasTransition
-  };
-}
-function getModalUtilityClass(slot) {
-  return generateUtilityClass("MuiModal", slot);
-}
-generateUtilityClasses("MuiModal", ["root", "hidden", "backdrop"]);
-const useUtilityClasses$h = (ownerState) => {
-  const {
-    open,
-    exited,
-    classes
-  } = ownerState;
-  const slots = {
-    root: ["root", !open && exited && "hidden"],
-    backdrop: ["backdrop"]
-  };
-  return composeClasses(slots, getModalUtilityClass, classes);
-};
-const ModalRoot = styled("div", {
-  name: "MuiModal",
-  slot: "Root",
-  overridesResolver: (props, styles2) => {
-    const {
-      ownerState
-    } = props;
-    return [styles2.root, !ownerState.open && ownerState.exited && styles2.hidden];
-  }
-})(memoTheme(({
-  theme
-}) => ({
-  position: "fixed",
-  zIndex: (theme.vars || theme).zIndex.modal,
-  right: 0,
-  bottom: 0,
-  top: 0,
-  left: 0,
-  variants: [{
-    props: ({
-      ownerState
-    }) => !ownerState.open && ownerState.exited,
-    style: {
-      visibility: "hidden"
-    }
-  }]
-})));
-const ModalBackdrop = styled(Backdrop, {
-  name: "MuiModal",
-  slot: "Backdrop"
-})({
-  zIndex: -1
-});
-const Modal = /* @__PURE__ */ reactExports.forwardRef(function Modal2(inProps, ref) {
-  const props = useDefaultProps({
-    name: "MuiModal",
-    props: inProps
-  });
-  const {
-    BackdropComponent = ModalBackdrop,
-    BackdropProps,
-    classes: classesProp,
-    className,
-    closeAfterTransition = false,
-    children,
-    container,
-    component,
-    components = {},
-    componentsProps = {},
-    disableAutoFocus = false,
-    disableEnforceFocus = false,
-    disableEscapeKeyDown = false,
-    disablePortal = false,
-    disableRestoreFocus = false,
-    disableScrollLock = false,
-    hideBackdrop = false,
-    keepMounted = false,
-    onClose,
-    onTransitionEnter,
-    onTransitionExited,
-    open,
-    slotProps = {},
-    slots = {},
-    // eslint-disable-next-line react/prop-types
-    theme,
-    ...other
-  } = props;
-  const propsWithDefaults = {
-    ...props,
-    closeAfterTransition,
-    disableAutoFocus,
-    disableEnforceFocus,
-    disableEscapeKeyDown,
-    disablePortal,
-    disableRestoreFocus,
-    disableScrollLock,
-    hideBackdrop,
-    keepMounted
-  };
-  const {
-    getRootProps,
-    getBackdropProps,
-    getTransitionProps: getTransitionProps2,
-    portalRef,
-    isTopModal,
-    exited,
-    hasTransition
-  } = useModal({
-    ...propsWithDefaults,
-    rootRef: ref
-  });
-  const ownerState = {
-    ...propsWithDefaults,
-    exited
-  };
-  const classes = useUtilityClasses$h(ownerState);
-  const childProps = {};
-  if (children.props.tabIndex === void 0) {
-    childProps.tabIndex = "-1";
-  }
-  if (hasTransition) {
-    const {
-      onEnter,
-      onExited
-    } = getTransitionProps2();
-    childProps.onEnter = onEnter;
-    childProps.onExited = onExited;
-  }
-  const externalForwardedProps = {
-    slots: {
-      root: components.Root,
-      backdrop: components.Backdrop,
-      ...slots
-    },
-    slotProps: {
-      ...componentsProps,
-      ...slotProps
-    }
-  };
-  const [RootSlot, rootProps] = useSlot("root", {
-    ref,
-    elementType: ModalRoot,
-    externalForwardedProps: {
-      ...externalForwardedProps,
-      ...other,
-      component
-    },
-    getSlotProps: getRootProps,
-    ownerState,
-    className: clsx(className, classes?.root, !ownerState.open && ownerState.exited && classes?.hidden)
-  });
-  const [BackdropSlot, backdropProps] = useSlot("backdrop", {
-    ref: BackdropProps?.ref,
-    elementType: BackdropComponent,
-    externalForwardedProps,
-    shouldForwardComponentProp: true,
-    additionalProps: BackdropProps,
-    getSlotProps: (otherHandlers) => {
-      return getBackdropProps({
-        ...otherHandlers,
-        onClick: (event) => {
-          if (otherHandlers?.onClick) {
-            otherHandlers.onClick(event);
-          }
-        }
-      });
-    },
-    className: clsx(BackdropProps?.className, classes?.backdrop),
-    ownerState
-  });
-  if (!keepMounted && !open && (!hasTransition || exited)) {
-    return null;
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, {
-    ref: portalRef,
-    container,
-    disablePortal,
-    children: /* @__PURE__ */ jsxRuntimeExports.jsxs(RootSlot, {
-      ...rootProps,
-      children: [!hideBackdrop && BackdropComponent ? /* @__PURE__ */ jsxRuntimeExports.jsx(BackdropSlot, {
-        ...backdropProps
-      }) : null, /* @__PURE__ */ jsxRuntimeExports.jsx(FocusTrap, {
-        disableEnforceFocus,
-        disableAutoFocus,
-        disableRestoreFocus,
-        isEnabled: isTopModal,
-        open,
-        children: /* @__PURE__ */ reactExports.cloneElement(children, childProps)
-      })]
-    })
   });
 });
 const dividerClasses = generateUtilityClasses("MuiDivider", ["root", "absolute", "fullWidth", "inset", "middle", "flexItem", "light", "vertical", "withChildren", "withChildrenVertical", "textAlignRight", "textAlignLeft", "wrapper", "wrapperVertical"]);
@@ -28372,9 +28637,6 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     ] })
   ] });
 }
-const CloseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-}));
 function SplashScreen({ onClick }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "splash-screen", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { className: "close", onClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(CloseSharpIcon, {}) }),

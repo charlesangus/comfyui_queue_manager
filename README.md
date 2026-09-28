@@ -49,7 +49,7 @@ An extension supporting more streamlined prompt queue management.
 - Export and import queue to / from a file.
 - Pause and resume queue.
 - Filter by workflows and then archive, delete and export filtered view only.
-- Completed jobs show output thumbnails that open in a new tab.
+- Completed jobs show output thumbnails that open in a full-window viewer.
 
 ## Compatibility
 - This extension requires the new ComfyUI menu.
@@ -215,7 +215,7 @@ The card shows a preview as soon as the job is queued. During execution, image v
 
 ### Output thumbnails
 - Completed jobs show a strip of output thumbnails (images and videos) below the job details.
-- Clicking a thumbnail opens the full file in a new browser tab.
+- Clicking a thumbnail opens it in a full-window viewer. Use the arrows or ← / → to step through the job's outputs, Esc or a click outside the image to close, and the toolbar button to open the file in a new tab.
 
 ### Extension Settings
 - Several aspects of the Queue Manager extension can be configured in the ComfyUI Settings window.

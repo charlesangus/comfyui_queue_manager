@@ -1,9 +1,10 @@
 "use client";
 
-import React, { memo, useCallback, useContext, useMemo } from "react";
+import React, { memo, useCallback, useContext, useMemo, useState } from "react";
 import { AppContext } from "../internals/app-context";
 import { LoaderSpinner } from "../components/LoaderSpinner";
-import { MediaItem, viewURL } from "./MediaItem";
+import { MediaItem } from "./MediaItem";
+import { Lightbox } from "./Lightbox";
 import { MediaOutputs } from "../models/MediaOutputs";
 import { CardInfo } from "./CardInfo";
 
@@ -69,9 +70,8 @@ const executionTimeLabel = useMemo(() => {
 
     const mediaOutputs = useMemo(() => new MediaOutputs(item?.[3]), [item]);
 
-    const handleThumbnailClick = useCallback((file) => {
-      window.open(viewURL(file), "_blank");
-    }, []);
+    const [lightboxIndex, setLightboxIndex] = useState(null);
+    const closeLightbox = useCallback(() => setLightboxIndex(null), []);
 
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
@@ -168,7 +168,7 @@ const executionTimeLabel = useMemo(() => {
                     file={file}
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleThumbnailClick(file);
+                      setLightboxIndex(idx);
                     }}
                     controls={false}
                     autoplay={false}
@@ -177,6 +177,15 @@ const executionTimeLabel = useMemo(() => {
                 ))}
               </div>
             )}
+
+            {lightboxIndex !== null ? (
+              <Lightbox
+                files={mediaOutputs.files}
+                index={lightboxIndex}
+                onIndexChange={setLightboxIndex}
+                onClose={closeLightbox}
+              />
+            ) : null}
 
             {error ? (
               // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
