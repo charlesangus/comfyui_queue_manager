@@ -1,5 +1,3 @@
-@use '../styles/variables' as *;
-
 header.header {
   height: 2.875rem;
   display: flex;
@@ -21,12 +19,6 @@ header.header {
 .queue-table {
   flex: 1;
   overflow: hidden;
-
-  .reloading & {
-    pointer-events: none;
-    user-select: none;
-    opacity: 0.6;
-  }
 
   .table-wrapper {
     overflow: hidden;
@@ -427,7 +419,7 @@ button {
     gap: 4px 0;
   }
 
-  @media (max-width: 620px) {
+  @container qm (max-width: 620px) {
     button {
       font-size: 0.7rem;
       min-width: 24px;
@@ -440,7 +432,7 @@ button {
     background-color: var(--qm-surface);
     border-radius: 5px;
 
-    @media (max-width: 620px) {
+    @container qm (max-width: 620px) {
       height: 24px;
       display: flex;
     }
@@ -453,7 +445,7 @@ button {
       align-items: center;
       font-size: 0.875rem;
 
-      @media (max-width: 620px) {
+      @container qm (max-width: 620px) {
         height: 24px !important;
         font-size: 0.7rem;
       }
@@ -481,7 +473,7 @@ button {
     line-height: 1.8rem;
     box-sizing: border-box;
     font-size: 13px;
-    font-family: var(--qm-font);
+    font-family: inherit;
 
     .type {
       color: var(--qm-fg-muted);
@@ -515,7 +507,7 @@ button {
 }
 
 .top-menu {
-  position: fixed;
+  position: absolute;
   top: 2.875rem;
   right: 0;
   background-color: var(--qm-surface);
@@ -559,7 +551,7 @@ button {
   }
 }
 .top-menu-toggle {
-  position: fixed;
+  position: absolute;
   top: 0;
   right: 0;
   z-index: 1;
@@ -607,14 +599,8 @@ button {
   margin: 0 auto;
 }
 
-.qm-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
 
-
-@keyframes spin {
+@keyframes qm-spin {
   from {
     transform: rotate(0deg);
   }
@@ -628,7 +614,7 @@ button {
   vertical-align: middle;
 
   svg {
-    animation: spin 2s linear infinite;
+    animation: qm-spin 2s linear infinite;
     width: 1rem;
   }
 }

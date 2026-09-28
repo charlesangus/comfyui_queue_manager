@@ -7,7 +7,7 @@ import Inventory2SharpIcon from "@mui/icons-material/Inventory2Sharp";
 
 import { PriorityMenu } from "./PriorityMenu";
 import { apiCall } from "../internals/functions";
-import { msgLoadWorkflow } from "../internals/parentBridge";
+import { app } from "comfy/app";
 import { performDelete } from "../internals/deleteUtils";
 import { useAppStore } from "../stores/appStore";
 import { useSelectionStore } from "../stores/selectionStore";
@@ -49,7 +49,7 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
     const workflow = response?.item?.[3]?.extra_pnginfo?.workflow;
     if (!workflow) return;
 
-    msgLoadWorkflow(workflow, selected[0]);
+    app.loadGraphData(workflow, true, true, `${workflow.workflow_name} ${selected[0]}`);
     await finish();
   };
 
@@ -60,9 +60,8 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   };
 
   const handleRun = async () => {
-    const { clientId } = useAppStore.getState();
     const dbIds = selectedItems.map((item) => item?.[3]?.db_id).filter((id) => id != null);
-    await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId });
+    await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId: app.api.clientId });
     await finish();
   };
 

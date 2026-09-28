@@ -1,97 +1,6 @@
-import {QueueManagerOrigin, QueueManagerURL, QM_THEME_VARS} from './config.js';
-import {settings} from './settings.js';
+import {mountQueueManager} from '../.gui/assets/index.js';
 
 import { app } from '../../../scripts/app.js';
-
-// The QM_* message-type strings below (postMessageToIframe callers, handleIframeMessages) are duplicated in src/gui/app/internals/parentBridge.js on the other side of the iframe boundary and must be kept in sync manually.
-function theIframe() {
-  return document.querySelector(".comfyui-queue-manager iframe");
-}
-
-export function postStatusMessageToIframe(event) {
-  postMessageToIframe({
-      name: event.type,
-      detail: event.detail
-  }, 'QM_queueStatusUpdated');
-}
-
-function postMessageToIframe(message, type) {
-  if (!type) {
-    type = 'QM_ParentMessage';
-  }
-
-  const iframe = theIframe();
-  if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({
-      type: type,
-      message: message
-    }, QueueManagerOrigin);
-  }
-}
-
-function collectTheme() {
-  const style = getComputedStyle(document.documentElement);
-  const bodyStyle = getComputedStyle(document.body);
-  const vars = {};
-
-  for (const varName of QM_THEME_VARS) {
-    const value = style.getPropertyValue(varName).trim();
-    if (value) {
-      vars[varName] = value;
-    }
-  }
-
-  const fontFamily = bodyStyle.fontFamily;
-  const fontSize = bodyStyle.fontSize;
-  const dark = document.documentElement.classList.contains('dark-theme');
-
-  return {
-    vars,
-    fontFamily,
-    fontSize,
-    dark,
-  };
-}
-
-function postThemeToIframe() {
-  const theme = collectTheme();
-  const iframe = theIframe();
-  if (iframe && iframe.contentWindow) {
-    iframe.contentWindow.postMessage({
-      type: 'QM_Theme',
-      ...theme,
-    }, QueueManagerOrigin);
-  }
-}
-
-let lastSentTheme = null;
-let themeUpdateTimeout = null;
-
-export function setupThemeObserver() {
-  postThemeToIframe();
-  lastSentTheme = JSON.stringify(collectTheme());
-
-  const observer = new MutationObserver(() => {
-    if (themeUpdateTimeout) {
-      clearTimeout(themeUpdateTimeout);
-    }
-
-    themeUpdateTimeout = setTimeout(() => {
-      const currentTheme = collectTheme();
-      const currentThemeStr = JSON.stringify(currentTheme);
-
-      if (currentThemeStr !== lastSentTheme) {
-        lastSentTheme = currentThemeStr;
-        postThemeToIframe();
-      }
-    }, 100);
-  });
-
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['style', 'class'],
-  });
-}
 
 export function compareVersions(a, b) {
   const pa = String(a).split('.').map(x => parseInt(x, 10) || 0);
@@ -313,88 +222,22 @@ export async function uiSetup () {
 }
 
 /**
- * When the queue status or workflow progress is updated then tell the iframe
+ * Refresh the pause button after a reconnect since the playback state might have changed
  */
 export function handleAPIEvents() {
-
-
-    app.api.addEventListener("status", function (e) {
-      postStatusMessageToIframe(e)
-    });
-
     app.api.addEventListener("reconnected", async function (e) {
-      // On reconnect fetch current playback status since it might have changed
       try {
         await fetch(`/queue_manager/playback`);
       } catch (error) {
         console.error("Error fetching playback status:", error);
       }
     });
-
-    app.api.addEventListener("execution_start", function (e) {
-      postStatusMessageToIframe(e)
-    });
-
-    app.api.addEventListener("execution_cached", function (e) {
-      postStatusMessageToIframe(e)
-    });
-
-    app.api.addEventListener("executing", function (e) {
-      postStatusMessageToIframe(e)
-    })
-
-    app.api.addEventListener("queue-manager-queue-updated", function (e) {
-      postStatusMessageToIframe(e)
-    })
-}
-
-/**
- *  Pass parent's key events to iframe
- */
-export function handleKeyboardEvents() {
-
-    window.addEventListener('keydown', e => {
-      postMessageToIframe({key: e.key, isDown: true}, 'QM_ParentKeypress')
-    });
-    window.addEventListener('keyup', e => {
-      postMessageToIframe({key: e.key, isDown: false}, 'QM_ParentKeypress')
-    });
-}
-
-
-export function handleIframeMessages() {
-  /**
-     * Messages from iframe
-     */
-    window.addEventListener("message", async (event) => {
-      if (event.origin !== QueueManagerOrigin) return;
-      const { type, workflow, number } = event.data;
-
-      // When workflow is received from iframe then load it into ComfyUI
-      if (type === "QM_LoadWorkflow" && workflow) {
-        // e.g. forward into ComfyUI’s API
-        app.loadGraphData(workflow, true, true, workflow.workflow_name + ' ' + number);
-      }
-
-      // Handshake message from iframe
-      if (type === "QM_QueueManager_Hello") {
-        const settings = extensionSettings('values');
-        const theme = collectTheme();
-        // send back clientId to iframe
-        event.source.postMessage(
-          { type: "QM_QueueManager_Hello",
-            clientId: app.api.clientId,
-            settings,
-            ...theme,
-          },
-          event.origin
-        );
-      }
-
-    }, false);
 }
 
 export function registerSidebar() {
+  let mountedEl = null;
+  let unmount = null;
+
   app.extensionManager.registerSidebarTab({
     id: "comfyui-queue-manager",
     icon: "pi pi-list-check",
@@ -402,36 +245,19 @@ export function registerSidebar() {
     tooltip: "Queue Manager",
     type: "custom",
     render: (el) => {
-      el.innerHTML = `
-        <style>
-          .p-splitter[data-p-resizing="true"] .comfyui-queue-manager {pointer-events: none;}
-          .comfyui-queue-manager { height: 100% }
-        </style>
-        <div class='comfyui-queue-manager flex flex-col'>
-          <section class='app-iframe flex-1'>
-            <iframe name="qm_queue_iframe" src="${QueueManagerURL}" class="w-full h-full border-0"></iframe>
-          </section>
-          <footer>
-          </footer>
-        </div>
-      `;
+      // The sidebar can call render again for the same element while the tab stays open.
+      if (el === mountedEl) return;
+      unmount?.();
 
-      // append stylesheet to this document
-      if (!document.getElementById("comfyui-queue-manager-stylesheet")) {
-        const style = document.createElement("link");
-        style.rel = "stylesheet";
-        style.href = `/extensions/comfyui_queue_manager/styles/manager.css`;
-        style.type = "text/css";
-        style.id = "comfyui-queue-manager-stylesheet";
-        style.onload = function() {
-
-        };
-        document.head.appendChild(style);
-      }
-
-      // resize container
       el.style.height = '100%';
       el.parentElement.style.overflow = 'hidden';
+      mountedEl = el;
+      unmount = mountQueueManager(el);
+    },
+    destroy: () => {
+      unmount?.();
+      mountedEl = null;
+      unmount = null;
     },
   });
 }
@@ -457,51 +283,3 @@ export function hookQueuePrompt() {
     return await _apiQueuePrompt.call(app.api, n, data, options, ...args);
   };
 }
-
-function postSettingToIframe(setting, newVal, oldVal) {
-  postMessageToIframe({
-    setting: setting,
-    newValue: newVal,
-    oldValue: oldVal
-  }, 'QM_Setting_Changed');
-}
-
-export function extensionSettings(mode = 'default') {
-
-  if (mode === 'default') {
-    // append onChange handler to every setting
-    for (const setting of settings) {
-      setting.onChange = function(newVal, oldVal) {
-        const id = setting.id.replace('QueueManager.', '');
-        postSettingToIframe(id, newVal, oldVal);
-      }
-    }
-    return settings;
-  }
-
-  if (mode === 'values') {
-    // pull values for all settings and convert to tree object, split by dots in id
-    const settingsTree = {};
-    for (const setting of settings) {
-      const value = app.extensionManager.setting.get(setting.id);
-      const idParts = setting.id.split('.');
-      let currentLevel = settingsTree;
-      for (let i = 0; i < idParts.length; i++) {
-        const part = idParts[i];
-        if (i === idParts.length - 1) {
-          currentLevel[part] = value;
-        } else {
-          if (!currentLevel[part]) {
-            currentLevel[part] = {};
-          }
-          currentLevel = currentLevel[part];
-        }
-      }
-    }
-
-    return settingsTree.QueueManager;
-  }
-
-}
-
-

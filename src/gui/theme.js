@@ -24,7 +24,7 @@ export function buildTheme(dark) {
       divider: 'var(--qm-border)',
     },
     typography: {
-      fontFamily: 'var(--qm-font)',
+      fontFamily: 'inherit',
     },
   });
 }

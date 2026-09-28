@@ -1,3 +1,4 @@
+import { app } from "../../../../scripts/app.js";
 function _mergeNamespaces(n, m) {
   for (var i = 0; i < m.length; i++) {
     const e = m[i];
@@ -17,35 +18,6 @@ function _mergeNamespaces(n, m) {
   }
   return Object.freeze(Object.defineProperty(n, Symbol.toStringTag, { value: "Module" }));
 }
-(function polyfill() {
-  const relList = document.createElement("link").relList;
-  if (relList && relList.supports && relList.supports("modulepreload")) return;
-  for (const link of document.querySelectorAll('link[rel="modulepreload"]')) processPreload(link);
-  new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type !== "childList") continue;
-      for (const node2 of mutation.addedNodes) if (node2.tagName === "LINK" && node2.rel === "modulepreload") processPreload(node2);
-    }
-  }).observe(document, {
-    childList: true,
-    subtree: true
-  });
-  function getFetchOpts(link) {
-    const fetchOpts = {};
-    if (link.integrity) fetchOpts.integrity = link.integrity;
-    if (link.referrerPolicy) fetchOpts.referrerPolicy = link.referrerPolicy;
-    if (link.crossOrigin === "use-credentials") fetchOpts.credentials = "include";
-    else if (link.crossOrigin === "anonymous") fetchOpts.credentials = "omit";
-    else fetchOpts.credentials = "same-origin";
-    return fetchOpts;
-  }
-  function processPreload(link) {
-    if (link.ep) return;
-    link.ep = true;
-    const fetchOpts = getFetchOpts(link);
-    fetch(link.href, fetchOpts);
-  }
-})();
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
 }
@@ -19186,55 +19158,6 @@ const QuizSharpIcon = createSvgIcon([/* @__PURE__ */ jsxRuntimeExports.jsx("path
 }, "0"), /* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M6 2v16h16V2zm7.51 8.16c.41-.73 1.18-1.16 1.63-1.8.48-.68.21-1.94-1.14-1.94-.88 0-1.32.67-1.5 1.23l-1.37-.57C11.51 5.96 12.52 5 13.99 5c1.23 0 2.08.56 2.51 1.26.37.6.58 1.73.01 2.57-.63.93-1.23 1.21-1.56 1.81-.13.24-.18.4-.18 1.18h-1.52c.01-.41-.06-1.08.26-1.66m-.56 3.79c0-.59.47-1.04 1.05-1.04.59 0 1.04.45 1.04 1.04 0 .58-.44 1.05-1.04 1.05-.58 0-1.05-.47-1.05-1.05"
 }, "1")]);
-const createStoreImpl = (createState) => {
-  let state;
-  const listeners = /* @__PURE__ */ new Set();
-  const setState = (partial, replace2) => {
-    const nextState = typeof partial === "function" ? partial(state) : partial;
-    if (!Object.is(nextState, state)) {
-      const previousState = state;
-      state = (replace2 != null ? replace2 : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
-      listeners.forEach((listener) => listener(state, previousState));
-    }
-  };
-  const getState = () => state;
-  const getInitialState = () => initialState;
-  const subscribe = (listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  };
-  const api = { setState, getState, getInitialState, subscribe };
-  const initialState = state = createState(setState, getState, api);
-  return api;
-};
-const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
-const identity = (arg2) => arg2;
-function useStore(api, selector = identity) {
-  const slice2 = React.useSyncExternalStore(
-    api.subscribe,
-    React.useCallback(() => selector(api.getState()), [api, selector]),
-    React.useCallback(() => selector(api.getInitialState()), [api, selector])
-  );
-  React.useDebugValue(slice2);
-  return slice2;
-}
-const createImpl = (createState) => {
-  const api = createStore(createState);
-  const useBoundStore = (selector) => useStore(api, selector);
-  Object.assign(useBoundStore, api);
-  return useBoundStore;
-};
-const create = ((createState) => createState ? createImpl(createState) : createImpl);
-const useAppStore = create((set) => ({
-  filters: null,
-  route: "queue",
-  clientId: null,
-  shiftDown: false,
-  setFilters: (filters) => set((state) => ({ ...state, filters })),
-  setRoute: (route) => set((state) => ({ ...state, route })),
-  setClientId: (clientId) => set((state) => ({ ...state, clientId })),
-  setShiftDown: (shiftDown) => set((state) => ({ ...state, shiftDown }))
-}));
 function TopMenu() {
   const [uiState, setUiState] = reactExports.useState({
     menuOpen: false
@@ -19247,7 +19170,7 @@ function TopMenu() {
   }
   async function takeOver() {
     toggleMenu();
-    apiCall("queue_manager/takeover?client_id=" + useAppStore.getState().clientId, null, "GET");
+    apiCall("queue_manager/takeover?client_id=" + app.api.clientId, null, "GET");
   }
   reactExports.useEffect(() => {
     if (!uiState.menuOpen) return;
@@ -19621,6 +19544,53 @@ const QueueCard = reactExports.memo(
     return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
   }
 );
+const createStoreImpl = (createState) => {
+  let state;
+  const listeners = /* @__PURE__ */ new Set();
+  const setState = (partial, replace2) => {
+    const nextState = typeof partial === "function" ? partial(state) : partial;
+    if (!Object.is(nextState, state)) {
+      const previousState = state;
+      state = (replace2 != null ? replace2 : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+      listeners.forEach((listener) => listener(state, previousState));
+    }
+  };
+  const getState = () => state;
+  const getInitialState = () => initialState;
+  const subscribe = (listener) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  };
+  const api = { setState, getState, getInitialState, subscribe };
+  const initialState = state = createState(setState, getState, api);
+  return api;
+};
+const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
+const identity = (arg2) => arg2;
+function useStore(api, selector = identity) {
+  const slice2 = React.useSyncExternalStore(
+    api.subscribe,
+    React.useCallback(() => selector(api.getState()), [api, selector]),
+    React.useCallback(() => selector(api.getInitialState()), [api, selector])
+  );
+  React.useDebugValue(slice2);
+  return slice2;
+}
+const createImpl = (createState) => {
+  const api = createStore(createState);
+  const useBoundStore = (selector) => useStore(api, selector);
+  Object.assign(useBoundStore, api);
+  return useBoundStore;
+};
+const create = ((createState) => createState ? createImpl(createState) : createImpl);
+const useAppStore = create((set) => ({
+  filters: null,
+  route: "queue",
+  shiftDown: false,
+  setFilters: (filters) => set((state) => ({ ...state, filters })),
+  setRoute: (route) => set((state) => ({ ...state, route })),
+  setShiftDown: (shiftDown) => set((state) => ({ ...state, shiftDown }))
+}));
 const useSelectionStore = create((set) => ({
   selected: /* @__PURE__ */ new Set(),
   anchor: null,
@@ -28018,7 +27988,7 @@ function ImportExport({ route }) {
     const file = e.target.files[0];
     const formData = new FormData();
     formData.append("queue_json", file);
-    formData.append("client_id", useAppStore.getState().clientId);
+    formData.append("client_id", app.api.clientId);
     const comfyApiKey = localStorage.getItem("comfy_api_key");
     if (comfyApiKey) {
       formData.append("api_key_comfy_org", comfyApiKey);
@@ -28080,7 +28050,7 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
   }
   async function playAllArchive() {
     await apiCall("queue_manager/play-archive", {
-      client_id: useAppStore.getState().clientId,
+      client_id: app.api.clientId,
       filters: isFilterOn() ? useAppStore.getState().filters : null,
       front: useAppStore.getState().shiftDown === true
     });
@@ -28301,17 +28271,6 @@ function PriorityMenu({ dbIds, onDone }) {
     )
   ] });
 }
-const QM_QUEUE_STATUS_UPDATED = "QM_queueStatusUpdated";
-const QM_PARENT_KEYPRESS = "QM_ParentKeypress";
-const QM_QUEUE_MANAGER_HELLO = "QM_QueueManager_Hello";
-const QM_SETTING_CHANGED = "QM_Setting_Changed";
-const QM_LOAD_WORKFLOW = "QM_LoadWorkflow";
-const msgLoadWorkflow = (workflow, number) => {
-  window.parent.postMessage(
-    { type: QM_LOAD_WORKFLOW, workflow, number },
-    "*"
-  );
-};
 async function performDelete(selectedRunning, selectedPending, fetchQueueItems) {
   await Promise.all(selectedRunning.map((item) => deleteRunningJob(item[1])));
   if (selectedPending.length > 0) {
@@ -28346,7 +28305,7 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     const response = await apiCall(`queue_manager/item?db_id=${dbId}`, null, "GET");
     const workflow = response?.item?.[3]?.extra_pnginfo?.workflow;
     if (!workflow) return;
-    msgLoadWorkflow(workflow, selected2[0]);
+    app.loadGraphData(workflow, true, true, `${workflow.workflow_name} ${selected2[0]}`);
     await finish();
   };
   const handleArchive = async () => {
@@ -28355,9 +28314,8 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await finish();
   };
   const handleRun = async () => {
-    const { clientId } = useAppStore.getState();
     const dbIds = selectedItems.map((item) => item?.[3]?.db_id).filter((id) => id != null);
-    await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId });
+    await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId: app.api.clientId });
     await finish();
   };
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
@@ -28490,97 +28448,35 @@ const useOptionsStore = create((set) => ({
     [key]: value
   }))
 }));
-function applyTheme({ vars, fontFamily, fontSize, dark: dark2 }) {
-  const root = document.documentElement;
-  if (vars) {
-    for (const [name, value] of Object.entries(vars)) {
-      root.style.setProperty(name, value);
-    }
-  }
-  if (fontFamily) {
-    root.style.setProperty("--qm-font-family", fontFamily);
-    document.body.style.fontFamily = fontFamily;
-  }
-  if (fontSize) {
-    document.body.style.fontSize = fontSize;
-  }
-  root.classList.toggle("dark-theme", !!dark2);
-}
-function useComfyTheme(onDarkChange) {
+const STATUS_EVENTS = ["status", "execution_start", "execution_cached", "executing", "queue-manager-queue-updated"];
+const SETTINGS = [["Basic", "PageSize"], ["Completed", "ListOrder"]];
+function useComfyEvents({ onQueueStatusUpdated }) {
+  const setOption = useOptionsStore((state) => state.setOption);
+  const handleStatus = useEvent((event) => onQueueStatusUpdated(event.type, event.detail));
   reactExports.useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.origin !== window.location.protocol + "//" + window.location.host) {
-        return;
-      }
-      if (event.data.type === "QM_Theme") {
-        applyTheme(event.data);
-        onDarkChange?.(!!event.data.dark);
-      }
-      if (event.data.type === "QM_QueueManager_Hello" && event.data.vars) {
-        applyTheme(event.data);
-        onDarkChange?.(!!event.data.dark);
+    for (const name of STATUS_EVENTS) {
+      app.api.addEventListener(name, handleStatus);
+    }
+    return () => {
+      for (const name of STATUS_EVENTS) {
+        app.api.removeEventListener(name, handleStatus);
       }
     };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [onDarkChange]);
-}
-function useParentMessages({ onQueueStatusUpdated, onSettingChanged, onHello } = {}) {
-  const setShiftDown = useAppStore((state) => state.setShiftDown);
-  const options = useOptionsStore((state) => state);
-  const setAllOptions = useOptionsStore((state) => state.setAllOptions);
-  const setOption = useOptionsStore((state) => state.setOption);
-  const handleMessage = useEvent((event) => {
-    if (event.origin !== window.location.protocol + "//" + window.location.host) {
-      return;
-    }
-    switch (event.data.type) {
-      case QM_QUEUE_STATUS_UPDATED:
-        onQueueStatusUpdated?.(event);
-        break;
-      case QM_PARENT_KEYPRESS:
-        {
-          const keypress = event.data.message;
-          if (keypress && keypress.key === "Shift") {
-            setShiftDown(keypress.isDown);
-          }
-        }
-        break;
-      case QM_QUEUE_MANAGER_HELLO:
-        useAppStore.getState().setClientId(event.data.clientId);
-        setAllOptions({ ...event.data.settings });
-        onHello?.(event);
-        break;
-      case QM_SETTING_CHANGED:
-        {
-          const settingPath = event.data.message.setting.split(".");
-          let current = options;
-          let exists = true;
-          for (const segment of settingPath) {
-            if (Object.prototype.hasOwnProperty.call(current, segment)) {
-              current = current[segment];
-            } else {
-              exists = false;
-            }
-          }
-          const CategorySlug = settingPath[0];
-          const SettingKey = settingPath[1];
-          if (exists) {
-            setOption(CategorySlug, SettingKey, event.data.message.newValue);
-          }
-          onSettingChanged?.(event);
-        }
-        break;
-    }
-  });
+  }, [handleStatus]);
   reactExports.useEffect(() => {
-    window.addEventListener("message", handleMessage);
-    window.parent.postMessage(
-      { type: QM_QUEUE_MANAGER_HELLO },
-      "*"
-    );
-    return () => window.removeEventListener("message", handleMessage);
-  }, [handleMessage]);
+    const listeners = SETTINGS.map(([category, key]) => {
+      const id = `QueueManager.${category}.${key}`;
+      setOption(category, key, app.extensionManager.setting.get(id));
+      const listener = (event) => setOption(category, key, event.detail.value);
+      app.ui.settings.addEventListener(`${id}.change`, listener);
+      return [`${id}.change`, listener];
+    });
+    return () => {
+      for (const [name, listener] of listeners) {
+        app.ui.settings.removeEventListener(name, listener);
+      }
+    };
+  }, [setOption]);
 }
 function getNodeIDs(nodes) {
   const nodeIDs = {};
@@ -28691,8 +28587,8 @@ function useQueue({ fetchOptions } = {}) {
       console.error(`Error fetching ${requestedRoute || route} items:`, error);
     }
   }, [appendFilters, appendRoute, fetchOptions, setFilters, setRoute, pageSize, completedListOrder, route]);
-  const onQueueStatusUpdated = (event) => {
-    switch (event.data.message.name) {
+  const onQueueStatusUpdated = (name, detail) => {
+    switch (name) {
       case "status":
         if (route === "queue" || route === "completed") {
           fetchQueueItems({ page: appStatus.queue && appStatus.queue.info ? appStatus.queue.info.page : 0 });
@@ -28700,7 +28596,7 @@ function useQueue({ fetchOptions } = {}) {
         break;
       case "execution_start":
         {
-          const { prompt_id } = event.data.message.detail;
+          const { prompt_id } = detail;
           const theJob = getTheJob(prompt_id, appStatus.queue);
           if (theJob) {
             const nodeIDs = getNodeIDs(theJob[3]?.extra_pnginfo?.workflow?.nodes ?? []);
@@ -28717,7 +28613,7 @@ function useQueue({ fetchOptions } = {}) {
         break;
       case "execution_cached":
         {
-          const { nodes } = event.data.message.detail;
+          const { nodes } = detail;
           if (!nodes || nodes.length === 0) {
             return;
           }
@@ -28736,7 +28632,7 @@ function useQueue({ fetchOptions } = {}) {
         break;
       case "executing":
         {
-          const node_id = event.data.message.detail;
+          const node_id = detail;
           if (!node_id) {
             return;
           }
@@ -28799,7 +28695,7 @@ function useQueue({ fetchOptions } = {}) {
   };
 }
 const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
-function Home({ onDarkChange }) {
+function Home() {
   const options = useOptionsStore((state) => state);
   const pageSize = useOptionsStore((state) => state.Basic.PageSize);
   const previousPageSizeRef = reactExports.useRef(pageSize);
@@ -28811,7 +28707,6 @@ function Home({ onDarkChange }) {
   const shiftDown = useAppStore((state) => state.shiftDown);
   const setShiftDown = useAppStore((state) => state.setShiftDown);
   const [showSplash, setShowSplash] = reactExports.useState(false);
-  useComfyTheme(onDarkChange);
   reactExports.useMemo(() => {
     const f = filters ? JSON.stringify(filters) : "";
     const order = route === "completed" ? String(completedListOrder ?? "") : "";
@@ -28859,7 +28754,7 @@ function Home({ onDarkChange }) {
       fetchQueueItems({ page: 0, reload: true });
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);
-  useParentMessages({ onQueueStatusUpdated });
+  useComfyEvents({ onQueueStatusUpdated });
   const openSplash = useEvent(() => {
     setShowSplash(true);
   });
@@ -28873,195 +28768,202 @@ function Home({ onDarkChange }) {
       apiCall("queue_manager/options", { key: "splash_screen", value: true }, "POST");
     }
   });
-  reactExports.useEffect(() => {
+  const handleKeyDown = (event) => {
     if (!queueData) return;
-    const handleKeyDown = (event) => {
-      const isInputLike = event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA" || event.target.isContentEditable;
-      if (event.key === "Escape") {
-        useSelectionStore.getState().clear();
-      } else if ((event.ctrlKey || event.metaKey) && (event.key === "a" || event.key === "A")) {
-        if (!isInputLike) {
-          event.preventDefault();
-          const items = [...queueData.running ?? [], ...queueData.pending ?? []];
-          const orderedKeys = items.map(itemKey);
-          useSelectionStore.getState().selectAll(orderedKeys);
-        }
-      } else if (event.key === "Delete" || event.key === "Backspace") {
-        if (!isInputLike) {
-          const selectedSize = useSelectionStore.getState().selected.size;
-          if (selectedSize > 0) {
-            let shouldDelete = true;
-            if (selectedSize > 5) {
-              shouldDelete = window.confirm(`Delete ${selectedSize} items?`);
-            }
-            if (shouldDelete) {
-              const running = queueData?.running ?? [];
-              const pending = queueData?.pending ?? [];
-              const selected = useSelectionStore.getState().selected;
-              const selectedRunning = running.filter((item) => selected.has(itemKey(item)));
-              const selectedPending = pending.filter((item) => selected.has(itemKey(item)));
-              performDelete(selectedRunning, selectedPending, fetchQueueItems);
-            }
-          }
-        }
+    const isInputLike = event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA" || event.target.isContentEditable;
+    const selectedSize = useSelectionStore.getState().selected.size;
+    if (event.key === "Escape") {
+      if (selectedSize === 0) return;
+      useSelectionStore.getState().clear();
+    } else if ((event.ctrlKey || event.metaKey) && (event.key === "a" || event.key === "A")) {
+      if (isInputLike) return;
+      event.preventDefault();
+      const items = [...queueData.running ?? [], ...queueData.pending ?? []];
+      const orderedKeys = items.map(itemKey);
+      useSelectionStore.getState().selectAll(orderedKeys);
+    } else if (event.key === "Delete" || event.key === "Backspace") {
+      if (isInputLike || selectedSize === 0) return;
+      let shouldDelete = true;
+      if (selectedSize > 5) {
+        shouldDelete = window.confirm(`Delete ${selectedSize} items?`);
+      }
+      if (shouldDelete) {
+        const running = queueData?.running ?? [];
+        const pending = queueData?.pending ?? [];
+        const selected = useSelectionStore.getState().selected;
+        const selectedRunning = running.filter((item) => selected.has(itemKey(item)));
+        const selectedPending = pending.filter((item) => selected.has(itemKey(item)));
+        performDelete(selectedRunning, selectedPending, fetchQueueItems);
+      }
+    } else {
+      return;
+    }
+    event.stopPropagation();
+  };
+  reactExports.useEffect(() => {
+    const handleShift = (event) => {
+      if (event.key === "Shift") {
+        setShiftDown(event.type === "keydown");
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [queueData, fetchQueueItems]);
+    window.addEventListener("keydown", handleShift);
+    window.addEventListener("keyup", handleShift);
+    return () => {
+      window.removeEventListener("keydown", handleShift);
+      window.removeEventListener("keyup", handleShift);
+    };
+  }, [setShiftDown]);
   reactExports.useEffect(() => {
     fetchQueueItems({ route: "queue" });
     fetchOptions();
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Shift") {
-        setShiftDown(true);
-      }
-    });
-    window.addEventListener("keyup", (e) => {
-      if (e.key === "Shift") {
-        setShiftDown(false);
-      }
-    });
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `route-${route} qm-container` + (queueIsLoading ? " loading" : "") + (queueIsReloading ? " reloading" : ""), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "px-2 py-1 text-sm header font-bold", children: [
-      "Queue Manager",
-      queueIsLoading && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {})
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(AppContext.Provider, { value: appContextValue, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(TopMenu, {}),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tabs" + (shiftDown ? " shift-down" : ""), children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "tab queue" + (route === "queue" ? " active" : ""),
-            onClick: () => {
-              fetchQueueItems({ route: "queue", reload: true });
-            },
-            children: "Queue"
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "tab archive" + (route === "archive" ? " active" : ""),
-            onClick: () => {
-              fetchQueueItems({ route: "archive", reload: true });
-            },
-            children: "Archive"
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: "tab completed" + (route === "completed" ? " active" : ""),
-            onClick: () => {
-              fetchQueueItems({ route: "completed", reload: true });
-            },
-            children: "Completed"
-          }
-        ),
-        shiftDown && route === "archive" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "play-first", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(UploadSharpIcon, {}),
-          " Press Run to queue at front"
-        ] })
-      ] }),
-      isFilterOn() && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "filters flex items-center p-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "Filters:" }),
-        Object.values(filters).map(
-          (filter) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "filter flex items-center", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "span",
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: `qm-root route-${route}` + (queueIsLoading ? " loading" : "") + (queueIsReloading ? " reloading" : ""),
+      tabIndex: -1,
+      onKeyDown: handleKeyDown,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "px-2 py-1 text-sm header font-bold", children: [
+          "Queue Manager",
+          queueIsLoading && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {})
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(AppContext.Provider, { value: appContextValue, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TopMenu, {}),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tabs" + (shiftDown ? " shift-down" : ""), children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
               {
-                className: "inline-flex close label",
-                style: { color: "var(--qm-fg-muted)" },
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "span",
-                    {
-                      className: "type",
-                      children: [
-                        filter.type + ": ",
-                        " "
-                      ]
-                    }
-                  ),
-                  filter.valueLabel
-                ]
+                className: "tab queue" + (route === "queue" ? " active" : ""),
+                onClick: () => {
+                  fetchQueueItems({ route: "queue", reload: true });
+                },
+                children: "Queue"
               }
             ),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "button",
               {
-                className: "qm-btn qm-btn-text qm-icon-btn close",
+                className: "tab archive" + (route === "archive" ? " active" : ""),
                 onClick: () => {
-                  const prev2 = useAppStore.getState().filters;
-                  const newFilters = (({ [filter.type]: _, ...f }) => f)(prev2);
-                  fetchQueueItems({ filters: newFilters });
+                  fetchQueueItems({ route: "archive", reload: true });
                 },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 24 24", width: "1.2em", height: "1.2em", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "path",
+                children: "Archive"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                className: "tab completed" + (route === "completed" ? " active" : ""),
+                onClick: () => {
+                  fetchQueueItems({ route: "completed", reload: true });
+                },
+                children: "Completed"
+              }
+            ),
+            shiftDown && route === "archive" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "play-first", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(UploadSharpIcon, {}),
+              " Press Run to queue at front"
+            ] })
+          ] }),
+          isFilterOn() && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "filters flex items-center p-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { children: "Filters:" }),
+            Object.values(filters).map(
+              (filter) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "filter flex items-center", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "span",
                   {
-                    fill: "currentColor",
-                    d: "M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                    className: "inline-flex close label",
+                    style: { color: "var(--qm-fg-muted)" },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "span",
+                        {
+                          className: "type",
+                          children: [
+                            filter.type + ": ",
+                            " "
+                          ]
+                        }
+                      ),
+                      filter.valueLabel
+                    ]
                   }
-                ) })
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    className: "qm-btn qm-btn-text qm-icon-btn close",
+                    onClick: () => {
+                      const prev2 = useAppStore.getState().filters;
+                      const newFilters = (({ [filter.type]: _, ...f }) => f)(prev2);
+                      fetchQueueItems({ filters: newFilters });
+                    },
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 24 24", width: "1.2em", height: "1.2em", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "path",
+                      {
+                        fill: "currentColor",
+                        d: "M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                      }
+                    ) })
+                  }
+                )
+              ] }, filter.type)
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "button",
+              {
+                className: "close close-all ml-auto qm-btn qm-btn-text",
+                onClick: () => {
+                  fetchQueueItems({ filters: {} });
+                },
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 24 24", width: "1.2em", height: "1.2em", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "path",
+                    {
+                      fill: "currentColor",
+                      d: "M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                    }
+                  ) }),
+                  "Clear filters"
+                ]
               }
             )
-          ] }, filter.type)
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            className: "close close-all ml-auto qm-btn qm-btn-text",
-            onClick: () => {
-              fetchQueueItems({ filters: {} });
-            },
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 24 24", width: "1.2em", height: "1.2em", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "path",
-                {
-                  fill: "currentColor",
-                  d: "M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
-                }
-              ) }),
-              "Clear filters"
-            ]
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "queue-table", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        Queue,
-        {
-          data: queueData,
-          error: queueError,
-          isLoading: queueIsLoading,
-          progress: queueProgress,
-          route
-        }
-      ) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        SelectionBar,
-        {
-          route,
-          queueData,
-          fetchQueueItems
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        Footer,
-        {
-          route,
-          queueData,
-          isFilterOn,
-          appendFilters,
-          appendRoute,
-          fetchQueueItems
-        }
-      ),
-      showSplash && /* @__PURE__ */ jsxRuntimeExports.jsx(SplashScreen, { onClick: closeSplash })
-    ] })
-  ] });
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "queue-table", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Queue,
+            {
+              data: queueData,
+              error: queueError,
+              isLoading: queueIsLoading,
+              progress: queueProgress,
+              route
+            }
+          ) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            SelectionBar,
+            {
+              route,
+              queueData,
+              fetchQueueItems
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Footer,
+            {
+              route,
+              queueData,
+              isFilterOn,
+              appendFilters,
+              appendRoute,
+              fetchQueueItems
+            }
+          ),
+          showSplash && /* @__PURE__ */ jsxRuntimeExports.jsx(SplashScreen, { onClick: closeSplash })
+        ] })
+      ]
+    }
+  );
 }
 function buildTheme(dark2) {
   return createTheme({
@@ -29086,16 +28988,37 @@ function buildTheme(dark2) {
       divider: "var(--qm-border)"
     },
     typography: {
-      fontFamily: "var(--qm-font)"
+      fontFamily: "inherit"
     }
   });
 }
+const isDark = () => document.documentElement.classList.contains("dark-theme");
 function AppRoot() {
-  const [dark2, setDark] = reactExports.useState(() => document.documentElement.classList.contains("dark-theme"));
+  const [dark2, setDark] = reactExports.useState(isDark);
   const theme = reactExports.useMemo(() => buildTheme(dark2), [dark2]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider, { theme, disableTransitionOnChange: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, { onDarkChange: setDark }) });
+  reactExports.useEffect(() => {
+    const observer = new MutationObserver(() => setDark(isDark()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeProvider, { theme, disableTransitionOnChange: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Home, {}) });
 }
-ReactDOM$1.createRoot(document.getElementById("root")).render(
-  /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppRoot, {}) })
-);
+const STYLESHEET_ID = "comfyui-queue-manager-gui-stylesheet";
+function mountQueueManager(el) {
+  if (!document.getElementById(STYLESHEET_ID)) {
+    const link = document.createElement("link");
+    link.id = STYLESHEET_ID;
+    link.rel = "stylesheet";
+    link.href = import.meta.url.replace(/index\.js$/, "index.css");
+    document.head.appendChild(link);
+  }
+  const root = ReactDOM$1.createRoot(el);
+  root.render(
+    /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppRoot, {}) })
+  );
+  return () => root.unmount();
+}
+export {
+  mountQueueManager
+};
 //# sourceMappingURL=index.js.map

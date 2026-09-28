@@ -7,7 +7,7 @@ import AdsClickSharpIcon from '@mui/icons-material/AdsClickSharp';
 import InfoOutlineSharpIcon from '@mui/icons-material/InfoOutlineSharp';
 import QuizSharpIcon from '@mui/icons-material/QuizSharp';
 
-import {useAppStore} from "../stores/appStore";
+import {app} from "comfy/app";
 
 export default function TopMenu() {
   const [uiState, setUiState] = useState({
@@ -25,7 +25,7 @@ export default function TopMenu() {
 
   async function takeOver() {
     toggleMenu();
-    apiCall('queue_manager/takeover?client_id='+useAppStore.getState().clientId, null, "GET");
+    apiCall('queue_manager/takeover?client_id='+app.api.clientId, null, "GET");
   }
 
   useEffect(() => {

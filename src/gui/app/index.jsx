@@ -18,13 +18,12 @@ import {useOptionsStore} from "./stores/optionsStore";
 import {useAppStore} from "./stores/appStore";
 import {useSelectionStore} from "./stores/selectionStore";
 import {LoaderSpinner} from "@/app/components/LoaderSpinner";
-import {useComfyTheme} from "./hooks/useComfyTheme";
-import {useParentMessages} from "./hooks/useParentMessages";
+import {useComfyEvents} from "./hooks/useComfyEvents";
 import {useQueue} from "./hooks/useQueue";
 
 const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
 
-export default function Home({ onDarkChange }) {
+export default function Home() {
   const options = useOptionsStore((state) => state);
   const pageSize = useOptionsStore((state) => state.Basic.PageSize);
   const previousPageSizeRef = useRef(pageSize);
@@ -39,8 +38,6 @@ export default function Home({ onDarkChange }) {
   const setShiftDown = useAppStore((state) => state.setShiftDown);
 
   const [showSplash, setShowSplash] = useState(false);
-
-  useComfyTheme(onDarkChange);
 
   const queryKey = useMemo(() => {
     const f = filters ? JSON.stringify(filters) : "";
@@ -100,7 +97,7 @@ export default function Home({ onDarkChange }) {
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);
 
-  useParentMessages({ onQueueStatusUpdated });
+  useComfyEvents({ onQueueStatusUpdated });
 
   const openSplash = useEvent(() => {
     setShowSplash(true);
@@ -124,69 +121,73 @@ export default function Home({ onDarkChange }) {
     }
   })
 
-  useEffect(() => {
+  // Bound to the panel root rather than window so these shortcuts don't fire while working on the canvas.
+  const handleKeyDown = (event) => {
     if (!queueData) return;
 
-    const handleKeyDown = (event) => {
-      const isInputLike =
-        event.target.tagName === 'INPUT' ||
-        event.target.tagName === 'TEXTAREA' ||
-        event.target.isContentEditable;
+    const isInputLike =
+      event.target.tagName === 'INPUT' ||
+      event.target.tagName === 'TEXTAREA' ||
+      event.target.isContentEditable;
+    const selectedSize = useSelectionStore.getState().selected.size;
 
-      if (event.key === 'Escape') {
-        useSelectionStore.getState().clear();
-      } else if ((event.ctrlKey || event.metaKey) && (event.key === 'a' || event.key === 'A')) {
-        if (!isInputLike) {
-          event.preventDefault();
-          const items = [...(queueData.running ?? []), ...(queueData.pending ?? [])];
-          const orderedKeys = items.map(itemKey);
-          useSelectionStore.getState().selectAll(orderedKeys);
-        }
-      } else if (event.key === 'Delete' || event.key === 'Backspace') {
-        if (!isInputLike) {
-          const selectedSize = useSelectionStore.getState().selected.size;
-          if (selectedSize > 0) {
-            let shouldDelete = true;
-            if (selectedSize > 5) {
-              shouldDelete = window.confirm(`Delete ${selectedSize} items?`);
-            }
-            if (shouldDelete) {
-              const running = queueData?.running ?? [];
-              const pending = queueData?.pending ?? [];
-              const selected = useSelectionStore.getState().selected;
-              const selectedRunning = running.filter((item) => selected.has(itemKey(item)));
-              const selectedPending = pending.filter((item) => selected.has(itemKey(item)));
-              performDelete(selectedRunning, selectedPending, fetchQueueItems);
-            }
-          }
-        }
+    if (event.key === 'Escape') {
+      if (selectedSize === 0) return;
+      useSelectionStore.getState().clear();
+    } else if ((event.ctrlKey || event.metaKey) && (event.key === 'a' || event.key === 'A')) {
+      if (isInputLike) return;
+      event.preventDefault();
+      const items = [...(queueData.running ?? []), ...(queueData.pending ?? [])];
+      const orderedKeys = items.map(itemKey);
+      useSelectionStore.getState().selectAll(orderedKeys);
+    } else if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (isInputLike || selectedSize === 0) return;
+      let shouldDelete = true;
+      if (selectedSize > 5) {
+        shouldDelete = window.confirm(`Delete ${selectedSize} items?`);
+      }
+      if (shouldDelete) {
+        const running = queueData?.running ?? [];
+        const pending = queueData?.pending ?? [];
+        const selected = useSelectionStore.getState().selected;
+        const selectedRunning = running.filter((item) => selected.has(itemKey(item)));
+        const selectedPending = pending.filter((item) => selected.has(itemKey(item)));
+        performDelete(selectedRunning, selectedPending, fetchQueueItems);
+      }
+    } else {
+      return;
+    }
+    event.stopPropagation();
+  };
+
+  useEffect(() => {
+    const handleShift = (event) => {
+      if (event.key === "Shift") {
+        setShiftDown(event.type === "keydown");
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [queueData, fetchQueueItems]);
+    window.addEventListener('keydown', handleShift);
+    window.addEventListener('keyup', handleShift);
+    return () => {
+      window.removeEventListener('keydown', handleShift);
+      window.removeEventListener('keyup', handleShift);
+    };
+  }, [setShiftDown]);
 
   // on mount get the queue items from the server
   useEffect(() => {
     fetchQueueItems({route: "queue"});
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchOptions sets state only after its internal await; the fetch itself must fire on mount
     fetchOptions();
-
-    window.addEventListener('keydown', e => {
-      if (e.key === "Shift") {
-        setShiftDown(true);
-      }
-    });
-    window.addEventListener('keyup', e => {
-      if (e.key === "Shift") {
-        setShiftDown(false);
-      }
-    });
   }, []);
 
   return (
-    <div className={`route-${route} qm-container` + (queueIsLoading ? ' loading' : '') + (queueIsReloading ? ' reloading' : '')}>
+    <div
+      className={`qm-root route-${route}` + (queueIsLoading ? ' loading' : '') + (queueIsReloading ? ' reloading' : '')}
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
+    >
       <header className="px-2 py-1 text-sm header font-bold">
         Queue Manager
         {queueIsLoading &&

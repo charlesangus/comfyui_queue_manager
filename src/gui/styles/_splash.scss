@@ -1,9 +1,9 @@
 .splash-screen {
-  position: fixed;
-  width: 80vw;
-  max-height: 80vh;
-  top: 10vh;
-  left: 10vw;
+  position: absolute;
+  width: 80%;
+  max-height: 80%;
+  top: 10%;
+  left: 10%;
   background-color: var(--qm-surface);
   border: 2px solid var(--qm-border);
   border-radius: 0.5rem;

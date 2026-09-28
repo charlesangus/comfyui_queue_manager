@@ -6,7 +6,6 @@ describe('appStore', () => {
     useAppStore.setState({
       filters: null,
       route: 'queue',
-      clientId: null,
       shiftDown: false,
     });
   });
@@ -19,7 +18,6 @@ describe('appStore', () => {
       const state = useAppStore.getState();
       expect(state.filters).toEqual(testFilters);
       expect(state.route).toBe('queue');
-      expect(state.clientId).toBeNull();
       expect(state.shiftDown).toBe(false);
     });
 
@@ -39,7 +37,6 @@ describe('appStore', () => {
       const state = useAppStore.getState();
       expect(state.route).toBe('history');
       expect(state.filters).toBeNull();
-      expect(state.clientId).toBeNull();
       expect(state.shiftDown).toBe(false);
     });
 
@@ -51,24 +48,6 @@ describe('appStore', () => {
     });
   });
 
-  describe('setClientId', () => {
-    it('updates clientId and leaves other state unchanged', () => {
-      useAppStore.getState().setClientId('client-123');
-
-      const state = useAppStore.getState();
-      expect(state.clientId).toBe('client-123');
-      expect(state.filters).toBeNull();
-      expect(state.route).toBe('queue');
-      expect(state.shiftDown).toBe(false);
-    });
-
-    it('can set clientId to null', () => {
-      useAppStore.getState().setClientId('client-123');
-      useAppStore.getState().setClientId(null);
-
-      expect(useAppStore.getState().clientId).toBeNull();
-    });
-  });
 
   describe('setShiftDown', () => {
     it('updates shiftDown to true and leaves other state unchanged', () => {
@@ -78,7 +57,6 @@ describe('appStore', () => {
       expect(state.shiftDown).toBe(true);
       expect(state.filters).toBeNull();
       expect(state.route).toBe('queue');
-      expect(state.clientId).toBeNull();
     });
 
     it('updates shiftDown to false', () => {
@@ -93,13 +71,11 @@ describe('appStore', () => {
     it('allows setting multiple state properties independently', () => {
       const state = useAppStore.getState();
       state.setRoute('history');
-      state.setClientId('client-456');
       state.setShiftDown(true);
       state.setFilters({ type: 'input' });
 
       const updatedState = useAppStore.getState();
       expect(updatedState.route).toBe('history');
-      expect(updatedState.clientId).toBe('client-456');
       expect(updatedState.shiftDown).toBe(true);
       expect(updatedState.filters).toEqual({ type: 'input' });
     });

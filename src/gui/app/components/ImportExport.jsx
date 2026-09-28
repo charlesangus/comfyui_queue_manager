@@ -2,7 +2,7 @@ import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUpload
 import { styled } from '@mui/material/styles';
 import useEvent from "react-use-event-hook";
 import { baseURL } from "../internals/config";
-import { useAppStore } from "../stores/appStore";
+import { app } from "comfy/app";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -26,7 +26,7 @@ export function ImportExport({ route }) {
 
     const formData = new FormData();
     formData.append("queue_json", file);
-    formData.append("client_id", useAppStore.getState().clientId);
+    formData.append("client_id", app.api.clientId);
 
     const comfyApiKey = localStorage.getItem("comfy_api_key");
     if (comfyApiKey) {
