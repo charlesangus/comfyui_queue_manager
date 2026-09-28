@@ -2,9 +2,11 @@
 
 "use client";
 
-import React, { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import { QueueCard } from "../components/QueueCard";
+import { Lightbox } from "./Lightbox";
+import { MediaOutputs } from "../models/MediaOutputs";
 import { useAppStore } from "../stores/appStore";
 import { useSelectionStore } from "../stores/selectionStore";
 
@@ -38,6 +40,22 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
     }
   }, []);
 
+  // Every output on the page in card order, so the lightbox can step from one job's outputs into the next.
+  const media = useMemo(
+    () => [...running, ...pending].flatMap((item) =>
+      new MediaOutputs(item?.[3]).files.map((file, fileIndex) => ({ file, key: itemKey(item), fileIndex }))
+    ),
+    [running, pending]
+  );
+
+  // Tracked by job and file rather than by position, so a refetch that shifts the page doesn't swap the image.
+  const [lightbox, setLightbox] = useState(null);
+  const handleOpenMedia = useCallback((key, fileIndex) => setLightbox({ key, fileIndex }), []);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+  const lightboxIndex = lightbox
+    ? media.findIndex((entry) => entry.key === lightbox.key && entry.fileIndex === lightbox.fileIndex)
+    : -1;
+
   return (
     <>
       {running.map((item) => {
@@ -54,6 +72,7 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
             filters={filters}
             isSelected={selected.has(key)}
             onSelect={handleSelect}
+            onOpenMedia={handleOpenMedia}
             itemKey={key}
           />
         );
@@ -72,10 +91,20 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
             filters={filters}
             isSelected={selected.has(key)}
             onSelect={handleSelect}
+            onOpenMedia={handleOpenMedia}
             itemKey={key}
           />
         );
       })}
+
+      {lightboxIndex !== -1 ? (
+        <Lightbox
+          files={media.map((entry) => entry.file)}
+          index={lightboxIndex}
+          onIndexChange={(index) => setLightbox(media[index])}
+          onClose={closeLightbox}
+        />
+      ) : null}
     </>
   );
 });

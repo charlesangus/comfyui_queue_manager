@@ -215,7 +215,7 @@ The card shows a preview as soon as the job is queued. During execution, image v
 
 ### Output thumbnails
 - Completed jobs show a strip of output thumbnails (images and videos) below the job details.
-- Clicking a thumbnail opens it in a full-window viewer. Use the arrows or ← / → to step through the job's outputs, Esc or a click outside the image to close, and the toolbar button to open the file in a new tab.
+- Clicking a thumbnail opens it in a full-window viewer. Use the arrows or ← / → to step through the outputs, continuing into the next or previous job, Esc or a click outside the image to close. Click the image or the toolbar button to open the file in a new tab.
 
 ### Extension Settings
 - Several aspects of the Queue Manager extension can be configured in the ComfyUI Settings window.

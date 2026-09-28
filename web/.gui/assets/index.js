@@ -19303,6 +19303,245 @@ const MediaItem = reactExports.memo(function MediaItem2({ file, onClick, autopla
     }
   ) }) });
 });
+class MediaOutputs {
+  files = [];
+  constructor(item) {
+    const nodes = item?.outputs;
+    if (!nodes) return;
+    for (const nodeID of Object.keys(nodes)) {
+      const outputs = nodes[nodeID];
+      const entries = outputs.images || outputs.gifs || outputs.files || [];
+      for (const entry of entries) {
+        this.files.push({
+          filename: entry.filename,
+          subfolder: entry.subfolder,
+          type: entry.type
+        });
+      }
+    }
+  }
+  get total() {
+    return this.files.length;
+  }
+}
+function TextTile({ label, value }) {
+  const [expanded, setExpanded] = reactExports.useState(false);
+  const toggleExpanded = () => setExpanded((prev2) => !prev2);
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      if (event.key === " ") event.preventDefault();
+      toggleExpanded();
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: `card-info-tile${expanded ? " expanded" : ""}`,
+      title: value,
+      role: "button",
+      tabIndex: 0,
+      "aria-expanded": expanded,
+      onClick: toggleExpanded,
+      onKeyDown: handleKeyDown,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: value })
+      ]
+    }
+  );
+}
+function ImageTile({ label, value }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
+    value?.filename ? /* @__PURE__ */ jsxRuntimeExports.jsx(MediaItem, { file: value, controls: false, autoplay: false, className: "tile-media" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: baseURL + value?.url, className: "tile-media", alt: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label })
+  ] });
+}
+function OtherTile({ label, value }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: String(value) })
+  ] });
+}
+const CardInfo = reactExports.memo(function CardInfo2({ entries }) {
+  if (!entries?.length) return null;
+  const sorted = [...entries].sort((a, b) => a.index - b.index);
+  const occurrences = /* @__PURE__ */ new Map();
+  return sorted.map((entry) => {
+    const identity2 = JSON.stringify([entry.index, entry.label]);
+    const occurrence = occurrences.get(identity2) ?? 0;
+    occurrences.set(identity2, occurrence + 1);
+    const key = JSON.stringify([entry.index, entry.label, occurrence]);
+    if (entry.kind === "image") {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, key);
+    }
+    if (entry.kind === "text") {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, key);
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
+  });
+});
+const QueueCard = reactExports.memo(
+  function QueueCard2({
+    item,
+    className,
+    loader,
+    index,
+    mode,
+    info,
+    route,
+    filters,
+    isSelected,
+    onSelect,
+    onOpenMedia,
+    itemKey: itemKey2
+  }) {
+    const { fetchQueueItems } = reactExports.useContext(AppContext);
+    const workflow = item?.[3]?.extra_pnginfo?.workflow;
+    const filterByWorkflow = reactExports.useCallback((event) => {
+      event.stopPropagation();
+      if (!workflow?.id) return;
+      fetchQueueItems({
+        filters: {
+          ...filters,
+          workflow: {
+            type: "workflow",
+            value: workflow.id,
+            valueLabel: workflow.workflow_name
+          }
+        }
+      });
+    }, [fetchQueueItems, filters, workflow]);
+    const executionTimeLabel = reactExports.useMemo(() => {
+      const t = item?.[3]?.execution_time;
+      if (t == null) return null;
+      const rawSeconds = Number(t);
+      if (!Number.isFinite(rawSeconds) || rawSeconds < 0) return null;
+      const totalSeconds = rawSeconds >= 60 ? Math.round(rawSeconds) : rawSeconds;
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor(totalSeconds % 86400 / 3600);
+      const minutes = Math.floor(totalSeconds % 3600 / 60);
+      const seconds = totalSeconds % 60;
+      const secondsLabel = rawSeconds >= 60 ? `${seconds}s` : `${seconds.toFixed(2)}s`;
+      if (days > 0) return ` ${days}d ${hours}h ${minutes}m ${secondsLabel}`;
+      if (hours > 0) return ` ${hours}h ${minutes}m ${secondsLabel}`;
+      if (minutes > 0) return ` ${minutes}m ${secondsLabel}`;
+      return ` ${rawSeconds.toFixed(2)}s`;
+    }, [item?.[3]?.execution_time]);
+    const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
+    const mediaOutputs = reactExports.useMemo(() => new MediaOutputs(item?.[3]), [item]);
+    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    const priority = item?.[3]?.priority;
+    const priorityBadge = reactExports.useMemo(() => {
+      if (!priority) return null;
+      if (priority === 1e3) {
+        return {
+          className: "priority-interactive",
+          label: "Interactive",
+          title: "Interactive: this job jumped the queue because it was run directly from the canvas"
+        };
+      }
+      if (priority === 999) {
+        return {
+          className: "priority-resumed",
+          label: "Resumed",
+          title: "Resumed: this job was interrupted to let an interactive run through, and will run again next"
+        };
+      }
+      return {
+        className: priority > 0 ? "priority-positive" : "priority-negative",
+        label: priority > 0 ? `+${priority}` : `${priority}`,
+        title: `Priority ${priority > 0 ? "+" : ""}${priority}`
+      };
+    }, [priority]);
+    return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "article",
+        {
+          className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
+          "aria-selected": isSelected,
+          onClick: (event) => onSelect(itemKey2, event),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
+              loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
+              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge priority-badge ${priorityBadge.className}`,
+                  title: priorityBadge.title,
+                  children: priorityBadge.label
+                }
+              ) : null,
+              error ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "span",
+                {
+                  className: `qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`,
+                  title: "Job outcome",
+                  children: error.kind === "interrupted" ? "Interrupted" : "Error"
+                }
+              ) : null,
+              mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
+                route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  MediaItem,
+                  {
+                    file,
+                    onClick: (event) => {
+                      event.stopPropagation();
+                      onOpenMedia(itemKey2, idx);
+                    },
+                    controls: false,
+                    autoplay: false,
+                    className: "thumbnail"
+                  },
+                  idx
+                )) }),
+                error ? (
+                  // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", onClick: (event) => event.stopPropagation(), children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
+                      error.kind === "interrupted" ? "Interrupted" : "Error",
+                      " details"
+                    ] }),
+                    error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
+                      error.node_type,
+                      " #",
+                      error.node_id
+                    ] }),
+                    error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
+                  ] })
+                ) : null
+              ] })
+            ] })
+          ]
+        }
+      )
+    );
+  },
+  (prev2, next2) => {
+    const prevId = prev2.item?.[3]?.db_id;
+    const nextId = next2.item?.[3]?.db_id;
+    if (prevId !== nextId) return false;
+    const prevCard = prev2.item?.[3]?.card;
+    const nextCard = next2.item?.[3]?.card;
+    if (prevCard !== nextCard && JSON.stringify(prevCard) !== JSON.stringify(nextCard)) {
+      return false;
+    }
+    const prevError = prev2.item?.[3]?.error;
+    const nextError = next2.item?.[3]?.error;
+    if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
+      return false;
+    }
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
+  }
+);
 function getScrollbarSize(win = window) {
   const documentWidth = win.document.documentElement.clientWidth;
   return win.innerWidth - documentWidth;
@@ -22104,7 +22343,8 @@ function Lightbox({ files, index, onIndexChange, onClose }) {
   }
   function handleClick(event) {
     event.stopPropagation();
-    if (!event.target.closest("img, video, .lightbox-toolbar, .lightbox-nav")) onClose();
+    if (event.target.tagName === "IMG") window.open(viewURL(file), "_blank");
+    else if (!event.target.closest("video, .lightbox-toolbar, .lightbox-nav")) onClose();
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { open: true, onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-lightbox", onClick: handleClick, onKeyDown: handleKeyDown, tabIndex: -1, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "lightbox-toolbar", children: [
@@ -22124,255 +22364,6 @@ function Lightbox({ files, index, onIndexChange, onClose }) {
     ] })
   ] }) });
 }
-class MediaOutputs {
-  files = [];
-  constructor(item) {
-    const nodes = item?.outputs;
-    if (!nodes) return;
-    for (const nodeID of Object.keys(nodes)) {
-      const outputs = nodes[nodeID];
-      const entries = outputs.images || outputs.gifs || outputs.files || [];
-      for (const entry of entries) {
-        this.files.push({
-          filename: entry.filename,
-          subfolder: entry.subfolder,
-          type: entry.type
-        });
-      }
-    }
-  }
-  get total() {
-    return this.files.length;
-  }
-}
-function TextTile({ label, value }) {
-  const [expanded, setExpanded] = reactExports.useState(false);
-  const toggleExpanded = () => setExpanded((prev2) => !prev2);
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      if (event.key === " ") event.preventDefault();
-      toggleExpanded();
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      className: `card-info-tile${expanded ? " expanded" : ""}`,
-      title: value,
-      role: "button",
-      tabIndex: 0,
-      "aria-expanded": expanded,
-      onClick: toggleExpanded,
-      onKeyDown: handleKeyDown,
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: value })
-      ]
-    }
-  );
-}
-function ImageTile({ label, value }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
-    value?.filename ? /* @__PURE__ */ jsxRuntimeExports.jsx(MediaItem, { file: value, controls: false, autoplay: false, className: "tile-media" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: baseURL + value?.url, className: "tile-media", alt: label }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label })
-  ] });
-}
-function OtherTile({ label, value }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-info-tile", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-caption", children: label }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-body", children: String(value) })
-  ] });
-}
-const CardInfo = reactExports.memo(function CardInfo2({ entries }) {
-  if (!entries?.length) return null;
-  const sorted = [...entries].sort((a, b) => a.index - b.index);
-  const occurrences = /* @__PURE__ */ new Map();
-  return sorted.map((entry) => {
-    const identity2 = JSON.stringify([entry.index, entry.label]);
-    const occurrence = occurrences.get(identity2) ?? 0;
-    occurrences.set(identity2, occurrence + 1);
-    const key = JSON.stringify([entry.index, entry.label, occurrence]);
-    if (entry.kind === "image") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageTile, { label: entry.label, value: entry.value }, key);
-    }
-    if (entry.kind === "text") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(TextTile, { label: entry.label, value: entry.value }, key);
-    }
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
-  });
-});
-const QueueCard = reactExports.memo(
-  function QueueCard2({
-    item,
-    className,
-    loader,
-    index,
-    mode,
-    info,
-    route,
-    filters,
-    isSelected,
-    onSelect,
-    itemKey: itemKey2
-  }) {
-    const { fetchQueueItems } = reactExports.useContext(AppContext);
-    const workflow = item?.[3]?.extra_pnginfo?.workflow;
-    const filterByWorkflow = reactExports.useCallback((event) => {
-      event.stopPropagation();
-      if (!workflow?.id) return;
-      fetchQueueItems({
-        filters: {
-          ...filters,
-          workflow: {
-            type: "workflow",
-            value: workflow.id,
-            valueLabel: workflow.workflow_name
-          }
-        }
-      });
-    }, [fetchQueueItems, filters, workflow]);
-    const executionTimeLabel = reactExports.useMemo(() => {
-      const t = item?.[3]?.execution_time;
-      if (t == null) return null;
-      const rawSeconds = Number(t);
-      if (!Number.isFinite(rawSeconds) || rawSeconds < 0) return null;
-      const totalSeconds = rawSeconds >= 60 ? Math.round(rawSeconds) : rawSeconds;
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor(totalSeconds % 86400 / 3600);
-      const minutes = Math.floor(totalSeconds % 3600 / 60);
-      const seconds = totalSeconds % 60;
-      const secondsLabel = rawSeconds >= 60 ? `${seconds}s` : `${seconds.toFixed(2)}s`;
-      if (days > 0) return ` ${days}d ${hours}h ${minutes}m ${secondsLabel}`;
-      if (hours > 0) return ` ${hours}h ${minutes}m ${secondsLabel}`;
-      if (minutes > 0) return ` ${minutes}m ${secondsLabel}`;
-      return ` ${rawSeconds.toFixed(2)}s`;
-    }, [item?.[3]?.execution_time]);
-    const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
-    const mediaOutputs = reactExports.useMemo(() => new MediaOutputs(item?.[3]), [item]);
-    const [lightboxIndex, setLightboxIndex] = reactExports.useState(null);
-    const closeLightbox = reactExports.useCallback(() => setLightboxIndex(null), []);
-    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
-    const priority = item?.[3]?.priority;
-    const priorityBadge = reactExports.useMemo(() => {
-      if (!priority) return null;
-      if (priority === 1e3) {
-        return {
-          className: "priority-interactive",
-          label: "Interactive",
-          title: "Interactive: this job jumped the queue because it was run directly from the canvas"
-        };
-      }
-      if (priority === 999) {
-        return {
-          className: "priority-resumed",
-          label: "Resumed",
-          title: "Resumed: this job was interrupted to let an interactive run through, and will run again next"
-        };
-      }
-      return {
-        className: priority > 0 ? "priority-positive" : "priority-negative",
-        label: priority > 0 ? `+${priority}` : `${priority}`,
-        title: `Priority ${priority > 0 ? "+" : ""}${priority}`
-      };
-    }, [priority]);
-    return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "article",
-        {
-          className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
-          "aria-selected": isSelected,
-          onClick: (event) => onSelect(itemKey2, event),
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
-              loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
-              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
-              priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "span",
-                {
-                  className: `qm-badge priority-badge ${priorityBadge.className}`,
-                  title: priorityBadge.title,
-                  children: priorityBadge.label
-                }
-              ) : null,
-              error ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "span",
-                {
-                  className: `qm-badge ${error.kind === "interrupted" ? "qm-badge-warning" : "qm-badge-danger"}`,
-                  title: "Job outcome",
-                  children: error.kind === "interrupted" ? "Interrupted" : "Error"
-                }
-              ) : null,
-              mediaOutputs.total > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge", title: "Output count", children: mediaOutputs.total }) : null
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
-                route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  MediaItem,
-                  {
-                    file,
-                    onClick: (event) => {
-                      event.stopPropagation();
-                      setLightboxIndex(idx);
-                    },
-                    controls: false,
-                    autoplay: false,
-                    className: "thumbnail"
-                  },
-                  idx
-                )) }),
-                lightboxIndex !== null ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  Lightbox,
-                  {
-                    files: mediaOutputs.files,
-                    index: lightboxIndex,
-                    onIndexChange: setLightboxIndex,
-                    onClose: closeLightbox
-                  }
-                ) : null,
-                error ? (
-                  // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- stops the details toggle from also triggering card selection
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("details", { className: "error-details", onClick: (event) => event.stopPropagation(), children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("summary", { children: [
-                      error.kind === "interrupted" ? "Interrupted" : "Error",
-                      " details"
-                    ] }),
-                    error.message ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "error-message", children: error.message }) : null,
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "error-node", children: [
-                      error.node_type,
-                      " #",
-                      error.node_id
-                    ] }),
-                    error.traceback ? /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { className: "error-traceback", children: error.traceback.join("\n") }) : null
-                  ] })
-                ) : null
-              ] })
-            ] })
-          ]
-        }
-      )
-    );
-  },
-  (prev2, next2) => {
-    const prevId = prev2.item?.[3]?.db_id;
-    const nextId = next2.item?.[3]?.db_id;
-    if (prevId !== nextId) return false;
-    const prevCard = prev2.item?.[3]?.card;
-    const nextCard = next2.item?.[3]?.card;
-    if (prevCard !== nextCard && JSON.stringify(prevCard) !== JSON.stringify(nextCard)) {
-      return false;
-    }
-    const prevError = prev2.item?.[3]?.error;
-    const nextError = next2.item?.[3]?.error;
-    if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
-      return false;
-    }
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
-  }
-);
 const createStoreImpl = (createState) => {
   let state;
   const listeners = /* @__PURE__ */ new Set();
@@ -22484,6 +22475,16 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
       useSelectionStore.getState().select(key);
     }
   }, []);
+  const media = reactExports.useMemo(
+    () => [...running, ...pending].flatMap(
+      (item) => new MediaOutputs(item?.[3]).files.map((file, fileIndex) => ({ file, key: itemKey$2(item), fileIndex }))
+    ),
+    [running, pending]
+  );
+  const [lightbox, setLightbox] = reactExports.useState(null);
+  const handleOpenMedia = reactExports.useCallback((key, fileIndex) => setLightbox({ key, fileIndex }), []);
+  const closeLightbox = reactExports.useCallback(() => setLightbox(null), []);
+  const lightboxIndex = lightbox ? media.findIndex((entry) => entry.key === lightbox.key && entry.fileIndex === lightbox.fileIndex) : -1;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     running.map((item) => {
       const key = itemKey$2(item);
@@ -22499,6 +22500,7 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
           filters,
           isSelected: selected.has(key),
           onSelect: handleSelect,
+          onOpenMedia: handleOpenMedia,
           itemKey: key
         },
         key
@@ -22517,11 +22519,21 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
           filters,
           isSelected: selected.has(key),
           onSelect: handleSelect,
+          onOpenMedia: handleOpenMedia,
           itemKey: key
         },
         item?.[3]?.db_id ?? `${item?.[1]}-${index}`
       );
-    })
+    }),
+    lightboxIndex !== -1 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Lightbox,
+      {
+        files: media.map((entry) => entry.file),
+        index: lightboxIndex,
+        onIndexChange: (index) => setLightbox(media[index]),
+        onClose: closeLightbox
+      }
+    ) : null
   ] });
 });
 const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {

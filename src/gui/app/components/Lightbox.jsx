@@ -23,7 +23,8 @@ export function Lightbox({ files, index, onIndexChange, onClose }) {
 
   function handleClick(event) {
     event.stopPropagation();
-    if (!event.target.closest("img, video, .lightbox-toolbar, .lightbox-nav")) onClose();
+    if (event.target.tagName === "IMG") window.open(viewURL(file), "_blank");
+    else if (!event.target.closest("video, .lightbox-toolbar, .lightbox-nav")) onClose();
   }
 
   return (
