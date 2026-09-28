@@ -49,7 +49,7 @@ An extension supporting more streamlined prompt queue management.
 - Export and import queue to / from a file.
 - Pause and resume queue.
 - Filter by workflows and then archive, delete and export filtered view only.
-- Completed jobs show output thumbnails that open in a new tab.
+- Completed jobs show output thumbnails that open in a full-window viewer.
 
 ## Compatibility
 - This extension requires the new ComfyUI menu.
@@ -215,7 +215,7 @@ The card shows a preview as soon as the job is queued. During execution, image v
 
 ### Output thumbnails
 - Completed jobs show a strip of output thumbnails (images and videos) below the job details.
-- Clicking a thumbnail opens the full file in a new browser tab.
+- Clicking a thumbnail opens it in a full-window viewer. Use the arrows or ← / → to step through the outputs, continuing into the next or previous job, Esc or a click outside the image to close. Click the image or the toolbar button to open the file in a new tab.
 
 ### Extension Settings
 - Several aspects of the Queue Manager extension can be configured in the ComfyUI Settings window.
@@ -251,7 +251,7 @@ Don't lol. Things will change and move around a lot.
 Nevertheless, here are some pointers if you have some PR ideas for critical fixes or features:
 - `/web` is the front end part of the extension.
   - Inside is `.gui` folder which is hidden from default ComfyUI UI, but it's where the build version of the Queue Manager is.
-- The core front end functionality of the Queue Manager is a React web app loaded in an iframe (from  `.gui` folder). It communicates with loading part of the extension by postMessage API.
+- The core front end functionality of the Queue Manager is a React app built into the `.gui` folder and mounted directly into the Queue Manager sidebar tab. It uses ComfyUI's `app` directly and inherits ComfyUI's styles.
 - Server side (python) part of the extension is in `/src/comfyui_queue_manager`
 - Source code for the React app is in `/src/gui`. I use bun to build it but you can as well use npm.
 - database is in `/data/` (sqlite files are created automatically on first run after installation)

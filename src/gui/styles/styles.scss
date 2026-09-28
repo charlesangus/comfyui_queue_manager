@@ -1,6 +1,27 @@
-@use 'variables' as *;
-@use 'layout';
-@use 'footer';
-@use 'common';
-@use 'queue';
-@use 'splash';
+@use 'sass:meta';
+@use 'variables';
+@use 'lightbox';
+
+// The GUI shares the ComfyUI page, so every rule is scoped to the panel root and fonts/colours are inherited from ComfyUI.
+.qm-root {
+  // Positioned children and the narrow-width rules are relative to the panel, as they were inside the iframe.
+  position: relative;
+  container: qm / inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--qm-fg);
+  outline: none;
+
+  &.reloading .queue-table {
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  @include meta.load-css('layout');
+  @include meta.load-css('footer');
+  @include meta.load-css('common');
+  @include meta.load-css('queue');
+  @include meta.load-css('splash');
+}

@@ -2,12 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
+// ComfyUI's app module, resolved relative to web/.gui/assets/index.js at runtime.
+const COMFY_APP = "comfy/app";
+
 export default defineConfig(({ mode }) => {
-  const PROD_BASE = "/extensions/comfyui_queue_manager/.gui/";
-
   return {
-    base: mode === "production" ? PROD_BASE : "/",
-
     plugins: [react()],
     resolve: {
       alias: {
@@ -15,19 +14,9 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    server: {
-      host: "localhost",
-      port: 3000,
-      strictPort: true,
-
-      // watch: {
-      //   usePolling: true,
-      //   interval: 100,
-      // },
-      //
-      // hmr: {
-      //   overlay: true,
-      // },
+    // Library builds leave process.env alone, but React needs it resolved.
+    define: {
+      "process.env.NODE_ENV": JSON.stringify(mode === "development" ? "development" : "production"),
     },
 
     esbuild: {
@@ -45,11 +34,16 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       outDir: "../../web/.gui",
       emptyOutDir: true,
+      lib: {
+        entry: "main.jsx",
+        formats: ["es"],
+        fileName: () => "assets/index.js",
+        cssFileName: "assets/index",
+      },
       rollupOptions: {
+        external: [COMFY_APP],
         output: {
-          entryFileNames: "assets/[name].js",
-          chunkFileNames: "assets/[name].js",
-          assetFileNames: "assets/[name][extname]",
+          paths: { [COMFY_APP]: "../../../../scripts/app.js" },
         },
       },
     },

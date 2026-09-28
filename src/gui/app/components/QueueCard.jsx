@@ -3,7 +3,7 @@
 import React, { memo, useCallback, useContext, useMemo } from "react";
 import { AppContext } from "../internals/app-context";
 import { LoaderSpinner } from "../components/LoaderSpinner";
-import { MediaItem, viewURL } from "./MediaItem";
+import { MediaItem } from "./MediaItem";
 import { MediaOutputs } from "../models/MediaOutputs";
 import { CardInfo } from "./CardInfo";
 
@@ -20,6 +20,7 @@ export const QueueCard = memo(
     filters,
     isSelected,
     onSelect,
+    onOpenMedia,
     itemKey,
   }) {
     const { fetchQueueItems } = useContext(AppContext);
@@ -68,10 +69,6 @@ const executionTimeLabel = useMemo(() => {
       index === undefined || !info ? "" : index + 1 + info.page * info.page_size;
 
     const mediaOutputs = useMemo(() => new MediaOutputs(item?.[3]), [item]);
-
-    const handleThumbnailClick = useCallback((file) => {
-      window.open(viewURL(file), "_blank");
-    }, []);
 
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
@@ -168,7 +165,7 @@ const executionTimeLabel = useMemo(() => {
                     file={file}
                     onClick={(event) => {
                       event.stopPropagation();
-                      handleThumbnailClick(file);
+                      onOpenMedia(itemKey, idx);
                     }}
                     controls={false}
                     autoplay={false}
@@ -223,6 +220,7 @@ const executionTimeLabel = useMemo(() => {
       prev.filters === next.filters &&
       prev.isSelected === next.isSelected &&
       prev.onSelect === next.onSelect &&
+      prev.onOpenMedia === next.onOpenMedia &&
       prev.itemKey === next.itemKey &&
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size &&

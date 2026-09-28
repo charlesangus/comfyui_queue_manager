@@ -1,13 +1,10 @@
 import {
   uiSetup,
   handleAPIEvents,
-  handleKeyboardEvents,
-  handleIframeMessages,
   registerSidebar,
   hookQueuePrompt,
-  extensionSettings,
-  setupThemeObserver
 } from './js/functions.js';
+import {settings} from './js/settings.js';
 
 import { app } from '../../scripts/app.js';
 
@@ -22,16 +19,10 @@ app.registerExtension({
 
     handleAPIEvents();
 
-    handleKeyboardEvents();
-
-    handleIframeMessages();
-
-    setupThemeObserver();
-
     registerSidebar();
 
     hookQueuePrompt();
   },
 
-  settings:extensionSettings()
+  settings
 })

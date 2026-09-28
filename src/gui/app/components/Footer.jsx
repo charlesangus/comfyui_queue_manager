@@ -6,6 +6,7 @@ import Stack from "@mui/material/Stack";
 
 import { baseURL } from "../internals/config";
 import { apiCall } from "../internals/functions";
+import { app } from "comfy/app";
 import { useAppStore } from "../stores/appStore";
 import { QueuePagination } from "./Pagination";
 import { ImportExport } from "./ImportExport";
@@ -23,7 +24,7 @@ export function Footer({ route, queueData, isFilterOn, appendFilters, appendRout
 
   async function playAllArchive() {
     await apiCall('queue_manager/play-archive', {
-      client_id: useAppStore.getState().clientId,
+      client_id: app.api.clientId,
       filters: isFilterOn() ? useAppStore.getState().filters : null,
       front: useAppStore.getState().shiftDown === true
     })

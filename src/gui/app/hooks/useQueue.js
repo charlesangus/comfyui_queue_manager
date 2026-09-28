@@ -141,16 +141,16 @@ export function useQueue({ fetchOptions } = {}) {
     }
   }, [appendFilters, appendRoute, fetchOptions, setFilters, setRoute, pageSize, completedListOrder, route]);
 
-  const onQueueStatusUpdated = (event) => {
+  const onQueueStatusUpdated = (name, detail) => {
 
-    switch (event.data.message.name) {
+    switch (name) {
       case "status":
         if (route === 'queue' || route === 'completed') {
           fetchQueueItems({ page: (appStatus.queue && appStatus.queue.info) ? appStatus.queue.info.page : 0 });
         }
         break;
       case "execution_start": {
-          const {prompt_id} = event.data.message.detail;
+          const {prompt_id} = detail;
 
           const theJob = getTheJob(prompt_id, appStatus.queue);
 
@@ -171,7 +171,7 @@ export function useQueue({ fetchOptions } = {}) {
         break;
 
       case 'execution_cached': {
-          const {nodes} = event.data.message.detail;
+          const {nodes} = detail;
 
           if (!nodes || nodes.length === 0) {
             return;
@@ -193,7 +193,7 @@ export function useQueue({ fetchOptions } = {}) {
         break;
 
       case "executing": {
-          const node_id = event.data.message.detail;
+          const node_id = detail;
           if (!node_id) {
             return;
           }

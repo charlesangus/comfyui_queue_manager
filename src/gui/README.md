@@ -1,16 +1,6 @@
-The frontend is a React project built with Vite and run by bun (can use npm too).
+The frontend is a React project built with Vite as a library. `web/js/functions.js` imports the bundle and mounts it straight into the Queue Manager sidebar tab. It is part of the ComfyUI page (no iframe), so it talks to ComfyUI through `app` (imported as `comfy/app`) and inherits ComfyUI's fonts, colours and Tailwind utilities.
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Building for production
+## Building
 
 ```bash
 npm install
@@ -19,17 +9,16 @@ npm run build
 
 This outputs to `../../web/.gui/` (i.e. `web/.gui/` at the repo root), which is what ComfyUI actually serves — there's no build step at install time, so the built output has to be committed. **Any change under `src/gui/` must be followed by `npm run build` here, and the resulting `web/.gui/` diff committed together with the source change.** Commits that do this are tagged `- Release build;` in the git history.
 
-## Gotchas
-### Frontend in development mode vs production mode
-Coding front end in development mode (with `npm run dev`) is faster thanks to fast reloads.
-In queue-manager.js set variable QM_ENVIRONMENT to `development` to enable dev mode source of the react app iframe.
+The folder name starts with a dot so ComfyUI doesn't load the bundle as a separate extension script.
 
+## Development
 
-#### Cross-Origin issues
-When running the front end in development mode, you will run into CORS issues when trying to access the ComfyUI APIs.
-Since dev mode frontend and comfyui are running on different URLs, you will run into CORS issues.
-To fix this run ComfyUI with the `--enable-cors-header http://localhost:3000` (or whatever post URL / port you gonna use) param (allowing dev mode front end to request comfyui apis) i.e.:
-
+```bash
+npm run dev
 ```
-python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header http://localhost:3000
-```
+
+Rebuilds `web/.gui/` in development mode on every change. Reload the ComfyUI page to pick it up. Run `npm run build` before committing.
+
+## Styles
+
+Every rule in `styles/` is nested under `.qm-root` (see `styles/styles.scss`) so nothing leaks into the rest of ComfyUI. The only global rules are the `--qm-*` colour aliases in `styles/_variables.scss`, which map to ComfyUI's own theme variables.

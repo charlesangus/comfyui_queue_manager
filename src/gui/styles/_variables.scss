@@ -1,6 +1,4 @@
 :root {
-  --font-roboto: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-
   --qm-bg: var(--comfy-menu-bg, #202020);
   --qm-surface: var(--comfy-menu-secondary-bg, #2a2a2a);
   --qm-surface-hover: var(--content-hover-bg, #333333);
@@ -17,5 +15,4 @@
   --qm-radius: 0.5rem;
   --qm-radius-sm: 0.375rem;
   --qm-space: 0.5rem;
-  --qm-font: var(--qm-font-family, system-ui, sans-serif);
 }
