@@ -29295,4 +29295,3 @@ function mountQueueManager(el) {
 export {
   mountQueueManager
 };
-//# sourceMappingURL=index.js.map
