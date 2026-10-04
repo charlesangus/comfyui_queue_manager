@@ -28471,9 +28471,10 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
             {
               onClick: playAllArchive,
               className: "qm-btn qm-btn-primary",
+              title: "Move all parked jobs back to the queue. Completed jobs stay archived; select them and click Run to queue copies.",
               children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, {}),
-                "  Run All ",
+                "  Run All Parked ",
                 isFilterOn() ? "*" : ""
               ]
             }

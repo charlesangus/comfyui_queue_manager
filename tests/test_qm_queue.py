@@ -1591,19 +1591,15 @@ def test_running_archived_finished_job_queues_a_copy(qm_queue):
     assert qm_queue.qm_db.read_single("SELECT completed_at FROM queue WHERE prompt_id = ?", ("prompt-old-done",))[0] is not None
 
 
-def test_run_all_archive_copies_finished_jobs_and_moves_parked_ones(qm_queue):
+def test_run_all_archive_moves_only_parked_jobs(qm_queue):
     _insert_finished(qm_queue, "prompt-old-done", 1, -1, "-8 days")
     qm_queue.native_queue.put(_make_item(2, "prompt-parked", "W", "wf"))
     qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-parked")])
     qm_queue.qm.archive_old_completed()
 
-    assert qm_queue.qm.play_archive(client_id="client-1") == 2
     assert qm_queue.qm.play_archive(client_id="client-1") == 1
-
-    statuses = _statuses(qm_queue)
-    assert statuses.pop("prompt-old-done") == 3
-    assert statuses.pop("prompt-parked") == 0
-    assert sorted(statuses.values()) == [0, 0]
+    assert qm_queue.qm.play_archive(client_id="client-1") == 0
+    assert _statuses(qm_queue) == {"prompt-old-done": 3, "prompt-parked": 0}
 
 
 def test_completed_pages_follow_completion_order(qm_queue):

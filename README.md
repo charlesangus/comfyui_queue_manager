@@ -134,10 +134,10 @@ Completed and failed jobs older than 7 days are moved to the Archive automatical
 
 When in the **Queue** or **Completed** tab, select one or more items and click **Archive** on the selection action bar to archive them, or archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
 
-Similarly, when in the **Archive** tab, select one or more items and click **Run** on the selection action bar to play them, or play all archived items by clicking the **Run All** button on the bottom of the window. Parked queue items move back to the queue, while completed jobs stay in the Archive and a copy of each is queued, like **Requeue** on the Completed tab.
+Similarly, when in the **Archive** tab, select one or more items and click **Run** on the selection action bar to play them, or move all parked queue items back to the queue by clicking the **Run All Parked** button on the bottom of the window. Selected parked items move back to the queue, while selected completed jobs stay in the Archive and a copy of each is queued, like **Requeue** on the Completed tab. **Run All Parked** never queues completed jobs.
 
 #### Run at front of the queue
-You can run a selection, the entire archive, or a filtered-out list of jobs at the front of the queue by pressing and holding **Shift** while clicking the selection action bar's **Run** button, or the **Run All** button.
+You can run a selection, the entire archive, or a filtered-out list of jobs at the front of the queue by pressing and holding **Shift** while clicking the selection action bar's **Run** button, or the **Run All Parked** button.
 
 When holding Shift pressed a small indicator message will appear on top of the window to confirm that the action will run at front of queue.
 
@@ -169,7 +169,7 @@ You can import items from a file to the Queue or to the Archive by clicking the 
 ### Filter by workflow
 You can filter the currently displayed list of items by workflow by clicking on the workflow name displayed on each card.
 
-Once filtered out the group actions on the bottom of the window (like `Archive All *`, `Run All *`, `Delete All *`) will only apply to the filtered items.
+Once filtered out the group actions on the bottom of the window (like `Archive All *`, `Run All Parked *`, `Delete All *`) will only apply to the filtered items.
 
 Asterisk `*` next to the button label indicates that the action will be applied to the filtered items only.
 

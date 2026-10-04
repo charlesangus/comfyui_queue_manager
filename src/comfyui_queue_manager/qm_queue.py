@@ -1091,11 +1091,11 @@ class QM_Queue:
 
             return requeued
 
-    # Change status to 0 for all items with status 3, update the client_id and set correct priority for each item
+    # Move parked archive items back to the queue, update the client_id and set correct priority for each item
     def play_archive(self, client_id=None, filters=None, front=False):
         with self.native_queue.mutex:
-            # Play the item from the database
-            where_string, params = self.get_filters(filters, ["status = 3"])
+            # Finished jobs stay archived; they only run again as copies through play_items
+            where_string, params = self.get_filters(filters, ["status = 3 AND completed_at IS NULL"])
 
             # If front we queue from last to first to retain order after applying negative priority
             if front:
@@ -1106,23 +1106,17 @@ class QM_Queue:
             # Get the archived items from the database
             rows = read_query(
                 f"""
-                SELECT id, prompt, completed_at
+                SELECT id, prompt
                 FROM queue
                 WHERE {where_string}
-                ORDER BY completed_at {order}, updated_at {order}, `number` {order}
+                ORDER BY updated_at {order}, `number` {order}
             """,
                 params,
             )
 
             # Convert the items to a list of tuples
             parameters = []
-            finished = []
             for row in rows:
-                # A finished job stays in the archive with its outputs and runs again as a copy
-                if row[2] is not None:
-                    finished.append(row[0])
-                    continue
-
                 PromptServer.instance.number += 1
 
                 item = json.loads(row[1])
@@ -1157,7 +1151,7 @@ class QM_Queue:
                 qm_log.info("%d item(s) scheduled for generation.", moved)
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": moved})
                 PromptServer.instance.queue_updated()
-            return moved + self.requeue_items(finished, front, client_id)
+            return moved
 
     def delete_from_queue(self, route="queue", filters=None):
         with self.native_queue.mutex:
