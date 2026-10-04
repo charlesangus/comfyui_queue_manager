@@ -116,7 +116,7 @@ export const Queue = memo(function Queue({ data, isLoading, error, progress, rou
   // The browser's own scroll anchoring is off for the list: when a priority change re-sorts it, React moves the
   // cards around and the native anchor gets lost, throwing the view to the top. Instead keep the first visible card
   // that is still listed with the same priority where it was on screen, so jobs starting, finishing or arriving
-  // don't shift the view and a re-prioritized card simply moves out of it.
+  // and cards above changing height don't shift the view, and a re-prioritized card simply moves out of it.
   const containerRef = useRef(null);
   const anchorsRef = useRef([]);
 
@@ -126,10 +126,13 @@ export const Queue = memo(function Queue({ data, isLoading, error, progress, rou
     const cards = container.getElementsByClassName("qm-card");
     const index = new Map(items.map((item, i) => [itemKey(item), i]));
 
-    const anchor = anchorsRef.current.find((a) => a.route === route && index.has(a.key) && items[index.get(a.key)][3]?.priority === a.priority);
-    if (anchor) {
-      container.scrollTop += cards[index.get(anchor.key)].getBoundingClientRect().top - container.getBoundingClientRect().top - anchor.offset;
-    }
+    const restoreAnchor = () => {
+      const anchor = anchorsRef.current.find((a) => a.route === route && index.has(a.key) && items[index.get(a.key)][3]?.priority === a.priority);
+      if (anchor) {
+        container.scrollTop += cards[index.get(anchor.key)].getBoundingClientRect().top - container.getBoundingClientRect().top - anchor.offset;
+      }
+      recordAnchors();
+    };
 
     // Like native scroll anchoring, a list scrolled to the very top stays there so new jobs above show up.
     const recordAnchors = () => {
@@ -145,9 +148,15 @@ export const Queue = memo(function Queue({ data, isLoading, error, progress, rou
       }
     };
 
-    recordAnchors();
+    restoreAnchor();
     container.addEventListener("scroll", recordAnchors, { passive: true });
-    return () => container.removeEventListener("scroll", recordAnchors);
+    // Covers cards reflowing on a panel resize, which changes heights above the view without a data update.
+    const observer = new ResizeObserver(restoreAnchor);
+    observer.observe(container.firstElementChild);
+    return () => {
+      container.removeEventListener("scroll", recordAnchors);
+      observer.disconnect();
+    };
   }, [data, route]);
 
   return (

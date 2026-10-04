@@ -22552,10 +22552,13 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
     const items = [...data?.running ?? [], ...data?.pending ?? []];
     const cards = container.getElementsByClassName("qm-card");
     const index = new Map(items.map((item, i) => [itemKey$2(item), i]));
-    const anchor = anchorsRef.current.find((a) => a.route === route && index.has(a.key) && items[index.get(a.key)][3]?.priority === a.priority);
-    if (anchor) {
-      container.scrollTop += cards[index.get(anchor.key)].getBoundingClientRect().top - container.getBoundingClientRect().top - anchor.offset;
-    }
+    const restoreAnchor = () => {
+      const anchor = anchorsRef.current.find((a) => a.route === route && index.has(a.key) && items[index.get(a.key)][3]?.priority === a.priority);
+      if (anchor) {
+        container.scrollTop += cards[index.get(anchor.key)].getBoundingClientRect().top - container.getBoundingClientRect().top - anchor.offset;
+      }
+      recordAnchors();
+    };
     const recordAnchors = () => {
       anchorsRef.current = [];
       if (container.scrollTop === 0) return;
@@ -22568,9 +22571,14 @@ const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progre
         anchorsRef.current.push({ route, key: itemKey$2(items[i]), priority: items[i][3]?.priority, offset: rect.top - top });
       }
     };
-    recordAnchors();
+    restoreAnchor();
     container.addEventListener("scroll", recordAnchors, { passive: true });
-    return () => container.removeEventListener("scroll", recordAnchors);
+    const observer = new ResizeObserver(restoreAnchor);
+    observer.observe(container.firstElementChild);
+    return () => {
+      container.removeEventListener("scroll", recordAnchors);
+      observer.disconnect();
+    };
   }, [data, route]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
