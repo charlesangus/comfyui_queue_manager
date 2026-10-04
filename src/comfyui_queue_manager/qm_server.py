@@ -162,6 +162,18 @@ class QM_Server:
             else:
                 return web.json_response({"error": "No item to play"}, status=400)
 
+        # Requeue copies of completed items
+        @PromptServer.instance.routes.post("/queue_manager/requeue")
+        async def requeue_items(request):
+            json_data = await request.json()
+            if "items" in json_data:
+                total = await asyncio.to_thread(
+                    self.queue.requeue_items, json_data["items"], json_data.get("front", False) == True, json_data.get("clientId", None)
+                )
+                return web.json_response({"requeued": total})
+            else:
+                return web.json_response({"error": "No item to requeue"}, status=400)
+
         # Set priority for POSTed items
         @PromptServer.instance.routes.post("/queue_manager/priority")
         async def set_priority(request):

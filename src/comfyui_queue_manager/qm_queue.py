@@ -7,6 +7,7 @@ import nodes
 
 import json
 import heapq
+import uuid
 
 from .inc.exceptions import BadRouteException
 from .qm_card import load_cards_by_prompt_ids, remove_card_images, save_static_card
@@ -990,6 +991,34 @@ class QM_Queue:
                 PromptServer.instance.queue_updated()
 
             return moved
+
+    def requeue_items(self, items, front, client_id=None):
+        """
+        Queue copies of completed items under new prompt ids, keeping the completed rows and their outputs
+        """
+        with self.native_queue.mutex:
+            requeued = 0
+            for db_id in items:
+                row = read_single("SELECT prompt, priority FROM queue WHERE id = ? AND status IN (2, -1)", (db_id,))
+                if row is None:
+                    continue
+
+                PromptServer.instance.number += 1
+                item = json.loads(row[0])
+                item[0] = PromptServer.instance.number * (-1 if front else 1)
+                item[1] = str(uuid.uuid4())
+                item[3]["client_id"] = client_id
+                item[3]["qm_priority"] = 0 if row[1] > PRIORITY_MAX else row[1]
+                if len(item) < 6:
+                    item.append({})
+
+                self.queue_put(item)
+                requeued += 1
+
+            if requeued > 0:
+                qm_log.info("%d completed item(s) requeued.", requeued)
+
+            return requeued
 
     # Change status to 0 for all items with status 3, update the client_id and set correct priority for each item
     def play_archive(self, client_id=None, filters=None, front=False):

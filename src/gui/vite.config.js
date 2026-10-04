@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
     build: {
       minify: false, // Keep generated JavaScript readable
       cssMinify: true,
-      sourcemap: true,
+      sourcemap: mode === "development",
       outDir: "../../web/.gui",
       emptyOutDir: true,
       lib: {

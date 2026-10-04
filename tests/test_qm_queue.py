@@ -1261,3 +1261,32 @@ def test_task_done_deletes_row_for_job_marked_pending_delete(qm_queue, monkeypat
     assert "prompt-delete-flow" not in qm_queue.qm.pending_delete
     assert not (cards_dir / qm_card_module._card_image_name("prompt-delete-flow", 1)).exists()
     assert task_id not in qm_queue.native_queue.currently_running
+
+
+def test_requeue_items_queues_copy_and_keeps_completed_row(qm_queue):
+    item = _make_item(1, "prompt-requeue-done", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2, priority = 5 WHERE prompt_id = ?", ("prompt-requeue-done",))
+    qm_queue.native_queue.queue = []
+    pending = _make_item(2, "prompt-requeue-pending", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(pending)
+    db_ids = [
+        qm_queue.qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (prompt_id,))["id"]
+        for prompt_id in ("prompt-requeue-done", "prompt-requeue-pending")
+    ]
+
+    assert qm_queue.qm.requeue_items(db_ids, front=False, client_id="client-1") == 1
+
+    original = qm_queue.qm_db.read_single("SELECT status FROM queue WHERE prompt_id = ?", ("prompt-requeue-done",))
+    assert original["status"] == 2
+
+    copy = qm_queue.qm_db.read_single(
+        "SELECT prompt_id, status, priority, prompt FROM queue WHERE prompt_id NOT IN (?, ?)",
+        ("prompt-requeue-done", "prompt-requeue-pending"),
+    )
+    assert copy["status"] == 0
+    assert copy["priority"] == 5
+    prompt = json.loads(copy["prompt"])
+    assert prompt[1] == copy["prompt_id"]
+    assert prompt[3]["client_id"] == "client-1"
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == [copy["prompt_id"]]

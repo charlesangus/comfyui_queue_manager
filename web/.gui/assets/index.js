@@ -28466,6 +28466,9 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
     ] }) })
   ] });
 }
+const ReplaySharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8"
+}));
 const LowPriorityIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M14 5h8v2h-8zm0 5.5h8v2h-8zm0 5.5h8v2h-8zM2 11.5C2 15.08 4.92 18 8.5 18H9v2l3-3-3-3v2h-.5C6.02 16 4 13.98 4 11.5S6.02 7 8.5 7H12V5H8.5C4.92 5 2 7.92 2 11.5"
 }));
@@ -28595,9 +28598,15 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await apiCall("queue_manager/play", { items: dbIds, front: shiftDown, clientId: app.api.clientId });
     await finish();
   };
+  const handleRequeue = async () => {
+    const dbIds = selectedItems.map((item) => item?.[3]?.db_id).filter((id) => id != null);
+    await apiCall("queue_manager/requeue", { items: dbIds, front: shiftDown, clientId: app.api.clientId });
+    await finish();
+  };
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
+  const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority = (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
   const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", children: [
@@ -28630,6 +28639,20 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
             /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
             shiftDown && /* @__PURE__ */ jsxRuntimeExports.jsx(UploadSharpIcon, { fontSize: "small" }),
             " Run",
+            shiftDown ? " to front" : ""
+          ]
+        }
+      ),
+      canRequeue && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          className: "qm-btn qm-btn-primary",
+          onClick: handleRequeue,
+          title: shiftDown ? "Queue again, at the front" : "Queue again",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(ReplaySharpIcon, { fontSize: "small" }),
+            shiftDown && /* @__PURE__ */ jsxRuntimeExports.jsx(UploadSharpIcon, { fontSize: "small" }),
+            " Requeue",
             shiftDown ? " to front" : ""
           ]
         }
@@ -29295,4 +29318,3 @@ function mountQueueManager(el) {
 export {
   mountQueueManager
 };
-//# sourceMappingURL=index.js.map
