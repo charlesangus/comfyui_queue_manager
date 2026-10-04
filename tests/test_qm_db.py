@@ -107,6 +107,9 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_priority_number'")
     assert cursor.fetchone() is not None
 
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_completed_at'")
+    assert cursor.fetchone() is not None
+
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_number'")
     assert cursor.fetchone() is None
 

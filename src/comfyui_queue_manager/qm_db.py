@@ -124,6 +124,7 @@ def init_schema():
 
     conn.execute("DROP INDEX IF EXISTS idx_queue_status_number")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_queue_status_priority_number ON queue(status, priority DESC, number)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_queue_status_completed_at ON queue(status, completed_at, updated_at, number)")
     conn.commit()
 
 

@@ -28687,7 +28687,7 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await finish();
   };
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
-  const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
+  const canArchive = (route === "queue" || route === "completed") && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority = (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
@@ -29239,21 +29239,21 @@ function Home() {
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "button",
               {
-                className: "tab archive" + (route === "archive" ? " active" : ""),
-                onClick: () => {
-                  fetchQueueItems({ route: "archive", reload: true });
-                },
-                children: "Archive"
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
                 className: "tab completed" + (route === "completed" ? " active" : ""),
                 onClick: () => {
                   fetchQueueItems({ route: "completed", reload: true });
                 },
                 children: "Completed"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                className: "tab archive" + (route === "archive" ? " active" : ""),
+                onClick: () => {
+                  fetchQueueItems({ route: "archive", reload: true });
+                },
+                children: "Archive"
               }
             ),
             shiftDown && route === "archive" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "play-first", children: [

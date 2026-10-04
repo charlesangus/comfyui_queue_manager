@@ -90,6 +90,8 @@ class QM_Queue:
         self.original_task_done = self.native_queue.task_done
         self.native_queue.task_done = self.task_done
 
+        self.archive_old_completed()
+
     # NOTE: This hijack will make native queue API endpoint to not return pending items.
     # We do this to avoid bottleneck in the native queue when it goes massive
     # and to avoid duplicate bandwidth for requesting queue by execution store and queue manager.
@@ -134,12 +136,11 @@ class QM_Queue:
                             item[3]["card"] = card_by_prompt_id[native_item[1]]
                         running.append(tuple(item))
                 case "archive":
-                    order_string = "ORDER BY queue.updated_at, number"
+                    # Archived pending jobs have no completion time, so they come first, in the order they were archived.
+                    order_string = "ORDER BY queue.completed_at, queue.updated_at, number"
                 case "completed":
-                    order_string = "ORDER BY queue.updated_at ASC" if order == "asc" else "ORDER BY queue.updated_at DESC"
-                    order_string += (
-                        ", number ASC" if order == "asc" else ", number DESC"
-                    )  # just in case, normally there won't be two items completed at the same time
+                    direction = "ASC" if order == "asc" else "DESC"
+                    order_string = f"ORDER BY queue.completed_at {direction}, queue.updated_at {direction}, number {direction}"
 
                     join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
                     join_string += " LEFT JOIN meta as exec_time ON queue.id = exec_time.item_id AND exec_time.key = 'execution_time'"
@@ -176,14 +177,14 @@ class QM_Queue:
 
                 params += (page * page_size, page_size)
 
+                # Pick the page's ids first so only those rows are joined and sorted, not every row of the route.
                 rows = read_query(
                     f"""
                     {select_string}
                     FROM queue
                     {join_string}
-                    WHERE {where_string}
+                    WHERE queue.id IN (SELECT id FROM queue WHERE {where_string} {order_string} LIMIT ?, ?)
                     {order_string}
-                    LIMIT ?, ?
                 """,
                     params,
                 )
@@ -515,6 +516,24 @@ class QM_Queue:
                         )
 
                 self._call_original_task_done(item_id, history_result, status, process_item)
+                self.archive_old_completed()
+
+    # Move finished jobs older than the user's setting to the archive, keeping the completed list short
+    def archive_old_completed(self):
+        settings = self.user_manager.settings.get_settings(None)
+        days = int(settings.get("QueueManager.Completed.ArchiveAfterDays", 7))
+        if days <= 0:
+            return 0
+
+        archived = write_query(
+            "UPDATE queue SET status = 3 WHERE status IN (2, -1) AND completed_at < datetime('now', ?)",
+            (f"-{days} days",),
+        )
+        if archived > 0:
+            qm_log.info("Archived %d completed job(s) older than %d day(s)", archived, days)
+            PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": archived})
+
+        return archived
 
     # Put item for execution
     # NOTE: We keep only up to one item in native "pending" queue (to avoid bottleneck for large queues).
@@ -1082,7 +1101,7 @@ class QM_Queue:
                 SELECT id, prompt
                 FROM queue
                 WHERE {where_string}
-                ORDER BY updated_at {order}, `number` {order}
+                ORDER BY completed_at {order}, updated_at {order}, `number` {order}
             """,
                 params,
             )

@@ -212,6 +212,14 @@ export default function Home() {
           >Queue
           </button>
 
+          {/* Completed */}
+          <button className={"tab completed" + (route === 'completed' ? ' active' : '')}
+                  onClick={() => {
+                    fetchQueueItems({route: "completed", reload: true});
+                  }}
+          >Completed
+          </button>
+
           {/* Archive */}
           <button
             className={"tab archive" + (route === 'archive' ? ' active' : '')}
@@ -219,14 +227,6 @@ export default function Home() {
               fetchQueueItems({route: "archive", reload: true});
             }}
           >Archive
-          </button>
-
-          {/* Completed */}
-          <button className={"tab completed" + (route === 'completed' ? ' active' : '')}
-                  onClick={() => {
-                    fetchQueueItems({route: "completed", reload: true});
-                  }}
-          >Completed
           </button>
 
           {shiftDown && route === "archive" &&

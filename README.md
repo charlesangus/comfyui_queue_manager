@@ -113,7 +113,7 @@ To view the Queue Manager window, click the Queue Manager button in the sidebar 
 
 ![main-window.png](readme-img/main-window.png)
 
-Each job appears as a card. Click a card to select it. Cards no longer carry per-card action buttons — instead, a selection action bar appears above the footer showing only the actions valid for your current selection and the current tab (Queue, Archive, Completed): **Clear**, **Delete**, **Load**, **Archive**, **Run**. For example, **Load** only shows up when exactly one non-external item is selected, **Archive** only shows up on the Queue tab for pending items, and **Run** only shows up on the Archive tab.
+Each job appears as a card. Click a card to select it. Cards no longer carry per-card action buttons — instead, a selection action bar appears above the footer showing only the actions valid for your current selection and the current tab (Queue, Completed, Archive): **Clear**, **Delete**, **Load**, **Archive**, **Run**. For example, **Load** only shows up when exactly one non-external item is selected, **Archive** only shows up on the Queue tab for pending items and on the Completed tab, and **Run** only shows up on the Archive tab.
 
 On the bottom you still have buttons like Archive All, Export Queue etc. which are applicable to all items in the current tab.
 
@@ -128,9 +128,11 @@ When button on the bottom has a asterisk `*` next to it, it means that the actio
 - **Delete** / **Backspace** deletes the selected items, same as clicking **Delete** on the selection action bar. If more than 5 items are selected you'll be asked to confirm first.
 
 ### Archive
-**Archive** is a place where you can park your queue items to play them later.
+**Archive** is where old completed jobs go, and where you can park queue items to play them later.
 
-When in the **Queue** tab, select one or more pending items and click **Archive** on the selection action bar to archive them, or archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
+Completed and failed jobs older than 7 days are moved to the Archive automatically, keeping the Completed tab fast. Change the number of days, or set it to 0 to turn this off, with the `QueueManager.Completed.ArchiveAfterDays` setting. Jobs are checked at startup and whenever a job finishes. Archived completed jobs keep their completion time and are listed by it, after any parked queue items.
+
+When in the **Queue** or **Completed** tab, select one or more items and click **Archive** on the selection action bar to archive them, or archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
 
 Similarly, when in the **Archive** tab, select one or more items and click **Run** on the selection action bar to play them, or play all archived items by clicking the **Run All** button on the bottom of the window.
 

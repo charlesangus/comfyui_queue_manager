@@ -53,4 +53,17 @@ export const settings =  [
     ],
     defaultValue: 'Newest first',
   },
+
+  {
+    id: 'QueueManager.Completed.ArchiveAfterDays',
+    name: 'Archive completed jobs after (days)',
+    category: ['Queue Manager', 'Completed', 'Archive completed jobs after (days)'],
+    tooltip: 'Completed and failed jobs older than this many days are moved to the Archive tab, keeping the Completed tab fast. Checked at startup and whenever a job finishes. 0 never archives automatically.',
+    type: 'number',
+    defaultValue: 7,
+    attrs: {
+      min: 0,
+      step: 1,
+    },
+  },
 ];

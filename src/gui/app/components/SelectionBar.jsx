@@ -86,7 +86,7 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   };
 
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
-  const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
+  const canArchive = (route === "queue" || route === "completed") && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority =
