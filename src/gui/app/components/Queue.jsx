@@ -13,7 +13,6 @@ import { useSelectionStore } from "../stores/selectionStore";
 const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
 
 const QueueItems = memo(function QueueItems({ running, pending, info }) {
-  const route = useAppStore((state) => state.route);
   const filters = useAppStore((state) => state.filters);
   const selected = useSelectionStore((state) => state.selected);
 
@@ -68,7 +67,6 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
             loader={true}
             mode={item?.[3]?.extra_pnginfo ? "running" : "external"}
             info={info}
-            route={route}
             filters={filters}
             isSelected={selected.has(key)}
             onSelect={handleSelect}
@@ -87,7 +85,6 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
             className="pending"
             index={index}
             info={info}
-            route={route}
             filters={filters}
             isSelected={selected.has(key)}
             onSelect={handleSelect}

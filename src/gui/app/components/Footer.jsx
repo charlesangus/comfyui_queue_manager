@@ -87,8 +87,9 @@ export function Footer({ route, queueData, isFilterOn, appendFilters, appendRout
               {route === 'archive' &&
                 <>
                   <button onClick={playAllArchive}
-                          className="qm-btn qm-btn-primary">
-                    <PlayArrowOutlinedIcon/>&nbsp;&nbsp;Run All {isFilterOn() ? "*" : ""}
+                          className="qm-btn qm-btn-primary"
+                          title="Move all parked jobs back to the queue. Completed jobs stay archived; select them and click Run to queue copies.">
+                    <PlayArrowOutlinedIcon/>&nbsp;&nbsp;Run All Parked {isFilterOn() ? "*" : ""}
                   </button>
                   <a className={"qm-btn"}
                           href={baseURL + "queue_manager/export" + appendFilters("?route=archive")}>

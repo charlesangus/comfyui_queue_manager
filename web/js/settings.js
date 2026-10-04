@@ -45,12 +45,25 @@ export const settings =  [
     id: 'QueueManager.Completed.ListOrder',
     name: 'Completed jobs list order',
     category: ['Queue Manager', 'Completed', 'Completed jobs list order'],
-    tooltip: 'Order in which completed jobs are displayed in the Completed tab.',
+    tooltip: 'Order in which completed jobs are displayed in the Completed and Archive tabs.',
     type: 'combo',
     options: [
       'Newest first',
       'Oldest first',
     ],
     defaultValue: 'Newest first',
+  },
+
+  {
+    id: 'QueueManager.Completed.ArchiveAfterDays',
+    name: 'Archive completed jobs after (days)',
+    category: ['Queue Manager', 'Completed', 'Archive completed jobs after (days)'],
+    tooltip: 'Completed and failed jobs older than this many days are moved to the Archive tab, keeping the Completed tab fast. Checked at startup and every hour. 0 never archives automatically.',
+    type: 'number',
+    defaultValue: 7,
+    attrs: {
+      min: 0,
+      step: 1,
+    },
   },
 ];

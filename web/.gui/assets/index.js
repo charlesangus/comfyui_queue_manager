@@ -19400,7 +19400,6 @@ const QueueCard = reactExports.memo(
     index,
     mode,
     info,
-    route,
     filters,
     isSelected,
     onSelect,
@@ -19453,7 +19452,7 @@ const QueueCard = reactExports.memo(
         title: [queued && `Queued: ${queued.title}`, completed && `Completed: ${completed.title}`].filter(Boolean).join("\n")
       };
     }, [createdAt, completedAt]);
-    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    const error = item?.[3]?.error ?? null;
     const priority = item?.[3]?.priority;
     const paused = item?.[3]?.paused;
     const priorityBadge = reactExports.useMemo(() => {
@@ -19502,7 +19501,7 @@ const QueueCard = reactExports.memo(
                 times.queued && times.completed ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "time-arrow", children: "→" }) : null,
                 times.completed ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "completed-time", children: times.completed.label }) : null
               ] }) : null,
-              route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
               paused ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge paused-badge", title: "Paused: this job is skipped until it is resumed", children: "Paused" }) : null,
               priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
@@ -19525,7 +19524,7 @@ const QueueCard = reactExports.memo(
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-body", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-info", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardInfo, { entries: item?.[3]?.card }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-outputs", children: [
-                route === "completed" && mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                mediaOutputs.total > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "outputs", children: mediaOutputs.files.map((file, idx) => /* @__PURE__ */ jsxRuntimeExports.jsx(
                   MediaItem,
                   {
                     file,
@@ -19576,7 +19575,7 @@ const QueueCard = reactExports.memo(
     if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
       return false;
     }
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.paused === next2.item?.[3]?.paused && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.created_at === next2.item?.[3]?.created_at && prev2.item?.[3]?.completed_at === next2.item?.[3]?.completed_at && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.paused === next2.item?.[3]?.paused && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.created_at === next2.item?.[3]?.created_at && prev2.item?.[3]?.completed_at === next2.item?.[3]?.completed_at && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
   }
 );
 function getScrollbarSize(win = window) {
@@ -22492,7 +22491,6 @@ const useSelectionStore = create((set) => ({
 }));
 const itemKey$2 = (item) => item?.[3]?.db_id ?? item?.[1];
 const QueueItems = reactExports.memo(function QueueItems2({ running, pending, info }) {
-  const route = useAppStore((state) => state.route);
   const filters = useAppStore((state) => state.filters);
   const selected = useSelectionStore((state) => state.selected);
   const orderedKeys = reactExports.useMemo(
@@ -22533,7 +22531,6 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
           loader: true,
           mode: item?.[3]?.extra_pnginfo ? "running" : "external",
           info,
-          route,
           filters,
           isSelected: selected.has(key),
           onSelect: handleSelect,
@@ -22552,7 +22549,6 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
           className: "pending",
           index,
           info,
-          route,
           filters,
           isSelected: selected.has(key),
           onSelect: handleSelect,
@@ -28475,9 +28471,10 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
             {
               onClick: playAllArchive,
               className: "qm-btn qm-btn-primary",
+              title: "Move all parked jobs back to the queue. Completed jobs stay archived; select them and click Run to queue copies.",
               children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, {}),
-                "  Run All ",
+                "  Run All Parked ",
                 isFilterOn() ? "*" : ""
               ]
             }
@@ -28687,7 +28684,7 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await finish();
   };
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
-  const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
+  const canArchive = (route === "queue" || route === "completed") && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority = (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
@@ -28732,7 +28729,7 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
         {
           className: "qm-btn qm-btn-primary",
           onClick: handleRun,
-          title: shiftDown ? "Move to queue, at the front" : "Move to queue",
+          title: shiftDown ? "Queue to run, at the front" : "Queue to run",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
             shiftDown && /* @__PURE__ */ jsxRuntimeExports.jsx(UploadSharpIcon, { fontSize: "small" }),
@@ -28948,7 +28945,7 @@ function useQueue({ fetchOptions } = {}) {
     if (pageSize !== void 0) {
       queryArgs += `${queryArgs ? "&" : "?"}page_size=${encodeURIComponent(pageSize)}`;
     }
-    if ((requestedRoute || route) === "completed") {
+    if ((requestedRoute || route) !== "queue") {
       const order = completedListOrder === "Oldest first" ? "asc" : "desc";
       queryArgs += `${queryArgs ? "&" : "?"}order=${order}`;
     }
@@ -29145,7 +29142,7 @@ function Home() {
     const listOrderChanged = completedListOrder !== previousListOrderRef.current;
     previousPageSizeRef.current = pageSize;
     previousListOrderRef.current = completedListOrder;
-    if (pageSizeChanged || route === "completed" && listOrderChanged) {
+    if (pageSizeChanged || route !== "queue" && listOrderChanged) {
       fetchQueueItems({ page: 0, reload: true });
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);
@@ -29239,21 +29236,21 @@ function Home() {
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "button",
               {
-                className: "tab archive" + (route === "archive" ? " active" : ""),
-                onClick: () => {
-                  fetchQueueItems({ route: "archive", reload: true });
-                },
-                children: "Archive"
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
                 className: "tab completed" + (route === "completed" ? " active" : ""),
                 onClick: () => {
                   fetchQueueItems({ route: "completed", reload: true });
                 },
                 children: "Completed"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                className: "tab archive" + (route === "archive" ? " active" : ""),
+                onClick: () => {
+                  fetchQueueItems({ route: "archive", reload: true });
+                },
+                children: "Archive"
               }
             ),
             shiftDown && route === "archive" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "play-first", children: [

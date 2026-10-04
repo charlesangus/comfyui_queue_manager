@@ -934,7 +934,7 @@ def test_get_current_queue_completed_route_includes_errored_job(qm_queue):
 
     success_item = _make_item(100, "prompt-completed-success-1", "Workflow A", "wf-a")
     qm_queue.native_queue.put(success_item)
-    qm_queue.qm_db.write_query("UPDATE queue SET status = 2 WHERE prompt_id = ?", ("prompt-completed-success-1",))
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2, completed_at = CURRENT_TIMESTAMP WHERE prompt_id = ?", ("prompt-completed-success-1",))
 
     _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
 
@@ -1266,7 +1266,9 @@ def test_task_done_deletes_row_for_job_marked_pending_delete(qm_queue, monkeypat
 def test_requeue_items_queues_copy_and_keeps_completed_row(qm_queue):
     item = _make_item(1, "prompt-requeue-done", "Workflow A", "wf-a")
     qm_queue.native_queue.put(item)
-    qm_queue.qm_db.write_query("UPDATE queue SET status = 2, priority = 5 WHERE prompt_id = ?", ("prompt-requeue-done",))
+    qm_queue.qm_db.write_query(
+        "UPDATE queue SET status = 2, priority = 5, completed_at = CURRENT_TIMESTAMP WHERE prompt_id = ?", ("prompt-requeue-done",)
+    )
     qm_queue.native_queue.queue = []
     pending = _make_item(2, "prompt-requeue-pending", "Workflow A", "wf-a")
     qm_queue.native_queue.put(pending)
@@ -1321,10 +1323,11 @@ def test_requeue_paths_reset_queue_time_and_clear_completed_at(qm_queue):
     qm_queue.native_queue.put(item)
     db_id = qm_queue.qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))["id"]
 
-    def complete(status=3):
+    # Parked archive rows have no completion time; finished rows do.
+    def complete(status=3, completed_at=None):
         qm_queue.qm_db.write_query(
-            "UPDATE queue SET status = ?, created_at = '2000-01-01 00:00:00', completed_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (status, db_id),
+            "UPDATE queue SET status = ?, created_at = '2000-01-01 00:00:00', completed_at = ? WHERE id = ?",
+            (status, completed_at, db_id),
         )
 
     def times():
@@ -1339,7 +1342,7 @@ def test_requeue_paths_reset_queue_time_and_clear_completed_at(qm_queue):
     qm_queue.qm.play_archive(front=False)
     assert times() == (True, None)
 
-    complete(2)
+    complete(2, "2000-01-02 00:00:00")
     qm_queue.native_queue.put(_make_item(50, "prompt-requeue-times", "Workflow A", "wf-a"))
     assert times() == (True, None)
 
@@ -1459,3 +1462,152 @@ def test_archiving_staged_job_evicts_it(qm_queue):
     assert qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-staged")]) == 1
     assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-next"]
     assert qm_queue.native_queue.get()[0][1] == "prompt-next"
+
+
+def _insert_finished(qm_queue, prompt_id, number, status, completed_at):
+    qm_queue.qm_db.write_query(
+        "INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status, completed_at) VALUES (?, ?, 'W', 'wf', ?, ?, datetime('now', ?))",
+        (prompt_id, number, json.dumps(_make_item(number, prompt_id, "W", "wf")), status, completed_at),
+    )
+
+
+def _statuses(qm_queue):
+    return {row["prompt_id"]: row["status"] for row in qm_queue.qm_db.read_query("SELECT prompt_id, status FROM queue")}
+
+
+def test_archive_old_completed_moves_only_old_finished_jobs(qm_queue):
+    _insert_finished(qm_queue, "prompt-old-done", 1, 2, "-8 days")
+    _insert_finished(qm_queue, "prompt-old-failed", 2, -1, "-30 days")
+    _insert_finished(qm_queue, "prompt-recent", 3, 2, "-6 days")
+    for number, prompt_id, status, paused in ((4, "prompt-pending", 0, 0), (5, "prompt-paused", 0, 1), (6, "prompt-running", 1, 0)):
+        qm_queue.qm_db.write_query(
+            "INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status, paused, created_at) VALUES (?, ?, 'W', 'wf', ?, ?, ?, datetime('now', '-30 days'))",
+            (prompt_id, number, json.dumps(_make_item(number, prompt_id, "W", "wf")), status, paused),
+        )
+
+    assert qm_queue.qm.archive_old_completed() == 2
+    assert _statuses(qm_queue) == {
+        "prompt-old-done": 3,
+        "prompt-old-failed": 3,
+        "prompt-recent": 2,
+        "prompt-pending": 0,
+        "prompt-paused": 0,
+        "prompt-running": 1,
+    }
+    assert ("send_sync", "queue-manager-queue-updated", {"total_moved": 2}, None) in qm_queue.server.messages
+
+
+@pytest.mark.parametrize(("days", "archived"), ((0, 0), (-1, 0), (1, 1), (10, 0)))
+def test_archive_old_completed_follows_setting(qm_queue, days, archived):
+    _insert_finished(qm_queue, "prompt-done", 1, 2, "-2 days")
+    qm_queue.qm.user_manager.settings.get_settings()["QueueManager.Completed.ArchiveAfterDays"] = days
+    qm_queue.server.messages.clear()
+
+    assert qm_queue.qm.archive_old_completed() == archived
+    assert _statuses(qm_queue)["prompt-done"] == (3 if archived else 2)
+    assert bool(qm_queue.server.messages) == bool(archived)
+
+
+@pytest.mark.parametrize("days", (None, "7", "x"))
+def test_archive_old_completed_ignores_non_numeric_setting(qm_queue, days):
+    _insert_finished(qm_queue, "prompt-done", 1, 2, "-30 days")
+    qm_queue.qm.user_manager.settings.get_settings()["QueueManager.Completed.ArchiveAfterDays"] = days
+
+    assert qm_queue.qm.archive_old_completed() == 0
+
+
+def test_queue_get_archives_old_completed_jobs_hourly(qm_queue, monkeypatch):
+    _insert_finished(qm_queue, "prompt-first", 1, 2, "-8 days")
+    clock = [1000.0]
+    monkeypatch.setattr(qm_queue.qm.__class__.__module__ + ".time.monotonic", lambda: clock[0])
+
+    assert qm_queue.native_queue.get(timeout=0) is None
+    assert _statuses(qm_queue) == {"prompt-first": 3}
+
+    _insert_finished(qm_queue, "prompt-second", 2, 2, "-8 days")
+    clock[0] += 3599
+    qm_queue.native_queue.get(timeout=0)
+    assert _statuses(qm_queue)["prompt-second"] == 2
+
+    clock[0] += 1
+    qm_queue.native_queue.get(timeout=0)
+    assert _statuses(qm_queue)["prompt-second"] == 3
+
+
+def test_archive_lists_parked_jobs_then_archived_completions_in_completed_order(qm_queue):
+    _insert_finished(qm_queue, "prompt-newer", 1, 2, "-8 days")
+    _insert_finished(qm_queue, "prompt-older", 2, -1, "-9 days")
+    qm_queue.native_queue.put(_make_item(3, "prompt-parked", "W", "wf"))
+    qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-parked")])
+    qm_queue.qm.archive_old_completed()
+
+    _, archived = qm_queue.qm.get_current_queue(page_size=20, route="archive", order="desc")
+    assert [item[1] for item in archived] == ["prompt-parked", "prompt-newer", "prompt-older"]
+
+    _, archived = qm_queue.qm.get_current_queue(page_size=20, route="archive", order="asc")
+    assert [item[1] for item in archived] == ["prompt-parked", "prompt-older", "prompt-newer"]
+
+    _, last_page = qm_queue.qm.get_current_queue(page=1, page_size=2, route="archive", order="desc")
+    assert [item[1] for item in last_page] == ["prompt-older"]
+
+
+def test_archived_finished_jobs_keep_outputs_and_errors(qm_queue):
+    outputs = {"9": {"images": [{"filename": "a.png", "subfolder": "", "type": "output"}]}}
+    for prompt_id, outcome in (("prompt-done", "success"), ("prompt-failed", "error")):
+        qm_queue.native_queue.put(_make_item(1, prompt_id, "W", "wf"))
+        _, task_id = qm_queue.native_queue.get()
+        events = [("execution_start", {"timestamp": 0}), ("execution_success", {"timestamp": 1500})]
+        if outcome == "error":
+            events = [("execution_error", {"exception_message": "boom", "node_id": "9", "node_type": "Save"})]
+        qm_queue.qm.task_done(task_id, {"outputs": outputs}, (outcome, outcome == "success", events))
+
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+    qm_queue.qm.archive_items([item[3]["db_id"] for item in completed])
+    qm_queue.native_queue.put(_make_item(2, "prompt-parked", "W", "wf"))
+    qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-parked")])
+
+    _, archived = qm_queue.qm.get_current_queue(page_size=20, route="archive")
+    by_id = {item[1]: item[3] for item in archived}
+    assert by_id["prompt-done"]["outputs"] == outputs
+    assert by_id["prompt-done"]["total_images"] == 1
+    assert by_id["prompt-done"]["execution_time"] == 1.5
+    assert by_id["prompt-done"]["error"] is None
+    assert by_id["prompt-failed"]["error"]["message"] == "boom"
+    assert "outputs" not in by_id["prompt-parked"] and "error" not in by_id["prompt-parked"]
+
+
+def test_running_archived_finished_job_queues_a_copy(qm_queue):
+    _insert_finished(qm_queue, "prompt-old-done", 1, 2, "-8 days")
+    qm_queue.native_queue.put(_make_item(2, "prompt-parked", "W", "wf"))
+    qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-parked")])
+    qm_queue.qm.archive_old_completed()
+
+    assert qm_queue.qm.play_items([_db_id(qm_queue, "prompt-old-done"), _db_id(qm_queue, "prompt-parked")], False, "client-1") == 2
+
+    statuses = _statuses(qm_queue)
+    assert statuses.pop("prompt-old-done") == 3
+    assert statuses.pop("prompt-parked") == 0
+    assert list(statuses.values()) == [0]
+    assert qm_queue.qm_db.read_single("SELECT completed_at FROM queue WHERE prompt_id = ?", ("prompt-old-done",))[0] is not None
+
+
+def test_run_all_archive_moves_only_parked_jobs(qm_queue):
+    _insert_finished(qm_queue, "prompt-old-done", 1, -1, "-8 days")
+    qm_queue.native_queue.put(_make_item(2, "prompt-parked", "W", "wf"))
+    qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-parked")])
+    qm_queue.qm.archive_old_completed()
+
+    assert qm_queue.qm.play_archive(client_id="client-1") == 1
+    assert qm_queue.qm.play_archive(client_id="client-1") == 0
+    assert _statuses(qm_queue) == {"prompt-old-done": 3, "prompt-parked": 0}
+
+
+def test_completed_pages_follow_completion_order(qm_queue):
+    for number in range(5):
+        _insert_finished(qm_queue, f"prompt-{number}", 10 - number, 2, f"-{number} hours")
+
+    pages = [qm_queue.qm.get_current_queue(page=page, page_size=2, route="completed", order="desc")[1] for page in range(3)]
+    assert [item[1] for page in pages for item in page] == [f"prompt-{number}" for number in range(5)]
+
+    _, oldest = qm_queue.qm.get_current_queue(page_size=2, route="completed", order="asc")
+    assert [item[1] for item in oldest] == ["prompt-4", "prompt-3"]

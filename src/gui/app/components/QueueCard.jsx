@@ -17,7 +17,6 @@ export const QueueCard = memo(
     mode,
     info,
 
-    route,
     filters,
     isSelected,
     onSelect,
@@ -85,7 +84,7 @@ const executionTimeLabel = useMemo(() => {
       };
     }, [createdAt, completedAt]);
 
-    const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
+    const error = item?.[3]?.error ?? null;
     const priority = item?.[3]?.priority;
     const paused = item?.[3]?.paused;
 
@@ -153,7 +152,7 @@ const executionTimeLabel = useMemo(() => {
             </span>
           ) : null}
 
-          {route === "completed" && executionTimeLabel ? (
+          {executionTimeLabel ? (
             <div className="qm-badge execution-time" title="Execution time">
               {executionTimeLabel}
             </div>
@@ -196,7 +195,7 @@ const executionTimeLabel = useMemo(() => {
           </div>
 
           <div className="card-outputs">
-            {route === "completed" && mediaOutputs.total > 0 && (
+            {mediaOutputs.total > 0 && (
               <div className="outputs">
                 {mediaOutputs.files.map((file, idx) => (
                   <MediaItem
@@ -255,7 +254,6 @@ const executionTimeLabel = useMemo(() => {
       prev.loader === next.loader &&
       prev.index === next.index &&
       prev.mode === next.mode &&
-      prev.route === next.route &&
       prev.filters === next.filters &&
       prev.isSelected === next.isSelected &&
       prev.onSelect === next.onSelect &&

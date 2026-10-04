@@ -7,6 +7,7 @@ import nodes
 
 import json
 import heapq
+import time
 import uuid
 
 from .inc.exceptions import BadRouteException
@@ -90,6 +91,8 @@ class QM_Queue:
         self.original_task_done = self.native_queue.task_done
         self.native_queue.task_done = self.task_done
 
+        self.next_archive_check = 0
+
     # NOTE: This hijack will make native queue API endpoint to not return pending items.
     # We do this to avoid bottleneck in the native queue when it goes massive
     # and to avoid duplicate bandwidth for requesting queue by execution store and queue manager.
@@ -133,13 +136,10 @@ class QM_Queue:
                         if native_item[1] in card_by_prompt_id:
                             item[3]["card"] = card_by_prompt_id[native_item[1]]
                         running.append(tuple(item))
-                case "archive":
-                    order_string = "ORDER BY queue.updated_at, number"
-                case "completed":
-                    order_string = "ORDER BY queue.updated_at ASC" if order == "asc" else "ORDER BY queue.updated_at DESC"
-                    order_string += (
-                        ", number ASC" if order == "asc" else ", number DESC"
-                    )  # just in case, normally there won't be two items completed at the same time
+                case "completed" | "archive":
+                    direction = "ASC" if order == "asc" else "DESC"
+                    # Parked queue items in the archive have no completion time and stay on top.
+                    order_string = f"ORDER BY queue.completed_at {direction} NULLS FIRST, queue.updated_at {direction}, number {direction}"
 
                     join_string = "LEFT JOIN meta as outputs ON queue.id = outputs.item_id AND outputs.key = 'outputs'"
                     join_string += " LEFT JOIN meta as exec_time ON queue.id = exec_time.item_id AND exec_time.key = 'execution_time'"
@@ -176,14 +176,14 @@ class QM_Queue:
 
                 params += (page * page_size, page_size)
 
+                # Pick the page's ids first so only those rows are joined and sorted, not every row of the route.
                 rows = read_query(
                     f"""
                     {select_string}
                     FROM queue
                     {join_string}
-                    WHERE {where_string}
+                    WHERE queue.id IN (SELECT id FROM queue WHERE {where_string} {order_string} LIMIT ?, ?)
                     {order_string}
-                    LIMIT ?, ?
                 """,
                     params,
                 )
@@ -218,7 +218,7 @@ class QM_Queue:
                     if route == "queue":
                         item[0] = row["number"]  # set the number to the one from the database
 
-                    if route == "completed":
+                    if route != "queue" and row["completed_at"] is not None:
                         if row["outputs"] is not None:
                             # If we have outputs then add them to the item
                             item[3]["outputs"] = json.loads(row["outputs"])
@@ -516,6 +516,22 @@ class QM_Queue:
 
                 self._call_original_task_done(item_id, history_result, status, process_item)
 
+    # Move finished jobs older than the user's setting to the archive, keeping the completed list short
+    def archive_old_completed(self):
+        days = self.user_manager.settings.get_settings(None).get("QueueManager.Completed.ArchiveAfterDays", 7)
+        if not isinstance(days, (int, float)) or days <= 0:
+            return 0
+
+        archived = write_query(
+            "UPDATE queue SET status = 3 WHERE status IN (2, -1) AND completed_at < datetime('now', ?)",
+            (f"-{days} days",),
+        )
+        if archived > 0:
+            qm_log.info("Archived %d completed job(s) older than %d day(s)", archived, days)
+            PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": archived})
+
+        return archived
+
     # Put item for execution
     # NOTE: We keep only up to one item in native "pending" queue (to avoid bottleneck for large queues).
     def queue_put(self, item):  # comfy server calls this method
@@ -684,6 +700,11 @@ class QM_Queue:
 
     def queue_get(self, timeout=None):
         with self.pause_lock:
+            # The worker calls back here at least every 1000s while idle, so old jobs age out without new runs.
+            if time.monotonic() >= self.next_archive_check:
+                self.next_archive_check = time.monotonic() + 3600
+                self.archive_old_completed()
+
             while self.paused:
                 if read_single("SELECT 1 FROM queue WHERE status = 0 AND paused = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
                     break
@@ -972,7 +993,25 @@ class QM_Queue:
             # Play the item from the database
 
             moved = 0
+            finished = []
             for db_id in items:
+                # Get the item and update the client id in prompt json
+                row = read_single(
+                    """
+                    SELECT prompt, completed_at
+                    FROM queue
+                    WHERE id = ?
+                """,
+                    (db_id,),
+                )
+                if row is None:
+                    continue
+
+                # A finished job stays in the archive with its outputs and runs again as a copy
+                if row[1] is not None:
+                    finished.append(db_id)
+                    continue
+
                 PromptServer.instance.number += 1
 
                 qm_log.info(
@@ -981,18 +1020,6 @@ class QM_Queue:
                     PromptServer.instance.number * (-1 if front else 1),
                     front,
                 )
-
-                # Get the item and update the client id in prompt json
-                row = read_single(
-                    """
-                    SELECT prompt
-                    FROM queue
-                    WHERE id = ?
-                """,
-                    (db_id,),
-                )
-                if row is None:
-                    continue
 
                 prompt = json.loads(row[0])
                 prompt[3]["client_id"] = client_id
@@ -1004,7 +1031,7 @@ class QM_Queue:
                 moved += write_query(
                     f"""
                     UPDATE queue
-                    SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP, completed_at = NULL,
+                    SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP,
                         priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                     WHERE id = ?
                 """,
@@ -1034,16 +1061,16 @@ class QM_Queue:
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": moved})
                 PromptServer.instance.queue_updated()
 
-            return moved
+            return moved + self.requeue_items(finished, front, client_id)
 
     def requeue_items(self, items, front, client_id=None):
         """
-        Queue copies of completed items under new prompt ids, keeping the completed rows and their outputs
+        Queue copies of finished items under new prompt ids, keeping the finished rows and their outputs
         """
         with self.native_queue.mutex:
             requeued = 0
             for db_id in items:
-                row = read_single("SELECT prompt, priority FROM queue WHERE id = ? AND status IN (2, -1)", (db_id,))
+                row = read_single("SELECT prompt, priority FROM queue WHERE id = ? AND completed_at IS NOT NULL", (db_id,))
                 if row is None:
                     continue
 
@@ -1064,11 +1091,11 @@ class QM_Queue:
 
             return requeued
 
-    # Change status to 0 for all items with status 3, update the client_id and set correct priority for each item
+    # Move parked archive items back to the queue, update the client_id and set correct priority for each item
     def play_archive(self, client_id=None, filters=None, front=False):
         with self.native_queue.mutex:
-            # Play the item from the database
-            where_string, params = self.get_filters(filters, ["status = 3"])
+            # Finished jobs stay archived; they only run again as copies through play_items
+            where_string, params = self.get_filters(filters, ["status = 3 AND completed_at IS NULL"])
 
             # If front we queue from last to first to retain order after applying negative priority
             if front:
@@ -1107,7 +1134,7 @@ class QM_Queue:
             moved = write_many(
                 f"""
                 UPDATE queue
-                SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP, completed_at = NULL,
+                SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP,
                     priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                 WHERE id = ?
             """,

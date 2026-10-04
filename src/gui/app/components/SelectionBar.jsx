@@ -86,7 +86,7 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   };
 
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
-  const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
+  const canArchive = (route === "queue" || route === "completed") && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority =
@@ -143,7 +143,7 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
           <button
             className="qm-btn qm-btn-primary"
             onClick={handleRun}
-            title={shiftDown ? "Move to queue, at the front" : "Move to queue"}
+            title={shiftDown ? "Queue to run, at the front" : "Queue to run"}
           >
             <PlayArrowOutlinedIcon fontSize="small" />
             {shiftDown && <UploadSharpIcon fontSize="small" />}
