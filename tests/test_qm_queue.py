@@ -1342,3 +1342,110 @@ def test_requeue_paths_reset_queue_time_and_clear_completed_at(qm_queue):
     complete(2)
     qm_queue.native_queue.put(_make_item(50, "prompt-requeue-times", "Workflow A", "wf-a"))
     assert times() == (True, None)
+
+
+def _db_id(qm_queue, prompt_id):
+    return qm_queue.qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (prompt_id,))["id"]
+
+
+def test_queue_get_skips_paused_jobs_until_resumed(qm_queue):
+    for number, prompt_id, priority in ((1, "prompt-first", 0), (2, "prompt-urgent", 10), (3, "prompt-last", 0)):
+        item = _make_item(number, prompt_id, "Workflow A", "wf-a")
+        item[3]["qm_priority"] = priority
+        qm_queue.native_queue.put(item)
+
+    urgent = _db_id(qm_queue, "prompt-urgent")
+    first = _db_id(qm_queue, "prompt-first")
+    assert qm_queue.qm.set_paused([urgent, first], True) == 2
+    # The prefetched head was paused, so the next eligible job takes its place.
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-last"]
+
+    assert qm_queue.native_queue.get()[0][1] == "prompt-last"
+    assert qm_queue.native_queue.get() is None
+    assert qm_queue.qm.get_tasks_remaining() == 1  # only the running job
+
+    assert qm_queue.qm.set_paused([urgent, first], False) == 2
+    dequeued = [qm_queue.native_queue.get()[0][1] for _ in range(2)]
+    assert dequeued == ["prompt-urgent", "prompt-first"]
+
+
+def test_set_paused_only_touches_pending_items(qm_queue):
+    for number, prompt_id in ((1, "prompt-running"), (2, "prompt-archived"), (3, "prompt-pending")):
+        qm_queue.native_queue.put(_make_item(number, prompt_id, "Workflow A", "wf-a"))
+    assert qm_queue.native_queue.get()[0][1] == "prompt-running"
+    archived = _db_id(qm_queue, "prompt-archived")
+    assert qm_queue.qm.archive_items([archived]) == 1
+
+    ids = [_db_id(qm_queue, p) for p in ("prompt-running", "prompt-archived", "prompt-pending")]
+    assert qm_queue.qm.set_paused(ids, True) == 1
+    assert qm_queue.qm.set_paused(ids, True) == 0
+
+    paused = [row[0] for row in qm_queue.qm_db.read_query("SELECT prompt_id FROM queue WHERE paused = 1")]
+    assert paused == ["prompt-pending"]
+    assert ("send_sync", "queue-manager-queue-updated", {"paused": 1}, None) in qm_queue.server.messages
+
+    with pytest.raises(BadRouteException):
+        qm_queue.qm.set_paused(ids, 1)
+
+
+def test_paused_job_keeps_priority_changes_and_list_position(qm_queue):
+    for number, prompt_id in ((1, "prompt-a"), (2, "prompt-b")):
+        qm_queue.native_queue.put(_make_item(number, prompt_id, "Workflow A", "wf-a"))
+
+    b = _db_id(qm_queue, "prompt-b")
+    assert qm_queue.qm.set_paused([b], True) == 1
+    assert qm_queue.qm.set_priority([b], 50) == 1
+
+    _, pending = qm_queue.qm.get_current_queue(0, 10, route="queue")
+    assert [(item[1], item[3]["priority"], item[3]["paused"]) for item in pending] == [
+        ("prompt-b", 50, True),
+        ("prompt-a", 0, False),
+    ]
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-a"]
+
+    assert qm_queue.qm.set_paused([b], False) == 1
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-b"]
+
+
+def test_global_pause_bypass_ignores_paused_interactive_job(qm_queue):
+    qm_queue.qm.paused = True
+
+    interactive = _make_item(1, "prompt-interactive", "Workflow A", "wf-a")
+    interactive[3]["extra_pnginfo"]["workflow"]["qm_interactive"] = "front"
+    qm_queue.native_queue.put(interactive)
+    assert qm_queue.qm.set_paused([_db_id(qm_queue, "prompt-interactive")], True) == 1
+
+    assert qm_queue.native_queue.get(timeout=0.2) is None
+
+
+def test_paused_job_stays_paused_through_restore(qm_queue):
+    for number, prompt_id, status, paused in ((1, "prompt-was-running", 1, 0), (2, "prompt-paused", 0, 1)):
+        qm_queue.qm_db.write_query(
+            "INSERT INTO queue (prompt_id, number, name, workflow_id, prompt, status, paused) VALUES (?, ?, 'W', 'wf', ?, ?, ?)",
+            (prompt_id, number, json.dumps(_make_item(number, prompt_id, "W", "wf")), status, paused),
+        )
+
+    assert qm_queue.native_queue.get()[0][1] == "prompt-was-running"
+    assert qm_queue.native_queue.get() is None
+
+    row = qm_queue.qm_db.read_single("SELECT status, paused FROM queue WHERE prompt_id = ?", ("prompt-paused",))
+    assert tuple(row) == (0, 1)
+
+
+def test_archiving_clears_paused_and_export_import_keeps_it(qm_queue):
+    for number, prompt_id in ((1, "prompt-paused"), (2, "prompt-to-archive")):
+        qm_queue.native_queue.put(_make_item(number, prompt_id, "Workflow A", "wf-a"))
+    ids = [_db_id(qm_queue, p) for p in ("prompt-paused", "prompt-to-archive")]
+    assert qm_queue.qm.set_paused(ids, True) == 2
+
+    exported = {item[1]: item for item in qm_queue.qm.get_full_queue("queue")}
+    assert exported["prompt-paused"][3]["qm_paused"] is True
+
+    exported["prompt-paused"][1] = "prompt-paused-imported"
+    assert qm_queue.qm.import_queue([exported["prompt-paused"]]) == (1, 1)
+    row = qm_queue.qm_db.read_single("SELECT paused, prompt FROM queue WHERE prompt_id = ?", ("prompt-paused-imported",))
+    assert row["paused"] == 1
+    assert "qm_paused" not in row["prompt"]
+
+    assert qm_queue.qm.archive_items([ids[1]]) == 1
+    assert qm_queue.qm_db.read_single("SELECT paused FROM queue WHERE id = ?", (ids[1],))["paused"] == 0

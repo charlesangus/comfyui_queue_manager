@@ -184,6 +184,16 @@ class QM_Server:
             else:
                 return web.json_response({"error": "Missing items or priority"}, status=400)
 
+        # Pause or resume POSTed pending items
+        @PromptServer.instance.routes.post("/queue_manager/pause")
+        async def set_paused(request):
+            json_data = await request.json()
+            if "items" in json_data and "paused" in json_data:
+                updated = await asyncio.to_thread(self.queue.set_paused, json_data["items"], json_data["paused"])
+                return web.json_response({"updated": updated})
+            else:
+                return web.json_response({"error": "Missing items or paused"}, status=400)
+
         # Endpoint to expose __version__ information
         @PromptServer.instance.routes.get("/queue_manager/version")
         async def get_version(request):

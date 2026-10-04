@@ -105,7 +105,7 @@ class QM_Queue:
             last_page = 0
             order_string = "ORDER BY priority DESC, number"
             join_string = ""
-            select_string = "SELECT queue.id as id, prompt, number, priority, queue.created_at, queue.completed_at"
+            select_string = "SELECT queue.id as id, prompt, number, priority, paused, queue.created_at, queue.completed_at"
 
             match route:
                 case "queue":
@@ -208,6 +208,7 @@ class QM_Queue:
                     # Add db_id to the item
                     item[3]["db_id"] = row["id"]
                     item[3]["priority"] = row["priority"]
+                    item[3]["paused"] = bool(row["paused"])
                     item[3]["created_at"] = row["created_at"]
                     if row["completed_at"] is not None:
                         item[3]["completed_at"] = row["completed_at"]
@@ -288,7 +289,7 @@ class QM_Queue:
 
             rows = read_query(
                 f"""
-                SELECT id, prompt, priority
+                SELECT id, prompt, priority, paused
                 FROM queue
                 WHERE {where_string}
                 ORDER BY created_at DESC
@@ -301,6 +302,7 @@ class QM_Queue:
             for row in rows:
                 item = json.loads(row[1])
                 item[3]["qm_priority"] = row[2]
+                item[3]["qm_paused"] = bool(row[3])
                 # Convert the item to a tuple
                 # item = tuple(item)
                 # Add the item to the pending list
@@ -314,7 +316,7 @@ class QM_Queue:
             return read_single("""
                 SELECT COUNT(*)
                 FROM queue
-                WHERE status = 0 OR status = 1
+                WHERE status = 1 OR (status = 0 AND paused = 0)
             """)[0]  # total
 
     def _call_original_task_done(self, item_id, history_result, status, process_item=None):
@@ -599,7 +601,7 @@ class QM_Queue:
         row = read_single("""
             SELECT prompt
             FROM queue
-            WHERE status = 0
+            WHERE status = 0 AND paused = 0
             ORDER BY priority DESC, number
             LIMIT 1
         """)
@@ -644,11 +646,11 @@ class QM_Queue:
         best = read_single("""
             SELECT prompt_id
             FROM queue
-            WHERE status = 0
+            WHERE status = 0 AND paused = 0
             ORDER BY priority DESC, number
             LIMIT 1
         """)
-        if best is None or best[0] == head_prompt_id:
+        if best is not None and best[0] == head_prompt_id:
             return False
 
         self.native_queue.queue = []
@@ -683,7 +685,7 @@ class QM_Queue:
     def queue_get(self, timeout=None):
         with self.pause_lock:
             while self.paused:
-                if read_single("SELECT 1 FROM queue WHERE status = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
+                if read_single("SELECT 1 FROM queue WHERE status = 0 AND paused = 0 AND priority >= ? LIMIT 1", (PRIORITY_INTERACTIVE,)) is not None:
                     break
                 notified = self.pause_lock.wait(timeout=timeout)
                 if timeout is not None and not notified:
@@ -699,7 +701,7 @@ class QM_Queue:
                 item_db = read_single("""
                     SELECT number, prompt, updated_at
                     FROM queue
-                    WHERE status = 0
+                    WHERE status = 0 AND paused = 0
                     ORDER BY priority DESC, number
                     LIMIT 1
                 """)
@@ -825,7 +827,7 @@ class QM_Queue:
             total = write_query(
                 f"""
                 UPDATE queue
-                SET status = 3
+                SET status = 3, paused = 0
                 WHERE {where_string}
             """,
                 params,
@@ -857,7 +859,7 @@ class QM_Queue:
                 archived += write_query(
                     """
                     UPDATE queue
-                    SET status = 3
+                    SET status = 3, paused = 0
                     WHERE id = ?
                 """,
                     (item,),
@@ -908,6 +910,40 @@ class QM_Queue:
             if updated > 0:
                 qm_log.info("Queue Item Priority Updated: %d item(s)", updated)
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"priority": updated})
+                PromptServer.instance.queue_updated()
+
+            return updated
+
+    def set_paused(self, db_ids, paused):
+        """
+        Hold pending items back from running, or release them
+        """
+        if type(paused) is not bool:
+            raise BadRouteException("Invalid paused value: " + str(paused))
+
+        with self.native_queue.mutex:
+            updated = 0
+            top_priority = PRIORITY_MIN
+            for db_id in db_ids:
+                row = read_single("SELECT priority FROM queue WHERE id = ? AND status = 0 AND paused != ?", (db_id, paused))
+                if row is None:
+                    continue
+
+                updated += write_query("UPDATE queue SET paused = ? WHERE id = ?", (paused, db_id), False)
+                top_priority = max(top_priority, row[0])
+
+            get_conn().commit()
+
+            if updated > 0:
+                # A paused job must leave the heap, and a resumed one may outrank its head.
+                self.preempt_heap_head_if_stale()
+                if not paused:
+                    self.notify_if_paused_interactive(top_priority)
+                    # An idle worker re-reads the database once woken.
+                    self.native_queue.not_empty.notify()
+
+                qm_log.info("Queue Item %s: %d item(s)", "Paused" if paused else "Resumed", updated)
+                PromptServer.instance.send_sync("queue-manager-queue-updated", {"paused" if paused else "resumed": updated})
                 PromptServer.instance.queue_updated()
 
             return updated
@@ -1131,6 +1167,7 @@ class QM_Queue:
                     item[5] = {"api_key_comfy_org": api_key_comfy_org} if api_key_comfy_org is not None else {}
 
                 priority = clamp_priority(item[3].pop("qm_priority", 0))
+                paused = item[3].pop("qm_paused", False) is True and status == 0
 
                 PromptServer.instance.number += 1
                 query_params.append(
@@ -1142,6 +1179,7 @@ class QM_Queue:
                         json.dumps(item),
                         status,
                         priority,
+                        paused,
                     )
                 )
 
@@ -1151,8 +1189,8 @@ class QM_Queue:
                 for item, params in zip(items, query_params):
                     cursor = conn.execute(
                         """
-                            INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status, priority)
-                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            INSERT OR IGNORE INTO queue (prompt_id, number, name, workflow_id, prompt, status, priority, paused)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         params,
                     )

@@ -6,6 +6,7 @@ import UploadSharpIcon from "@mui/icons-material/UploadSharp";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import Inventory2SharpIcon from "@mui/icons-material/Inventory2Sharp";
 import ReplaySharpIcon from "@mui/icons-material/ReplaySharp";
+import PauseSharpIcon from "@mui/icons-material/PauseSharp";
 
 import { PriorityMenu } from "./PriorityMenu";
 import { apiCall } from "../internals/functions";
@@ -78,12 +79,20 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
     await finish();
   };
 
+  const setPaused = async (items, paused) => {
+    const dbIds = items.map((item) => item?.[3]?.db_id).filter((id) => id != null);
+    await apiCall("queue_manager/pause", { items: dbIds, paused });
+    await finish();
+  };
+
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority =
     (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
+  const toPause = route === "queue" ? selectedPending.filter((item) => !item[3]?.paused) : [];
+  const toResume = route === "queue" ? selectedPending.filter((item) => item[3]?.paused) : [];
   const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
 
   return (
@@ -115,6 +124,20 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
         )}
 
         {canSetPriority && <PriorityMenu dbIds={priorityDbIds} onDone={finish} />}
+
+        {toPause.length > 0 && (
+          <button className="qm-btn" onClick={() => setPaused(toPause, true)} title="Hold back from running">
+            <PauseSharpIcon fontSize="small" />
+            &nbsp;Pause
+          </button>
+        )}
+
+        {toResume.length > 0 && (
+          <button className="qm-btn" onClick={() => setPaused(toResume, false)} title="Let run again">
+            <PlayArrowOutlinedIcon fontSize="small" />
+            &nbsp;Resume
+          </button>
+        )}
 
         {canRun && (
           <button

@@ -102,6 +102,7 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     columns = {row[1] for row in cursor.fetchall()}
     assert "priority" in columns
     assert "completed_at" in columns
+    assert "paused" in columns
 
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_priority_number'")
     assert cursor.fetchone() is not None
@@ -109,8 +110,9 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_number'")
     assert cursor.fetchone() is None
 
-    result = qm_db.read_single("SELECT priority, completed_at FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
+    result = qm_db.read_single("SELECT priority, completed_at, paused FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
     assert result["priority"] == 0
+    assert result["paused"] == 0
     assert result["completed_at"] is None
     result = qm_db.read_single("SELECT completed_at, updated_at FROM queue WHERE prompt_id = ?", ("test-prompt-002",))
     assert tuple(result) == ("2026-01-02 03:04:05", "2026-01-02 03:04:05")
