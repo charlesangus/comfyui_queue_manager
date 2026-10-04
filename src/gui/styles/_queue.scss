@@ -128,6 +128,12 @@ header.header {
       }
     }
 
+    .paused-badge {
+      border: 1px solid var(--qm-border);
+      background-color: var(--qm-bg);
+      color: var(--qm-fg-muted);
+    }
+
     .priority-badge {
       &.priority-positive {
         background-color: var(--qm-success);
@@ -274,6 +280,10 @@ header.header {
 
   .qm-card.failed {
     border-color: var(--qm-danger);
+  }
+
+  .qm-card.paused {
+    border-style: dashed;
   }
 
   .qm-card.selected {

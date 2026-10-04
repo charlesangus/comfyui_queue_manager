@@ -87,6 +87,7 @@ const executionTimeLabel = useMemo(() => {
 
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
+    const paused = item?.[3]?.paused;
 
     const priorityBadge = useMemo(() => {
       if (!priority) return null;
@@ -117,7 +118,7 @@ const executionTimeLabel = useMemo(() => {
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/role-supports-aria-props -- card selection is mouse-driven only, matching the existing filters/thumbnail interactions in this file
       <article
-        className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`}
+        className={`qm-card${error ? " failed" : ""}${paused ? " paused" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`}
         aria-selected={isSelected}
         onMouseDown={(event) => {
           // A modifier click selects cards, so don't let it also start or extend a text selection.
@@ -156,6 +157,12 @@ const executionTimeLabel = useMemo(() => {
             <div className="qm-badge execution-time" title="Execution time">
               {executionTimeLabel}
             </div>
+          ) : null}
+
+          {paused ? (
+            <span className="qm-badge paused-badge" title="Paused: this job is skipped until it is resumed">
+              Paused
+            </span>
           ) : null}
 
           {priorityBadge ? (
@@ -257,6 +264,7 @@ const executionTimeLabel = useMemo(() => {
       prev.info?.page === next.info?.page &&
       prev.info?.page_size === next.info?.page_size &&
       prev.item?.[3]?.priority === next.item?.[3]?.priority &&
+      prev.item?.[3]?.paused === next.item?.[3]?.paused &&
       prev.item?.[3]?.status === next.item?.[3]?.status &&
       prev.item?.[3]?.created_at === next.item?.[3]?.created_at &&
       prev.item?.[3]?.completed_at === next.item?.[3]?.completed_at &&

@@ -44,7 +44,8 @@ def init_schema():
             prompt    TEXT,
             status     INTEGER DEFAULT 0, -- 0: pending, 1: running, 2: finished, 3: archive, TODO: -1: error, -2: bin
             priority   INTEGER NOT NULL DEFAULT 0,
-            completed_at DATETIME
+            completed_at DATETIME,
+            paused     INTEGER NOT NULL DEFAULT 0 -- pending items held back from running
         );
 
         CREATE TABLE IF NOT EXISTS options (
@@ -115,6 +116,10 @@ def init_schema():
         # The updated_at trigger restamps those rows, so put it back; the completed list is ordered by it.
         conn.execute("UPDATE queue SET completed_at = updated_at WHERE status IN (2, -1)")
         conn.execute("UPDATE queue SET updated_at = completed_at WHERE status IN (2, -1)")
+        conn.commit()
+
+    if "paused" not in columns:
+        conn.execute("ALTER TABLE queue ADD COLUMN paused INTEGER NOT NULL DEFAULT 0")
         conn.commit()
 
     conn.execute("DROP INDEX IF EXISTS idx_queue_status_number")

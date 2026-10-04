@@ -19455,6 +19455,7 @@ const QueueCard = reactExports.memo(
     }, [createdAt, completedAt]);
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
+    const paused = item?.[3]?.paused;
     const priorityBadge = reactExports.useMemo(() => {
       if (!priority) return null;
       if (priority === 1e3) {
@@ -19482,7 +19483,7 @@ const QueueCard = reactExports.memo(
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "article",
         {
-          className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
+          className: `qm-card${error ? " failed" : ""}${paused ? " paused" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
           "aria-selected": isSelected,
           onMouseDown: (event) => {
             if ((event.shiftKey || event.ctrlKey || event.metaKey) && !event.target.closest(".error-details")) {
@@ -19502,6 +19503,7 @@ const QueueCard = reactExports.memo(
                 times.completed ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "completed-time", children: times.completed.label }) : null
               ] }) : null,
               route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
+              paused ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "qm-badge paused-badge", title: "Paused: this job is skipped until it is resumed", children: "Paused" }) : null,
               priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
                 {
@@ -19574,7 +19576,7 @@ const QueueCard = reactExports.memo(
     if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
       return false;
     }
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.created_at === next2.item?.[3]?.created_at && prev2.item?.[3]?.completed_at === next2.item?.[3]?.completed_at && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.paused === next2.item?.[3]?.paused && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.created_at === next2.item?.[3]?.created_at && prev2.item?.[3]?.completed_at === next2.item?.[3]?.completed_at && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
   }
 );
 function getScrollbarSize(win = window) {
@@ -28539,6 +28541,9 @@ function Footer({ route, queueData, isFilterOn, appendFilters, appendRoute, fetc
 const ReplaySharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8"
 }));
+const PauseSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
+  d: "M6 19h4V5H6zm8-14v14h4V5z"
+}));
 const LowPriorityIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M14 5h8v2h-8zm0 5.5h8v2h-8zm0 5.5h8v2h-8zM2 11.5C2 15.08 4.92 18 8.5 18H9v2l3-3-3-3v2h-.5C6.02 16 4 13.98 4 11.5S6.02 7 8.5 7H12V5H8.5C4.92 5 2 7.92 2 11.5"
 }));
@@ -28676,11 +28681,18 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
     await apiCall("queue_manager/requeue", { items: dbIds, front: shiftDown, clientId: app.api.clientId });
     await finish();
   };
+  const setPaused = async (items, paused) => {
+    const dbIds = items.map((item) => item?.[3]?.db_id).filter((id) => id != null);
+    await apiCall("queue_manager/pause", { items: dbIds, paused });
+    await finish();
+  };
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority = (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
+  const toPause = route === "queue" ? selectedPending.filter((item) => !item[3]?.paused) : [];
+  const toResume = route === "queue" ? selectedPending.filter((item) => item[3]?.paused) : [];
   const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", ref: (el) => {
     if (el) rootRef.current = el.closest(".qm-root");
@@ -28707,6 +28719,14 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
         " Archive"
       ] }),
       canSetPriority && /* @__PURE__ */ jsxRuntimeExports.jsx(PriorityMenu, { dbIds: priorityDbIds, onDone: finish }),
+      toPause.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "qm-btn", onClick: () => setPaused(toPause, true), title: "Hold back from running", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(PauseSharpIcon, { fontSize: "small" }),
+        " Pause"
+      ] }),
+      toResume.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "qm-btn", onClick: () => setPaused(toResume, false), title: "Let run again", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(PlayArrowOutlinedIcon, { fontSize: "small" }),
+        " Resume"
+      ] }),
       canRun && /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
