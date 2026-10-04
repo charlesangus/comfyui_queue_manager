@@ -19460,6 +19460,11 @@ const QueueCard = reactExports.memo(
         {
           className: `qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`,
           "aria-selected": isSelected,
+          onMouseDown: (event) => {
+            if ((event.shiftKey || event.ctrlKey || event.metaKey) && !event.target.closest(".error-details")) {
+              event.preventDefault();
+            }
+          },
           onClick: (event) => onSelect(itemKey2, event),
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-header", children: [

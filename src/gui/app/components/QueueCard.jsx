@@ -104,6 +104,13 @@ const executionTimeLabel = useMemo(() => {
       <article
         className={`qm-card${error ? " failed" : ""}${className ? ` ${className}` : ""}${isSelected ? " selected" : ""}`}
         aria-selected={isSelected}
+        onMouseDown={(event) => {
+          // A modifier click selects cards, so don't let it also start or extend a text selection.
+          // Plain drags still select text, and the error details keep shift-click for copying the traceback.
+          if ((event.shiftKey || event.ctrlKey || event.metaKey) && !event.target.closest(".error-details")) {
+            event.preventDefault();
+          }
+        }}
         onClick={(event) => onSelect(itemKey, event)}
       >
         <div className="card-header">
