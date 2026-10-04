@@ -111,6 +111,10 @@ def init_schema():
 
     if "completed_at" not in columns:
         conn.execute("ALTER TABLE queue ADD COLUMN completed_at DATETIME")
+        # Finished rows were last touched when they completed, so updated_at is the best completion time they have.
+        # The updated_at trigger restamps those rows, so put it back; the completed list is ordered by it.
+        conn.execute("UPDATE queue SET completed_at = updated_at WHERE status IN (2, -1)")
+        conn.execute("UPDATE queue SET updated_at = completed_at WHERE status IN (2, -1)")
         conn.commit()
 
     conn.execute("DROP INDEX IF EXISTS idx_queue_status_number")
