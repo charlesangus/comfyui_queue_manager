@@ -62,9 +62,9 @@ export function PriorityMenu({ dbIds, onDone }) {
         anchorOrigin={{ vertical: openUpward ? "top" : "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: openUpward ? "bottom" : "top", horizontal: "left" }}
       >
-        <MenuItem onClick={() => applyPriority(-1)}>Low (−1)</MenuItem>
+        <MenuItem onClick={() => applyPriority(-10)}>Low (−10)</MenuItem>
         <MenuItem onClick={() => applyPriority(0)}>Normal (0)</MenuItem>
-        <MenuItem onClick={() => applyPriority(1)}>High (+1)</MenuItem>
+        <MenuItem onClick={() => applyPriority(10)}>High (+10)</MenuItem>
         <MenuItem
           disableRipple
           className="priority-custom"
@@ -76,7 +76,7 @@ export function PriorityMenu({ dbIds, onDone }) {
             label="Custom"
             value={customValue}
             onChange={(event) => setCustomValue(event.target.value)}
-            slotProps={{ htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }}
+            slotProps={{ htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX, step: 10 } }}
           />
           <button className="qm-btn qm-btn-primary" onClick={handleCustomApply} disabled={customValue === ""}>
             Apply
