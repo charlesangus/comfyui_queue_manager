@@ -6,6 +6,7 @@ import { LoaderSpinner } from "../components/LoaderSpinner";
 import { MediaItem } from "./MediaItem";
 import { MediaOutputs } from "../models/MediaOutputs";
 import { CardInfo } from "./CardInfo";
+import { formatCardTime } from "../internals/functions";
 
 export const QueueCard = memo(
   function QueueCard({
@@ -70,6 +71,20 @@ const executionTimeLabel = useMemo(() => {
 
     const mediaOutputs = useMemo(() => new MediaOutputs(item?.[3]), [item]);
 
+    const createdAt = item?.[3]?.created_at;
+    const completedAt = item?.[3]?.completed_at;
+    const times = useMemo(() => {
+      const queued = formatCardTime(createdAt);
+      const completed = formatCardTime(completedAt);
+      if (!queued && !completed) return null;
+
+      return {
+        queued,
+        completed,
+        title: [queued && `Queued: ${queued.title}`, completed && `Completed: ${completed.title}`].filter(Boolean).join("\n"),
+      };
+    }, [createdAt, completedAt]);
+
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
 
@@ -128,6 +143,14 @@ const executionTimeLabel = useMemo(() => {
                   : ""}
             </button>
           </div>
+
+          {times ? (
+            <span className={`card-times${times.queued && times.completed ? " both" : ""}`} title={times.title}>
+              {times.queued ? <span className="queued-time">{times.queued.label}</span> : null}
+              {times.queued && times.completed ? <span className="time-arrow">→</span> : null}
+              {times.completed ? <span className="completed-time">{times.completed.label}</span> : null}
+            </span>
+          ) : null}
 
           {route === "completed" && executionTimeLabel ? (
             <div className="qm-badge execution-time" title="Execution time">
@@ -235,6 +258,8 @@ const executionTimeLabel = useMemo(() => {
       prev.info?.page_size === next.info?.page_size &&
       prev.item?.[3]?.priority === next.item?.[3]?.priority &&
       prev.item?.[3]?.status === next.item?.[3]?.status &&
+      prev.item?.[3]?.created_at === next.item?.[3]?.created_at &&
+      prev.item?.[3]?.completed_at === next.item?.[3]?.completed_at &&
       prev.item?.[3]?.execution_time === next.item?.[3]?.execution_time &&
       prev.item?.[3]?.total_files === next.item?.[3]?.total_files &&
       prev.item?.[3]?.extra_pnginfo?.workflow?.id === next.item?.[3]?.extra_pnginfo?.workflow?.id &&

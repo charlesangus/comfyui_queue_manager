@@ -43,7 +43,8 @@ def init_schema():
             workflow_id   VARCHAR(255),
             prompt    TEXT,
             status     INTEGER DEFAULT 0, -- 0: pending, 1: running, 2: finished, 3: archive, TODO: -1: error, -2: bin
-            priority   INTEGER NOT NULL DEFAULT 0
+            priority   INTEGER NOT NULL DEFAULT 0,
+            completed_at DATETIME
         );
 
         CREATE TABLE IF NOT EXISTS options (
@@ -106,6 +107,10 @@ def init_schema():
 
     if "priority" not in columns:
         conn.execute("ALTER TABLE queue ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+
+    if "completed_at" not in columns:
+        conn.execute("ALTER TABLE queue ADD COLUMN completed_at DATETIME")
         conn.commit()
 
     conn.execute("DROP INDEX IF EXISTS idx_queue_status_number")

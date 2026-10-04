@@ -1290,3 +1290,51 @@ def test_requeue_items_queues_copy_and_keeps_completed_row(qm_queue):
     assert prompt[1] == copy["prompt_id"]
     assert prompt[3]["client_id"] == "client-1"
     assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == [copy["prompt_id"]]
+
+
+@pytest.mark.parametrize("outcome", ["success", "error"])
+def test_task_done_stamps_completed_at_and_list_exposes_timestamps(qm_queue, outcome):
+    item = _make_item(100, "prompt-times", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+
+    _, pending = qm_queue.qm.get_current_queue(page_size=20)
+    assert pending[0][3]["created_at"] is not None
+    assert "completed_at" not in pending[0][3]
+
+    _, task_id = qm_queue.native_queue.get()
+    running, _ = qm_queue.qm.get_current_queue(page_size=20)
+    assert running[0][3]["created_at"] == pending[0][3]["created_at"]
+
+    qm_queue.qm.task_done(task_id, {"outputs": {}}, (outcome, outcome == "success", []))
+
+    _, completed = qm_queue.qm.get_current_queue(page_size=20, route="completed")
+    assert completed[0][3]["created_at"] == pending[0][3]["created_at"]
+    assert completed[0][3]["completed_at"] is not None
+
+    qm_queue.qm.archive_items([completed[0][3]["db_id"]])
+    _, archived = qm_queue.qm.get_current_queue(page_size=20, route="archive")
+    assert archived[0][3]["completed_at"] == completed[0][3]["completed_at"]
+
+
+def test_requeue_paths_clear_completed_at(qm_queue):
+    item = _make_item(100, "prompt-requeue-times", "Workflow A", "wf-a")
+    qm_queue.native_queue.put(item)
+    db_id = qm_queue.qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))["id"]
+
+    def complete_and_archive():
+        qm_queue.qm_db.write_query("UPDATE queue SET status = 3, completed_at = CURRENT_TIMESTAMP WHERE id = ?", (db_id,))
+
+    def completed_at():
+        return qm_queue.qm_db.read_single("SELECT completed_at FROM queue WHERE id = ?", (db_id,))["completed_at"]
+
+    complete_and_archive()
+    qm_queue.qm.play_items([db_id], front=False)
+    assert completed_at() is None
+
+    complete_and_archive()
+    qm_queue.qm.play_archive(front=False)
+    assert completed_at() is None
+
+    qm_queue.qm_db.write_query("UPDATE queue SET status = 2, completed_at = CURRENT_TIMESTAMP WHERE id = ?", (db_id,))
+    qm_queue.native_queue.put(_make_item(50, "prompt-requeue-times", "Workflow A", "wf-a"))
+    assert completed_at() is None

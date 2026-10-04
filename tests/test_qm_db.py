@@ -99,6 +99,7 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     cursor.execute("PRAGMA table_info(queue)")
     columns = {row[1] for row in cursor.fetchall()}
     assert "priority" in columns
+    assert "completed_at" in columns
 
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_priority_number'")
     assert cursor.fetchone() is not None
@@ -106,8 +107,9 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_number'")
     assert cursor.fetchone() is None
 
-    result = qm_db.read_single("SELECT priority FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
+    result = qm_db.read_single("SELECT priority, completed_at FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
     assert result["priority"] == 0
+    assert result["completed_at"] is None
 
     qm_db.init_schema()
 

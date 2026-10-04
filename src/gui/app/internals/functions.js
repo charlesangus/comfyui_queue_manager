@@ -60,3 +60,21 @@ export function compareVersions(a, b) {
   }
   return 0;
 }
+
+// Queue timestamps come from SQLite CURRENT_TIMESTAMP: "YYYY-MM-DD HH:MM:SS" in UTC.
+// Shows the time alone for today, the date and time earlier this year, and only the date before that.
+export function formatCardTime(value, now = new Date()) {
+  if (!value) return null;
+
+  const date = new Date(`${value.replace(" ", "T")}Z`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  let options = { hour: "numeric", minute: "2-digit" };
+  if (date.getFullYear() !== now.getFullYear()) {
+    options = { year: "numeric", month: "short", day: "numeric" };
+  } else if (date.toDateString() !== now.toDateString()) {
+    options = { month: "short", day: "numeric", ...options };
+  }
+
+  return { label: date.toLocaleString(undefined, options), title: date.toLocaleString() };
+}
