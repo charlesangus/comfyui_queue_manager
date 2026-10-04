@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import UploadSharpIcon from "@mui/icons-material/UploadSharp";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
@@ -18,6 +19,9 @@ const itemKey = (item) => item?.[3]?.db_id ?? item?.[1];
 export function SelectionBar({ route, queueData, fetchQueueItems }) {
   const selected = useSelectionStore((state) => state.selected);
   const shiftDown = useAppStore((state) => state.shiftDown);
+  // Every action clears the selection, which removes this bar and the focused button with it and drops focus to
+  // <body>, out of reach of the panel's shortcuts. The panel root is kept here to hand focus back to it.
+  const rootRef = useRef(null);
 
   if (selected.size === 0) {
     return null;
@@ -33,10 +37,12 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   const finish = async () => {
     useSelectionStore.getState().clear();
     await fetchQueueItems({ reload: true });
+    rootRef.current.focus({ preventScroll: true });
   };
 
   const handleDelete = async () => {
     await performDelete(selectedRunning, selectedPending, fetchQueueItems);
+    rootRef.current.focus({ preventScroll: true });
   };
 
   const handleLoad = async () => {
@@ -81,13 +87,16 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
   const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
 
   return (
-    <div className="selection-bar">
+    <div className="selection-bar" ref={(el) => { if (el) rootRef.current = el.closest(".qm-root"); }}>
       <span className="count qm-badge">{selected.size} selected</span>
 
       <div className="buttons">
         <button
           className="qm-btn qm-btn-text"
-          onClick={() => useSelectionStore.getState().clear()}
+          onClick={() => {
+            rootRef.current.focus({ preventScroll: true });
+            useSelectionStore.getState().clear();
+          }}
         >
           Clear
         </button>

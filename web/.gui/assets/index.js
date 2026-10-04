@@ -22542,15 +22542,50 @@ const QueueItems = reactExports.memo(function QueueItems2({ running, pending, in
     ) : null
   ] });
 });
-const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress }) {
+const Queue = reactExports.memo(function Queue2({ data, isLoading, error, progress, route }) {
   const running = data?.running ?? [];
   const pending = data?.pending ?? [];
+  const containerRef = reactExports.useRef(null);
+  const anchorsRef = reactExports.useRef([]);
+  reactExports.useLayoutEffect(() => {
+    const container = containerRef.current;
+    const items = [...data?.running ?? [], ...data?.pending ?? []];
+    const cards = container.getElementsByClassName("qm-card");
+    const index = new Map(items.map((item, i) => [itemKey$2(item), i]));
+    const restoreAnchor = () => {
+      const anchor = anchorsRef.current.find((a) => a.route === route && index.has(a.key) && items[index.get(a.key)][3]?.priority === a.priority);
+      if (anchor) {
+        container.scrollTop += cards[index.get(anchor.key)].getBoundingClientRect().top - container.getBoundingClientRect().top - anchor.offset;
+      }
+      recordAnchors();
+    };
+    const recordAnchors = () => {
+      anchorsRef.current = [];
+      if (container.scrollTop === 0) return;
+      const top = container.getBoundingClientRect().top;
+      const bottom = top + container.clientHeight;
+      for (let i = 0; i < items.length; i++) {
+        const rect = cards[i].getBoundingClientRect();
+        if (rect.bottom <= top) continue;
+        if (rect.top >= bottom) break;
+        anchorsRef.current.push({ route, key: itemKey$2(items[i]), priority: items[i][3]?.priority, offset: rect.top - top });
+      }
+    };
+    restoreAnchor();
+    container.addEventListener("scroll", recordAnchors, { passive: true });
+    const observer = new ResizeObserver(restoreAnchor);
+    observer.observe(container.firstElementChild);
+    return () => {
+      container.removeEventListener("scroll", recordAnchors);
+      observer.disconnect();
+    };
+  }, [data, route]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
     {
       className: "overflow-x-auto table-wrapper" + (isLoading ? " loading" : ""),
       style: { "--job-progress": progress + "%" },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-cards", children: [
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "table-container", ref: containerRef, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "qm-cards", children: [
         error && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "info-cell text-red-500 text-center", children: [
           "Loading failed: ",
           error
@@ -28569,6 +28604,7 @@ const itemKey$1 = (item) => item?.[3]?.db_id ?? item?.[1];
 function SelectionBar({ route, queueData, fetchQueueItems }) {
   const selected = useSelectionStore((state) => state.selected);
   const shiftDown = useAppStore((state) => state.shiftDown);
+  const rootRef = reactExports.useRef(null);
   if (selected.size === 0) {
     return null;
   }
@@ -28580,9 +28616,11 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
   const finish = async () => {
     useSelectionStore.getState().clear();
     await fetchQueueItems({ reload: true });
+    rootRef.current.focus({ preventScroll: true });
   };
   const handleDelete = async () => {
     await performDelete(selectedRunning, selectedPending, fetchQueueItems);
+    rootRef.current.focus({ preventScroll: true });
   };
   const handleLoad = async () => {
     const selected2 = selectedItems[0];
@@ -28615,7 +28653,9 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
   const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority = (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
   const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "selection-bar", ref: (el) => {
+    if (el) rootRef.current = el.closest(".qm-root");
+  }, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "count qm-badge", children: [
       selected.size,
       " selected"
@@ -28625,7 +28665,10 @@ function SelectionBar({ route, queueData, fetchQueueItems }) {
         "button",
         {
           className: "qm-btn qm-btn-text",
-          onClick: () => useSelectionStore.getState().clear(),
+          onClick: () => {
+            rootRef.current.focus({ preventScroll: true });
+            useSelectionStore.getState().clear();
+          },
           children: "Clear"
         }
       ),

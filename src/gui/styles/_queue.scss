@@ -31,6 +31,8 @@ header.header {
     height: 100%;
     position: relative;
     border-top: 1px solid var(--qm-border);
+    // Queue.jsx anchors the scroll position itself.
+    overflow-anchor: none;
   }
 
   .MuiPaper-root {
