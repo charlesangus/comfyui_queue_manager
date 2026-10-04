@@ -4,7 +4,7 @@ from aiohttp import web
 from server import PromptServer
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 
 from .helpers import sanitize_filename, requestJson
 from .inc.exceptions import BadRouteException
@@ -307,28 +307,6 @@ class QM_Server:
             total = await asyncio.to_thread(self.queue.delete_running_job, prompt_id)
 
             return web.json_response({"deleted": total})
-
-        # Take over client focus
-        @PromptServer.instance.routes.get("/queue_manager/takeover")
-        async def takeover_focus(request):
-            client_id = request.query.get("client_id", None)
-
-            # is client_id valid: 32 chars hex
-            if client_id is None:
-                return web.json_response({"error": "Client ID not provided"}, status=400)
-            if len(client_id) != 32:
-                return web.json_response({"error": "Invalid client ID"}, status=400)
-            if not all(c in "0123456789abcdef" for c in client_id):
-                return web.json_response({"error": "Invalid client ID"}, status=400)
-
-            takeover_client = {"client_id": client_id, "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}
-
-            self.queue_manager.queue.takeover_client = takeover_client
-            await asyncio.to_thread(self.queue_manager.options.set, "takeover_client", client_id)
-
-            qm_log.info(f"Client takeover requested by {client_id}")
-
-            return web.json_response(takeover_client)
 
         # Allowed options with their default values
         self.allowed_options = {

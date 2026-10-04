@@ -1,13 +1,9 @@
 import {EllipsisVertical} from "lucide-react";
-import {apiCall} from "../internals/functions";
 import {useContext, useState, useRef, useEffect } from "react";
 import {AppContext} from "../internals/app-context";
 
-import AdsClickSharpIcon from '@mui/icons-material/AdsClickSharp';
 import InfoOutlineSharpIcon from '@mui/icons-material/InfoOutlineSharp';
 import QuizSharpIcon from '@mui/icons-material/QuizSharp';
-
-import {app} from "comfy/app";
 
 export default function TopMenu() {
   const [uiState, setUiState] = useState({
@@ -21,11 +17,6 @@ export default function TopMenu() {
 
   function toggleMenu() {
     setUiState(prev => ({...prev, menuOpen: !prev.menuOpen}));
-  }
-
-  async function takeOver() {
-    toggleMenu();
-    apiCall('queue_manager/takeover?client_id='+app.api.clientId, null, "GET");
   }
 
   useEffect(() => {
@@ -62,7 +53,6 @@ export default function TopMenu() {
         ref={menuRef}
         className={"top-menu" + (uiState.menuOpen ? ' open' : '')}>
         <div className={"container"}>
-          <button type={"button"}  className={"button qm-btn qm-btn-text"} onClick={takeOver}><AdsClickSharpIcon /> Take over focus</button>
           <a className={"button qm-btn qm-btn-text"} href={"https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual"} target={"_blank"} rel="noreferrer"><QuizSharpIcon /> Documentation</a>
           <button type={"button"}  className={"button qm-btn qm-btn-text"} onClick={() => {toggleMenu(); openSplash()}}><InfoOutlineSharpIcon /> About Queue Manager</button>
         </div>

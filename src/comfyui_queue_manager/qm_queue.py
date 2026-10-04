@@ -47,12 +47,6 @@ class QM_Queue:
 
         qm_log.info("Queue status: %s", "not paused" if not self.paused else "paused")
 
-        client_id, timestamp = queue_manager.options.get("takeover_client", False, True)
-        if client_id:
-            self.takeover_client = {"client_id": client_id, "timestamp": timestamp}
-        else:
-            self.takeover_client = None
-
         if self.paused:
             self.restore_queue(True)
 
@@ -720,7 +714,7 @@ class QM_Queue:
 
                 # Get the item with highest priority from the queue in database
                 item_db = read_single("""
-                    SELECT number, prompt, updated_at
+                    SELECT number, prompt
                     FROM queue
                     WHERE status = 0 AND paused = 0
                     ORDER BY priority DESC, number
@@ -729,11 +723,6 @@ class QM_Queue:
 
                 if item_db is not None:
                     item = json.loads(item_db[1])
-
-                    # SIML: TODO: Perhaps use different column to check timestamp? i.e. queued_at since item might be updated for other reasons?
-                    # If we have takeover client then we need to set the client_id in the prompt
-                    if self.takeover_client and self.takeover_client["timestamp"] > item_db[2]:
-                        item[3]["client_id"] = self.takeover_client["client_id"]
 
                     # Native format is a tuple
                     item = tuple(item)
