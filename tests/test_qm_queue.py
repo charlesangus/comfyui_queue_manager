@@ -1316,25 +1316,29 @@ def test_task_done_stamps_completed_at_and_list_exposes_timestamps(qm_queue, out
     assert archived[0][3]["completed_at"] == completed[0][3]["completed_at"]
 
 
-def test_requeue_paths_clear_completed_at(qm_queue):
+def test_requeue_paths_reset_queue_time_and_clear_completed_at(qm_queue):
     item = _make_item(100, "prompt-requeue-times", "Workflow A", "wf-a")
     qm_queue.native_queue.put(item)
     db_id = qm_queue.qm_db.read_single("SELECT id FROM queue WHERE prompt_id = ?", (item[1],))["id"]
 
-    def complete_and_archive():
-        qm_queue.qm_db.write_query("UPDATE queue SET status = 3, completed_at = CURRENT_TIMESTAMP WHERE id = ?", (db_id,))
+    def complete(status=3):
+        qm_queue.qm_db.write_query(
+            "UPDATE queue SET status = ?, created_at = '2000-01-01 00:00:00', completed_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (status, db_id),
+        )
 
-    def completed_at():
-        return qm_queue.qm_db.read_single("SELECT completed_at FROM queue WHERE id = ?", (db_id,))["completed_at"]
+    def times():
+        row = qm_queue.qm_db.read_single("SELECT created_at, completed_at FROM queue WHERE id = ?", (db_id,))
+        return row["created_at"] != "2000-01-01 00:00:00", row["completed_at"]
 
-    complete_and_archive()
+    complete()
     qm_queue.qm.play_items([db_id], front=False)
-    assert completed_at() is None
+    assert times() == (True, None)
 
-    complete_and_archive()
+    complete()
     qm_queue.qm.play_archive(front=False)
-    assert completed_at() is None
+    assert times() == (True, None)
 
-    qm_queue.qm_db.write_query("UPDATE queue SET status = 2, completed_at = CURRENT_TIMESTAMP WHERE id = ?", (db_id,))
+    complete(2)
     qm_queue.native_queue.put(_make_item(50, "prompt-requeue-times", "Workflow A", "wf-a"))
-    assert completed_at() is None
+    assert times() == (True, None)

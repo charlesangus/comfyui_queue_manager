@@ -562,6 +562,7 @@ class QM_Queue:
                     prompt = excluded.prompt,
                     status = 0,
                     priority = excluded.priority,
+                    created_at = CURRENT_TIMESTAMP,
                     completed_at = NULL
             """,
                 (
@@ -965,7 +966,7 @@ class QM_Queue:
                 moved += write_query(
                     f"""
                     UPDATE queue
-                    SET status = 0, number = ?, prompt = ?, completed_at = NULL,
+                    SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP, completed_at = NULL,
                         priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                     WHERE id = ?
                 """,
@@ -1068,7 +1069,7 @@ class QM_Queue:
             moved = write_many(
                 f"""
                 UPDATE queue
-                SET status = 0, number = ?, prompt = ?, completed_at = NULL,
+                SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP, completed_at = NULL,
                     priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                 WHERE id = ?
             """,
