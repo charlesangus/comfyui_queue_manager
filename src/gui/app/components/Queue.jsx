@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LoaderSpinner } from "../components/LoaderSpinner";
 import { QueueCard } from "../components/QueueCard";
 import { Lightbox } from "./Lightbox";
@@ -109,16 +109,53 @@ const QueueItems = memo(function QueueItems({ running, pending, info }) {
   );
 });
 
-export const Queue = memo(function Queue({ data, isLoading, error, progress }) {
+export const Queue = memo(function Queue({ data, isLoading, error, progress, route }) {
   const running = data?.running ?? [];
   const pending = data?.pending ?? [];
+
+  // The browser's own scroll anchoring is off for the list: when a priority change re-sorts it, React moves the
+  // cards around and the native anchor gets lost, throwing the view to the top. Instead keep the first visible card
+  // that is still listed with the same priority where it was on screen, so jobs starting, finishing or arriving
+  // don't shift the view and a re-prioritized card simply moves out of it.
+  const containerRef = useRef(null);
+  const anchorsRef = useRef([]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const items = [...(data?.running ?? []), ...(data?.pending ?? [])];
+    const cards = container.getElementsByClassName("qm-card");
+    const index = new Map(items.map((item, i) => [itemKey(item), i]));
+
+    const anchor = anchorsRef.current.find((a) => a.route === route && index.has(a.key) && items[index.get(a.key)][3]?.priority === a.priority);
+    if (anchor) {
+      container.scrollTop += cards[index.get(anchor.key)].getBoundingClientRect().top - container.getBoundingClientRect().top - anchor.offset;
+    }
+
+    // Like native scroll anchoring, a list scrolled to the very top stays there so new jobs above show up.
+    const recordAnchors = () => {
+      anchorsRef.current = [];
+      if (container.scrollTop === 0) return;
+      const top = container.getBoundingClientRect().top;
+      const bottom = top + container.clientHeight;
+      for (let i = 0; i < items.length; i++) {
+        const rect = cards[i].getBoundingClientRect();
+        if (rect.bottom <= top) continue;
+        if (rect.top >= bottom) break;
+        anchorsRef.current.push({ route, key: itemKey(items[i]), priority: items[i][3]?.priority, offset: rect.top - top });
+      }
+    };
+
+    recordAnchors();
+    container.addEventListener("scroll", recordAnchors, { passive: true });
+    return () => container.removeEventListener("scroll", recordAnchors);
+  }, [data, route]);
 
   return (
     <div
       className={"overflow-x-auto table-wrapper" + (isLoading ? " loading" : "")}
       style={{ "--job-progress": progress + "%" }}
     >
-      <div className={"table-container"}>
+      <div className={"table-container"} ref={containerRef}>
         <div className="qm-cards">
           {error && (
             <div className="info-cell text-red-500 text-center">
