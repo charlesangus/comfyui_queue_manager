@@ -17,7 +17,6 @@ An extension supporting more streamlined prompt queue management.
   - [Interactive runs](#interactive-runs)
   - [Export and Import](#export-and-import)
   - [Filter by workflow](#filter-by-workflow)
-  - [Restore client focus](#restore-client-focus)
   - [Workflow Name node](#workflow-name-node)
   - [Queue Card Info node](#queue-card-info-node)
   - [External jobs](#external-jobs)
@@ -86,7 +85,6 @@ and other things I forgot about.
 - `readme-img/main-window.png` — Queue tab with multiple cards showing selection indicators (outline), unified badge pills (priority, execution time), interactive and resumed badges, delete buttons at normal width, and visible progress fill on running cards
 - `readme-img/shift-pressed.png` — "Run at front of queue" indicator message at the top of the window
 - `readme-img/filters.png` — Workflow filter interface showing filtered card list
-- `readme-img/focus.png` — Three-dot menu with "Take over focus" option visible
 - `readme-img/external-job.png` — Card indicating an external job (from third-party queue submission)
 - `readme-img/settings.png` — ComfyUI Settings panel showing Queue Manager settings section
 - `readme-img/priority-menu.png` — Priority menu dropdown showing presets (Low/Normal/High) and custom input field (new)
@@ -174,13 +172,6 @@ Once filtered out the group actions on the bottom of the window (like `Archive A
 Asterisk `*` next to the button label indicates that the action will be applied to the filtered items only.
 
 ![filters.png](readme-img/filters.png)
-
-### Restore client focus
-When you restart ComfyUI or browser, you might lose the client focus. When that happens the progress of running renders in ComfyUI will no longer update (no progress view, no previews, no highlights which nodes is being executed).
-
-To restore the client focus, click the three vertical dots menu and select `Take over focus`. The effect will take place after currently running job (if any) finishes.
-
-![focus.png](readme-img/focus.png)
 
 ### Workflow Name node
 You can use the Workflow Name node to get the name of the currently running workflow.

@@ -129,3 +129,14 @@ def test_priority_column_migration(tmp_path, monkeypatch):
 
     result = qm_db.read_single("SELECT priority FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
     assert result["priority"] == 0
+
+
+def test_options_get_returns_value_after_set(qm_db):
+    import importlib
+    import comfyui_queue_manager.qm_options
+
+    options = importlib.reload(comfyui_queue_manager.qm_options).QM_Options()
+    options.set("queue_paused", True)
+
+    assert options.get("queue_paused", False) is True
+    assert options.get_all() == {"queue_paused": True}

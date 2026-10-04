@@ -19095,69 +19095,7 @@ const __iconNode = [
   ["circle", { cx: "12", cy: "19", r: "1", key: "lyex9k" }]
 ];
 const EllipsisVertical = createLucideIcon("ellipsis-vertical", __iconNode);
-const baseURL = "/";
-async function apiCall(endpoint, data, method = "POST") {
-  const url = endpoint.startsWith("https://") || endpoint.startsWith("http://") ? endpoint : `${baseURL}${endpoint}`;
-  try {
-    let request = {
-      method,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    };
-    if (method.toLowerCase() !== "get") {
-      request.body = JSON.stringify(data);
-    }
-    const response = await fetch(url, request);
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-    const contentType = response.headers.get("content-type");
-    const contentLength = parseInt(response.headers.get("content-length"));
-    if (contentLength === 0) {
-      return null;
-    }
-    if (contentType.includes("application/json")) {
-      return await response.json();
-    } else {
-      return await response.text();
-    }
-  } catch (error) {
-    console.error("Error running apiCall:", error);
-    throw error;
-  }
-}
-async function deleteRunningJob(promptId) {
-  return apiCall("queue_manager/running", { prompt_id: promptId }, "DELETE");
-}
-function compareVersions(a, b) {
-  const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
-  const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const na = pa[i] || 0;
-    const nb = pb[i] || 0;
-    if (na > nb) return 1;
-    if (na < nb) return -1;
-  }
-  return 0;
-}
-function formatCardTime(value, now = /* @__PURE__ */ new Date()) {
-  if (!value) return null;
-  const date = /* @__PURE__ */ new Date(`${value.replace(" ", "T")}Z`);
-  if (Number.isNaN(date.getTime())) return null;
-  let options = { hour: "numeric", minute: "2-digit" };
-  if (date.getFullYear() !== now.getFullYear()) {
-    options = { year: "numeric", month: "short", day: "numeric" };
-  } else if (date.toDateString() !== now.toDateString()) {
-    options = { month: "short", day: "numeric", ...options };
-  }
-  return { label: date.toLocaleString(void 0, options), title: date.toLocaleString() };
-}
 const AppContext = reactExports.createContext(null);
-const AdsClickSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
-  d: "M11.71 17.99C8.53 17.84 6 15.22 6 12c0-3.31 2.69-6 6-6 3.22 0 5.84 2.53 5.99 5.71l-2.1-.63C15.48 9.31 13.89 8 12 8c-2.21 0-4 1.79-4 4 0 1.89 1.31 3.48 3.08 3.89zM22 12c0 .3-.01.6-.04.9l-1.97-.59c.01-.1.01-.21.01-.31 0-4.42-3.58-8-8-8s-8 3.58-8 8 3.58 8 8 8c.1 0 .21 0 .31-.01l.59 1.97c-.3.03-.6.04-.9.04-5.52 0-10-4.48-10-10S6.48 2 12 2s10 4.48 10 10m-3.77 4.26L22 15l-10-3 3 10 1.26-3.77 4.27 4.27 1.98-1.98z"
-}));
 const InfoOutlineSharpIcon = createSvgIcon([/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M11 17h2v-6h-2zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8M11 9h2V7h-2z"
 }, "0"), /* @__PURE__ */ jsxRuntimeExports.jsx("path", {
@@ -19179,10 +19117,6 @@ function TopMenu() {
   const toggleRef = reactExports.useRef(null);
   function toggleMenu() {
     setUiState((prev2) => ({ ...prev2, menuOpen: !prev2.menuOpen }));
-  }
-  async function takeOver() {
-    toggleMenu();
-    apiCall("queue_manager/takeover?client_id=" + app.api.clientId, null, "GET");
   }
   reactExports.useEffect(() => {
     if (!uiState.menuOpen) return;
@@ -19216,10 +19150,6 @@ function TopMenu() {
         ref: menuRef,
         className: "top-menu" + (uiState.menuOpen ? " open" : ""),
         children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "container", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "button qm-btn qm-btn-text", onClick: takeOver, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(AdsClickSharpIcon, {}),
-            " Take over focus"
-          ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("a", { className: "button qm-btn qm-btn-text", href: "https://github.com/QuietNoise/comfyui_queue_manager?tab=readme-ov-file#manual", target: "_blank", rel: "noreferrer", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(QuizSharpIcon, {}),
             " Documentation"
@@ -19257,6 +19187,7 @@ function LoaderSpinner() {
     }
   ) });
 }
+const baseURL = "/";
 function viewURL(file) {
   const { filename, subfolder, type } = file;
   const params = new URLSearchParams({
@@ -19392,6 +19323,64 @@ const CardInfo = reactExports.memo(function CardInfo2({ entries }) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(OtherTile, { label: entry.label, value: entry.value }, key);
   });
 });
+async function apiCall(endpoint, data, method = "POST") {
+  const url = endpoint.startsWith("https://") || endpoint.startsWith("http://") ? endpoint : `${baseURL}${endpoint}`;
+  try {
+    let request = {
+      method,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    };
+    if (method.toLowerCase() !== "get") {
+      request.body = JSON.stringify(data);
+    }
+    const response = await fetch(url, request);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    const contentType = response.headers.get("content-type");
+    const contentLength = parseInt(response.headers.get("content-length"));
+    if (contentLength === 0) {
+      return null;
+    }
+    if (contentType.includes("application/json")) {
+      return await response.json();
+    } else {
+      return await response.text();
+    }
+  } catch (error) {
+    console.error("Error running apiCall:", error);
+    throw error;
+  }
+}
+async function deleteRunningJob(promptId) {
+  return apiCall("queue_manager/running", { prompt_id: promptId }, "DELETE");
+}
+function compareVersions(a, b) {
+  const pa = String(a).split(".").map((x) => parseInt(x, 10) || 0);
+  const pb = String(b).split(".").map((x) => parseInt(x, 10) || 0);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const na = pa[i] || 0;
+    const nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+function formatCardTime(value, now = /* @__PURE__ */ new Date()) {
+  if (!value) return null;
+  const date = /* @__PURE__ */ new Date(`${value.replace(" ", "T")}Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  let options = { hour: "numeric", minute: "2-digit" };
+  if (date.getFullYear() !== now.getFullYear()) {
+    options = { year: "numeric", month: "short", day: "numeric" };
+  } else if (date.toDateString() !== now.toDateString()) {
+    options = { month: "short", day: "numeric", ...options };
+  }
+  return { label: date.toLocaleString(void 0, options), title: date.toLocaleString() };
+}
 const QueueCard = reactExports.memo(
   function QueueCard2({
     item,
