@@ -15,7 +15,6 @@ function makeProps(overrides = {}) {
     index: 0,
     mode: 'normal',
     info: { page: 0, page_size: 100 },
-    route: 'queue',
     filters: null,
     isSelected: false,
     onSelect: sharedOnSelect,

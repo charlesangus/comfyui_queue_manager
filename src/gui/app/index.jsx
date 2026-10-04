@@ -92,7 +92,7 @@ export default function Home() {
     previousListOrderRef.current = completedListOrder;
 
     // Both settings change which jobs belong on each page.
-    if (pageSizeChanged || (route === "completed" && listOrderChanged)) {
+    if (pageSizeChanged || (route !== "queue" && listOrderChanged)) {
       fetchQueueItems({page: 0, reload: true});
     }
   }, [pageSize, completedListOrder, route, fetchQueueItems]);

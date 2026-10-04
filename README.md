@@ -130,11 +130,11 @@ When button on the bottom has a asterisk `*` next to it, it means that the actio
 ### Archive
 **Archive** is where old completed jobs go, and where you can park queue items to play them later.
 
-Completed and failed jobs older than 7 days are moved to the Archive automatically, keeping the Completed tab fast. Change the number of days, or set it to 0 to turn this off, with the `QueueManager.Completed.ArchiveAfterDays` setting. Jobs are checked at startup and whenever a job finishes. Archived completed jobs keep their completion time and are listed by it, after any parked queue items.
+Completed and failed jobs older than 7 days are moved to the Archive automatically, keeping the Completed tab fast. Change the number of days, or set it to 0 to turn this off, with the `QueueManager.Completed.ArchiveAfterDays` setting. Jobs are checked at startup and every hour. Archived completed jobs keep their outputs and are listed in the same order as the Completed tab, after any parked queue items.
 
 When in the **Queue** or **Completed** tab, select one or more items and click **Archive** on the selection action bar to archive them, or archive all items in the queue by clicking the **Archive All** button on the bottom of the window.
 
-Similarly, when in the **Archive** tab, select one or more items and click **Run** on the selection action bar to play them, or play all archived items by clicking the **Run All** button on the bottom of the window.
+Similarly, when in the **Archive** tab, select one or more items and click **Run** on the selection action bar to play them, or play all archived items by clicking the **Run All** button on the bottom of the window. Parked queue items move back to the queue, while completed jobs stay in the Archive and a copy of each is queued, like **Requeue** on the Completed tab.
 
 #### Run at front of the queue
 You can run a selection, the entire archive, or a filtered-out list of jobs at the front of the queue by pressing and holding **Shift** while clicking the selection action bar's **Run** button, or the **Run All** button.

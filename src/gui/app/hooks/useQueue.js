@@ -97,7 +97,7 @@ export function useQueue({ fetchOptions } = {}) {
     if (pageSize !== undefined) {
       queryArgs += `${queryArgs ? '&' : '?'}page_size=${encodeURIComponent(pageSize)}`;
     }
-    if ((requestedRoute || route) === "completed") {
+    if ((requestedRoute || route) !== "queue") {
       const order = completedListOrder === "Oldest first" ? "asc" : "desc";
       queryArgs += `${queryArgs ? '&' : '?'}order=${order}`;
     }
