@@ -19463,6 +19463,7 @@ const QueueCard = reactExports.memo(
           onMouseDown: (event) => {
             if ((event.shiftKey || event.ctrlKey || event.metaKey) && !event.target.closest(".error-details")) {
               event.preventDefault();
+              event.currentTarget.closest(".qm-root").focus({ preventScroll: true });
             }
           },
           onClick: (event) => onSelect(itemKey2, event),

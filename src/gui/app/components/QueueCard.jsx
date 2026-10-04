@@ -109,6 +109,8 @@ const executionTimeLabel = useMemo(() => {
           // Plain drags still select text, and the error details keep shift-click for copying the traceback.
           if ((event.shiftKey || event.ctrlKey || event.metaKey) && !event.target.closest(".error-details")) {
             event.preventDefault();
+            // That also skips the click focusing the panel, which Delete/Ctrl+A need to reach the queue instead of the canvas.
+            event.currentTarget.closest(".qm-root").focus({ preventScroll: true });
           }
         }}
         onClick={(event) => onSelect(itemKey, event)}
