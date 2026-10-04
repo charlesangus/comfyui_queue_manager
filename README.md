@@ -146,7 +146,7 @@ When holding Shift pressed a small indicator message will appear on top of the w
 ### Priority
 Every job has an integer priority, `0` by default. Higher priority jobs run first.
 
-Select one or more items and click **Priority** on the selection action bar to set it. Pick one of the presets — Low (`-10`), Normal (`0`), High (`+10`) — or enter a custom value from `-100` to `100` (its up/down arrows step by `10`).
+Select one or more items and click **Priority** on the selection action bar to set it. Pick one of the presets — Low (`-10`), Normal (`0`), High (`+10`) — or enter a custom value from `-100` to `100`.
 
 Jobs with equal priority run in the existing order, so **Run at front of the queue** (holding Shift, see above) still works as a tie-break within a priority level: it moves the selection to the front of its own priority tier, not necessarily to the very front of the whole queue if higher-priority jobs are ahead of it.
 

@@ -76,7 +76,7 @@ export function PriorityMenu({ dbIds, onDone }) {
             label="Custom"
             value={customValue}
             onChange={(event) => setCustomValue(event.target.value)}
-            slotProps={{ htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX, step: 10 } }}
+            slotProps={{ htmlInput: { min: PRIORITY_MIN, max: PRIORITY_MAX } }}
           />
           <button className="qm-btn qm-btn-primary" onClick={handleCustomApply} disabled={customValue === ""}>
             Apply
