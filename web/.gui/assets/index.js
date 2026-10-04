@@ -28521,9 +28521,9 @@ function PriorityMenu({ dbIds, onDone }) {
         anchorOrigin: { vertical: openUpward ? "top" : "bottom", horizontal: "left" },
         transformOrigin: { vertical: openUpward ? "bottom" : "top", horizontal: "left" },
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-1), children: "Low (−1)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(-10), children: "Low (−10)" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(0), children: "Normal (0)" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(1), children: "High (+1)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(MenuItem, { onClick: () => applyPriority(10), children: "High (+10)" }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs(
             MenuItem,
             {

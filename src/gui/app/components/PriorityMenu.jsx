@@ -62,9 +62,9 @@ export function PriorityMenu({ dbIds, onDone }) {
         anchorOrigin={{ vertical: openUpward ? "top" : "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: openUpward ? "bottom" : "top", horizontal: "left" }}
       >
-        <MenuItem onClick={() => applyPriority(-1)}>Low (−1)</MenuItem>
+        <MenuItem onClick={() => applyPriority(-10)}>Low (−10)</MenuItem>
         <MenuItem onClick={() => applyPriority(0)}>Normal (0)</MenuItem>
-        <MenuItem onClick={() => applyPriority(1)}>High (+1)</MenuItem>
+        <MenuItem onClick={() => applyPriority(10)}>High (+10)</MenuItem>
         <MenuItem
           disableRipple
           className="priority-custom"
