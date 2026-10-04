@@ -105,20 +105,20 @@ class QM_Queue:
             last_page = 0
             order_string = "ORDER BY priority DESC, number"
             join_string = ""
-            select_string = "SELECT queue.id as id, prompt, number, priority"
+            select_string = "SELECT queue.id as id, prompt, number, priority, queue.created_at, queue.completed_at"
 
             match route:
                 case "queue":
                     native_items = list(self.native_queue.currently_running.values())
                     running_prompt_ids = [native_item[1] for native_item in native_items]
 
-                    priority_by_prompt_id = {}
+                    row_by_prompt_id = {}
                     if running_prompt_ids:
                         placeholders = ",".join("?" * len(running_prompt_ids))
-                        priority_by_prompt_id = {
-                            row["prompt_id"]: row["priority"]
+                        row_by_prompt_id = {
+                            row["prompt_id"]: row
                             for row in read_query(
-                                f"SELECT prompt_id, priority FROM queue WHERE prompt_id IN ({placeholders})",
+                                f"SELECT prompt_id, priority, created_at FROM queue WHERE prompt_id IN ({placeholders})",
                                 tuple(running_prompt_ids),
                             )
                         }
@@ -127,8 +127,9 @@ class QM_Queue:
                     for native_item in native_items:
                         item = list(native_item)
                         item[3] = item[3].copy()
-                        if native_item[1] in priority_by_prompt_id:
-                            item[3]["priority"] = priority_by_prompt_id[native_item[1]]
+                        if native_item[1] in row_by_prompt_id:
+                            item[3]["priority"] = row_by_prompt_id[native_item[1]]["priority"]
+                            item[3]["created_at"] = row_by_prompt_id[native_item[1]]["created_at"]
                         if native_item[1] in card_by_prompt_id:
                             item[3]["card"] = card_by_prompt_id[native_item[1]]
                         running.append(tuple(item))
@@ -207,6 +208,9 @@ class QM_Queue:
                     # Add db_id to the item
                     item[3]["db_id"] = row["id"]
                     item[3]["priority"] = row["priority"]
+                    item[3]["created_at"] = row["created_at"]
+                    if row["completed_at"] is not None:
+                        item[3]["completed_at"] = row["completed_at"]
                     if row["card"] is not None:
                         item[3]["card"] = json.loads(row["card"])
 
@@ -372,7 +376,7 @@ class QM_Queue:
                 write_query(
                     """
                     UPDATE queue
-                    SET status = ?
+                    SET status = ?, completed_at = CURRENT_TIMESTAMP
                     WHERE prompt_id = ?
                 """,
                     (final_status, prompt_id),
@@ -557,7 +561,9 @@ class QM_Queue:
                     workflow_id = excluded.workflow_id,
                     prompt = excluded.prompt,
                     status = 0,
-                    priority = excluded.priority
+                    priority = excluded.priority,
+                    created_at = CURRENT_TIMESTAMP,
+                    completed_at = NULL
             """,
                 (
                     item[1],
@@ -960,7 +966,7 @@ class QM_Queue:
                 moved += write_query(
                     f"""
                     UPDATE queue
-                    SET status = 0, number = ?, prompt = ?,
+                    SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP, completed_at = NULL,
                         priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                     WHERE id = ?
                 """,
@@ -1063,7 +1069,7 @@ class QM_Queue:
             moved = write_many(
                 f"""
                 UPDATE queue
-                SET status = 0, number = ?, prompt = ?,
+                SET status = 0, number = ?, prompt = ?, created_at = CURRENT_TIMESTAMP, completed_at = NULL,
                     priority = CASE WHEN priority > {PRIORITY_MAX} THEN 0 ELSE priority END
                 WHERE id = ?
             """,

@@ -85,6 +85,8 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     """
     old_conn = sqlite3.connect(str(db_file))
     old_conn.execute(insert_query, ("test-prompt-001", 1, "Test Job", "workflow-123", "{}", 0))
+    old_conn.execute(insert_query, ("test-prompt-002", 2, "Test Job", "workflow-123", "{}", 2))
+    old_conn.execute("UPDATE queue SET updated_at = '2026-01-02 03:04:05' WHERE prompt_id = 'test-prompt-002'")
     old_conn.commit()
     old_conn.close()
 
@@ -99,6 +101,7 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     cursor.execute("PRAGMA table_info(queue)")
     columns = {row[1] for row in cursor.fetchall()}
     assert "priority" in columns
+    assert "completed_at" in columns
 
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_priority_number'")
     assert cursor.fetchone() is not None
@@ -106,8 +109,11 @@ def test_priority_column_migration(tmp_path, monkeypatch):
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_queue_status_number'")
     assert cursor.fetchone() is None
 
-    result = qm_db.read_single("SELECT priority FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
+    result = qm_db.read_single("SELECT priority, completed_at FROM queue WHERE prompt_id = ?", ("test-prompt-001",))
     assert result["priority"] == 0
+    assert result["completed_at"] is None
+    result = qm_db.read_single("SELECT completed_at, updated_at FROM queue WHERE prompt_id = ?", ("test-prompt-002",))
+    assert tuple(result) == ("2026-01-02 03:04:05", "2026-01-02 03:04:05")
 
     qm_db.init_schema()
 

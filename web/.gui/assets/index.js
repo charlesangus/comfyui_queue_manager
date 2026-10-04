@@ -19142,6 +19142,18 @@ function compareVersions(a, b) {
   }
   return 0;
 }
+function formatCardTime(value, now = /* @__PURE__ */ new Date()) {
+  if (!value) return null;
+  const date = /* @__PURE__ */ new Date(`${value.replace(" ", "T")}Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  let options = { hour: "numeric", minute: "2-digit" };
+  if (date.getFullYear() !== now.getFullYear()) {
+    options = { year: "numeric", month: "short", day: "numeric" };
+  } else if (date.toDateString() !== now.toDateString()) {
+    options = { month: "short", day: "numeric", ...options };
+  }
+  return { label: date.toLocaleString(void 0, options), title: date.toLocaleString() };
+}
 const AppContext = reactExports.createContext(null);
 const AdsClickSharpIcon = createSvgIcon(/* @__PURE__ */ jsxRuntimeExports.jsx("path", {
   d: "M11.71 17.99C8.53 17.84 6 15.22 6 12c0-3.31 2.69-6 6-6 3.22 0 5.84 2.53 5.99 5.71l-2.1-.63C15.48 9.31 13.89 8 12 8c-2.21 0-4 1.79-4 4 0 1.89 1.31 3.48 3.08 3.89zM22 12c0 .3-.01.6-.04.9l-1.97-.59c.01-.1.01-.21.01-.31 0-4.42-3.58-8-8-8s-8 3.58-8 8 3.58 8 8 8c.1 0 .21 0 .31-.01l.59 1.97c-.3.03-.6.04-.9.04-5.52 0-10-4.48-10-10S6.48 2 12 2s10 4.48 10 10m-3.77 4.26L22 15l-10-3 3 10 1.26-3.77 4.27 4.27 1.98-1.98z"
@@ -19429,6 +19441,18 @@ const QueueCard = reactExports.memo(
     }, [item?.[3]?.execution_time]);
     const rowIndex = index === void 0 || !info ? "" : index + 1 + info.page * info.page_size;
     const mediaOutputs = reactExports.useMemo(() => new MediaOutputs(item?.[3]), [item]);
+    const createdAt = item?.[3]?.created_at;
+    const completedAt = item?.[3]?.completed_at;
+    const times = reactExports.useMemo(() => {
+      const queued = formatCardTime(createdAt);
+      const completed = formatCardTime(completedAt);
+      if (!queued && !completed) return null;
+      return {
+        queued,
+        completed,
+        title: [queued && `Queued: ${queued.title}`, completed && `Completed: ${completed.title}`].filter(Boolean).join("\n")
+      };
+    }, [createdAt, completedAt]);
     const error = item?.[3]?.status === -1 ? item?.[3]?.error : null;
     const priority = item?.[3]?.priority;
     const priorityBadge = reactExports.useMemo(() => {
@@ -19472,6 +19496,11 @@ const QueueCard = reactExports.memo(
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "serial", children: rowIndex }),
               loader ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderSpinner, {}) : null,
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "name-cell", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "plain", onClick: filterByWorkflow, title: "Filter view by the workflow", children: mode === "external" ? "External job" : workflow?.workflow_name ? workflow.workflow_name : "" }) }),
+              times ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: `card-times${times.queued && times.completed ? " both" : ""}`, title: times.title, children: [
+                times.queued ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "queued-time", children: times.queued.label }) : null,
+                times.queued && times.completed ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "time-arrow", children: "→" }) : null,
+                times.completed ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "completed-time", children: times.completed.label }) : null
+              ] }) : null,
               route === "completed" && executionTimeLabel ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "qm-badge execution-time", title: "Execution time", children: executionTimeLabel }) : null,
               priorityBadge ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
@@ -19545,7 +19574,7 @@ const QueueCard = reactExports.memo(
     if (prevError !== nextError && JSON.stringify(prevError) !== JSON.stringify(nextError)) {
       return false;
     }
-    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
+    return prev2.loader === next2.loader && prev2.index === next2.index && prev2.mode === next2.mode && prev2.route === next2.route && prev2.filters === next2.filters && prev2.isSelected === next2.isSelected && prev2.onSelect === next2.onSelect && prev2.onOpenMedia === next2.onOpenMedia && prev2.itemKey === next2.itemKey && prev2.info?.page === next2.info?.page && prev2.info?.page_size === next2.info?.page_size && prev2.item?.[3]?.priority === next2.item?.[3]?.priority && prev2.item?.[3]?.status === next2.item?.[3]?.status && prev2.item?.[3]?.created_at === next2.item?.[3]?.created_at && prev2.item?.[3]?.completed_at === next2.item?.[3]?.completed_at && prev2.item?.[3]?.execution_time === next2.item?.[3]?.execution_time && prev2.item?.[3]?.total_files === next2.item?.[3]?.total_files && prev2.item?.[3]?.extra_pnginfo?.workflow?.id === next2.item?.[3]?.extra_pnginfo?.workflow?.id && prev2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name === next2.item?.[3]?.extra_pnginfo?.workflow?.workflow_name;
   }
 );
 function getScrollbarSize(win = window) {

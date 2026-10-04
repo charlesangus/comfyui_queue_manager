@@ -95,6 +95,39 @@ header.header {
       color: var(--qm-fg);
     }
 
+    .card-times {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      white-space: nowrap;
+      color: var(--qm-fg-muted);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+
+      .time-arrow {
+        padding: 0 0.25em;
+      }
+
+      // Stack queued over completed so a narrow panel keeps room for the name.
+      @container qm (max-width: 400px) {
+        &.both {
+          flex-direction: column;
+          align-items: flex-end;
+          font-size: 0.7rem;
+          line-height: 1.15;
+        }
+
+        .time-arrow {
+          display: none;
+        }
+      }
+
+      // Below this the times would squeeze the name out entirely.
+      @container qm (max-width: 260px) {
+        display: none;
+      }
+    }
+
     .priority-badge {
       &.priority-positive {
         background-color: var(--qm-success);

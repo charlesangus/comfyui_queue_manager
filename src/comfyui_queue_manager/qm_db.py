@@ -43,7 +43,8 @@ def init_schema():
             workflow_id   VARCHAR(255),
             prompt    TEXT,
             status     INTEGER DEFAULT 0, -- 0: pending, 1: running, 2: finished, 3: archive, TODO: -1: error, -2: bin
-            priority   INTEGER NOT NULL DEFAULT 0
+            priority   INTEGER NOT NULL DEFAULT 0,
+            completed_at DATETIME
         );
 
         CREATE TABLE IF NOT EXISTS options (
@@ -106,6 +107,14 @@ def init_schema():
 
     if "priority" not in columns:
         conn.execute("ALTER TABLE queue ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+
+    if "completed_at" not in columns:
+        conn.execute("ALTER TABLE queue ADD COLUMN completed_at DATETIME")
+        # Finished rows were last touched when they completed, so updated_at is the best completion time they have.
+        # The updated_at trigger restamps those rows, so put it back; the completed list is ordered by it.
+        conn.execute("UPDATE queue SET completed_at = updated_at WHERE status IN (2, -1)")
+        conn.execute("UPDATE queue SET updated_at = completed_at WHERE status IN (2, -1)")
         conn.commit()
 
     conn.execute("DROP INDEX IF EXISTS idx_queue_status_number")

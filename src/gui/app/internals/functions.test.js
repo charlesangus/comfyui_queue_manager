@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compareVersions } from './functions';
+import { compareVersions, formatCardTime } from './functions';
 
 describe('compareVersions', () => {
   describe('equal versions', () => {
@@ -89,5 +89,44 @@ describe('compareVersions', () => {
     it('handles versions with empty strings in numeric conversion', () => {
       expect(compareVersions('1..0', '1.0.0')).toBe(0);
     });
+  });
+});
+
+describe('formatCardTime', () => {
+  const now = new Date(2026, 9, 4, 18, 30);
+
+  it('returns null for missing or unparseable values', () => {
+    expect(formatCardTime(null, now)).toBeNull();
+    expect(formatCardTime(undefined, now)).toBeNull();
+    expect(formatCardTime('', now)).toBeNull();
+    expect(formatCardTime('not a date', now)).toBeNull();
+  });
+
+  it('reads database timestamps as UTC', () => {
+    const local = new Date(2026, 9, 4, 9, 5);
+    const utc = local.toISOString().slice(0, 19).replace('T', ' ');
+    expect(formatCardTime(utc, now).title).toBe(local.toLocaleString());
+  });
+
+  it('shows only the time for today', () => {
+    const local = new Date(2026, 9, 4, 9, 5);
+    const utc = local.toISOString().slice(0, 19).replace('T', ' ');
+    expect(formatCardTime(utc, now).label).toBe(local.toLocaleString(undefined, { hour: 'numeric', minute: '2-digit' }));
+  });
+
+  it('adds the date for other days this year', () => {
+    const local = new Date(2026, 8, 30, 23, 59);
+    const utc = local.toISOString().slice(0, 19).replace('T', ' ');
+    expect(formatCardTime(utc, now).label).toBe(
+      local.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    );
+  });
+
+  it('shows only the date for earlier years', () => {
+    const local = new Date(2025, 11, 31, 12, 0);
+    const utc = local.toISOString().slice(0, 19).replace('T', ' ');
+    expect(formatCardTime(utc, now).label).toBe(
+      local.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    );
   });
 });
