@@ -869,6 +869,8 @@ class QM_Queue:
             get_conn().commit()
 
             if archived > 0:
+                # An archived job may already be staged in the native queue.
+                self.preempt_heap_head_if_stale()
                 qm_log.info("Queue Item Archived: %d item(s)", archived)
                 PromptServer.instance.send_sync("queue-manager-queue-updated", {"total_moved": archived})
 

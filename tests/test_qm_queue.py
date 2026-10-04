@@ -1449,3 +1449,13 @@ def test_archiving_clears_paused_and_export_import_keeps_it(qm_queue):
 
     assert qm_queue.qm.archive_items([ids[1]]) == 1
     assert qm_queue.qm_db.read_single("SELECT paused FROM queue WHERE id = ?", (ids[1],))["paused"] == 0
+
+
+def test_archiving_staged_job_evicts_it(qm_queue):
+    for number, prompt_id in ((1, "prompt-staged"), (2, "prompt-next")):
+        qm_queue.native_queue.put(_make_item(number, prompt_id, "Workflow A", "wf-a"))
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-staged"]
+
+    assert qm_queue.qm.archive_items([_db_id(qm_queue, "prompt-staged")]) == 1
+    assert [heap_item[1] for heap_item in qm_queue.native_queue.queue] == ["prompt-next"]
+    assert qm_queue.native_queue.get()[0][1] == "prompt-next"
