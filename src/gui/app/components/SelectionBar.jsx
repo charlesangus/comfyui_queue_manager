@@ -4,6 +4,7 @@ import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import UploadSharpIcon from "@mui/icons-material/UploadSharp";
 import DeleteOutlineSharpIcon from "@mui/icons-material/DeleteOutlineSharp";
 import Inventory2SharpIcon from "@mui/icons-material/Inventory2Sharp";
+import ReplaySharpIcon from "@mui/icons-material/ReplaySharp";
 
 import { PriorityMenu } from "./PriorityMenu";
 import { apiCall } from "../internals/functions";
@@ -65,9 +66,16 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
     await finish();
   };
 
+  const handleRequeue = async () => {
+    const dbIds = selectedItems.map((item) => item?.[3]?.db_id).filter((id) => id != null);
+    await apiCall("queue_manager/requeue", { items: dbIds, front: shiftDown, clientId: app.api.clientId });
+    await finish();
+  };
+
   const canLoad = selectedItems.length === 1 && Boolean(selectedItems[0]?.[3]?.extra_pnginfo?.workflow);
   const canArchive = route === "queue" && selectedRunning.length === 0 && selectedPending.length > 0;
   const canRun = route === "archive";
+  const canRequeue = route === "completed" && selectedPending.length > 0;
   const canSetPriority =
     (route === "queue" || route === "archive") && selectedRunning.length === 0 && selectedPending.length > 0;
   const priorityDbIds = selectedPending.map((item) => item?.[3]?.db_id).filter((id) => id != null);
@@ -108,6 +116,18 @@ export function SelectionBar({ route, queueData, fetchQueueItems }) {
             <PlayArrowOutlinedIcon fontSize="small" />
             {shiftDown && <UploadSharpIcon fontSize="small" />}
             &nbsp;Run{shiftDown ? " to front" : ""}
+          </button>
+        )}
+
+        {canRequeue && (
+          <button
+            className="qm-btn qm-btn-primary"
+            onClick={handleRequeue}
+            title={shiftDown ? "Queue again, at the front" : "Queue again"}
+          >
+            <ReplaySharpIcon fontSize="small" />
+            {shiftDown && <UploadSharpIcon fontSize="small" />}
+            &nbsp;Requeue{shiftDown ? " to front" : ""}
           </button>
         )}
 
